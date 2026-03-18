@@ -1,13 +1,12 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import {
   Search, SlidersHorizontal, ExternalLink, MapPin, Calendar, Users,
-  BarChart2, LayoutGrid, TrendingUp, DollarSign, Globe, Award,
+  BarChart2, LayoutGrid, TrendingUp, DollarSign, Globe, Award, ChevronDown, Check,
 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -105,7 +104,7 @@ function AnalyticsPanel({ startups }: { startups: DealFlowStartup[] }) {
     const uaCount    = startups.filter(d =>
       d.startupOrigin?.toLowerCase().includes('ukrainian') || d.startupOrigin === 'Ukraine'
     ).length
-    const memberCount = startups.filter(d => d.techosystemMember === 'Yes').length
+    const memberCount = startups.filter(d => d.techosystemMember === 'Member').length
 
     // Deals by vertical — top 10
     const vMap: Record<string, number> = {}
@@ -262,7 +261,7 @@ function DealCard({ startup }: { startup: DealFlowStartup }) {
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">
               <h3 className="font-semibold text-foreground leading-tight truncate">{startup.name}</h3>
-              {startup.techosystemMember === 'Yes' && (
+              {startup.techosystemMember === 'Member' && (
                 <Badge className="text-xs shrink-0 text-white border-0" style={{ background: RED }}>
                   Techosystem
                 </Badge>
@@ -324,41 +323,94 @@ function DealCard({ startup }: { startup: DealFlowStartup }) {
   )
 }
 
-// ── Reusable Filter Dropdown ──────────────────────────────────
+// ── Custom Dropdown (avoids Radix popper position bugs in fixed layouts) ──
 function FilterDropdown({
   label, items, selected, onToggle,
 }: {
   label: string; items: string[]; selected: string[]
   onToggle: (v: string) => void
 }) {
+  const [open, setOpen] = useState(false)
+  const [pos, setPos]   = useState({ top: 0, left: 0 })
+  const btnRef = useRef<HTMLButtonElement>(null)
+
+  const openMenu = useCallback(() => {
+    if (btnRef.current) {
+      const r = btnRef.current.getBoundingClientRect()
+      setPos({ top: r.bottom + 4, left: r.left })
+    }
+    setOpen(o => !o)
+  }, [])
+
+  // Close on outside click
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: MouseEvent) => {
+      if (btnRef.current && !btnRef.current.contains(e.target as Node)) {
+        // Check if click is inside the menu portal
+        const menus = document.querySelectorAll('[data-filter-menu]')
+        for (const m of menus) {
+          if (m.contains(e.target as Node)) return
+        }
+        setOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2 h-8">
-          <SlidersHorizontal className="h-3.5 w-3.5" />
-          {label}
-          {selected.length > 0 && (
-            <span
-              className="rounded-full px-1.5 py-0.5 text-[10px] font-semibold text-white"
-              style={{ background: RED }}
-            >
-              {selected.length}
-            </span>
-          )}
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="max-h-64 overflow-y-auto w-52">
-        {items.map(v => (
-          <DropdownMenuCheckboxItem
-            key={v}
-            checked={selected.includes(v)}
-            onCheckedChange={() => onToggle(v)}
+    <>
+      <button
+        ref={btnRef}
+        onClick={openMenu}
+        className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 py-1.5 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground transition-colors h-8"
+      >
+        <SlidersHorizontal className="h-3.5 w-3.5 text-muted-foreground" />
+        {label}
+        {selected.length > 0 && (
+          <span
+            className="rounded-full px-1.5 py-0.5 text-[10px] font-semibold text-white"
+            style={{ background: RED }}
           >
-            {v}
-          </DropdownMenuCheckboxItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
+            {selected.length}
+          </span>
+        )}
+        <ChevronDown className="h-3 w-3 text-muted-foreground" />
+      </button>
+
+      {open && (
+        <div
+          data-filter-menu
+          style={{
+            position: 'fixed',
+            top: pos.top,
+            left: pos.left,
+            zIndex: 9999,
+            minWidth: 200,
+            maxHeight: 280,
+            overflowY: 'auto',
+          }}
+          className="rounded-md border border-border bg-background shadow-lg py-1"
+        >
+          {items.map(v => (
+            <button
+              key={v}
+              onClick={() => onToggle(v)}
+              className="w-full flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-accent text-left transition-colors"
+            >
+              <span
+                className="h-4 w-4 rounded border border-input flex items-center justify-center flex-shrink-0"
+                style={selected.includes(v) ? { background: RED, borderColor: RED } : {}}
+              >
+                {selected.includes(v) && <Check className="h-3 w-3 text-white" />}
+              </span>
+              {v}
+            </button>
+          ))}
+        </div>
+      )}
+    </>
   )
 }
 
@@ -399,7 +451,7 @@ export function DealRoomView() {
     if (selectedStages.length > 0)    result = result.filter(s => selectedStages.includes(s.roundStage))
     if (selectedYears.length > 0)     result = result.filter(s => selectedYears.includes(String(s.year)))
     if (selectedInvType)              result = result.filter(s => s.investmentType === selectedInvType)
-    if (techosystemOnly)              result = result.filter(s => s.techosystemMember === 'Yes')
+    if (techosystemOnly)              result = result.filter(s => s.techosystemMember === 'Member')
     if (sortBy === 'highest') result.sort((a, b) => b.investmentSizeUSD - a.investmentSizeUSD)
     if (sortBy === 'lowest')  result.sort((a, b) => a.investmentSizeUSD - b.investmentSizeUSD)
     if (sortBy === 'newest')  result.sort((a, b) =>
@@ -495,32 +547,12 @@ export function DealRoomView() {
             />
 
             {/* Investment type */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant={selectedInvType ? 'secondary' : 'outline'}
-                  size="sm" className="h-8"
-                >
-                  {selectedInvType || 'Investment Type'}
-                  {selectedInvType && (
-                    <span
-                      className="ml-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold text-white"
-                      style={{ background: RED }}
-                    >1</span>
-                  )}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
-                <DropdownMenuCheckboxItem
-                  checked={selectedInvType === 'New'}
-                  onCheckedChange={() => setSelectedInvType(p => p === 'New' ? '' : 'New')}
-                >New investment</DropdownMenuCheckboxItem>
-                <DropdownMenuCheckboxItem
-                  checked={selectedInvType === 'Follow-up'}
-                  onCheckedChange={() => setSelectedInvType(p => p === 'Follow-up' ? '' : 'Follow-up')}
-                >Follow-up</DropdownMenuCheckboxItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <FilterDropdown
+              label="Investment Type"
+              items={['New', 'Follow-up']}
+              selected={selectedInvType ? [selectedInvType] : []}
+              onToggle={v => setSelectedInvType(p => p === v ? '' : v)}
+            />
 
             {/* Techosystem members only */}
             <Button
