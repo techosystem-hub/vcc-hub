@@ -98,7 +98,18 @@ async function fetchTable<T>(
   params: Record<string, string> = {}
 ): Promise<T[]> {
   const url = new URL(`${ROOT}/${encodeURIComponent(table)}`);
-  Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
+  const { sort, ...otherParams } = params;
+  Object.entries(otherParams).forEach(([k, v]) => url.searchParams.set(k, v));
+  // Airtable requires array-style sort params: sort[0][field]=X&sort[0][direction]=asc
+  if (sort) {
+    try {
+      const sortArr = JSON.parse(sort) as Array<{ field: string; direction: string }>;
+      sortArr.forEach((s, i) => {
+        url.searchParams.set(`sort[${i}][field]`, s.field);
+        url.searchParams.set(`sort[${i}][direction]`, s.direction);
+      });
+    } catch { /* invalid sort — ignore */ }
+  }
 
   const records: T[] = [];
   let offset: string | undefined;
