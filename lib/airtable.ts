@@ -281,7 +281,7 @@ export async function getMatchesForInvestor(investorId: string): Promise<Match[]
 
   // Two-pass: collect unique startup IDs, then fetch their details
   const baseMatches = records.map(parseMatchBase);
-  const startupIds  = [...new Set(baseMatches.map(m => m.startupId).filter(Boolean))];
+  const startupIds  = Array.from(new Set(baseMatches.map(m => m.startupId).filter(Boolean)));
 
   // Fetch startup records by ID
   const startupMap: Record<string, Startup> = {};
