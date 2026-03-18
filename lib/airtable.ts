@@ -336,6 +336,92 @@ export async function updateMatchStatus(matchId: string, status: MatchStatus) {
   return res.json();
 }
 
+// ── Deal Flow Database ───────────────────────────────────────
+// Separate Airtable base: appzew2eaB6QOy0RF / "Imported table"
+
+const DEALFLOW_ROOT = `https://api.airtable.com/v0/appzew2eaB6QOy0RF`;
+
+export interface DealFlowStartup {
+  id: string;
+  name: string;
+  description: string;
+  vertical: string;
+  founders: string;
+  legalHQ: string;
+  startupOrigin: string;
+  roundStage: string;
+  investmentSizeUSD: number;
+  datePublished: string;
+  year: number;
+  bornYear: string;
+  techosystemMember: string;
+  officeInUkraine: boolean;
+  investors: string;
+  uaInvestorsInvolved: string;
+  linkToNews: string;
+  investmentType: string;
+}
+
+function parseDealFlowStartup(r: any): DealFlowStartup {
+  const f = r.fields;
+  return {
+    id:                r.id,
+    name:              f['Startup'] || '',
+    description:       f['Startup brief description'] || '',
+    vertical:          f['Vertical'] || '',
+    founders:          f['Founders'] || '',
+    legalHQ:           f['Legal HQ'] || '',
+    startupOrigin:     f['Startup origin'] || '',
+    roundStage:        f['Round stage'] || '',
+    investmentSizeUSD: typeof f['Investment size in USD'] === 'number' ? f['Investment size in USD'] : 0,
+    datePublished:     f['Date of publishing'] || '',
+    year:              f['Year'] || 0,
+    bornYear:          f['Born Year'] || '',
+    techosystemMember: f['Techosytem Member'] || 'No',
+    officeInUkraine:   f['Office in Ukraine'] || false,
+    investors:         f['Investor(s)'] || '',
+    uaInvestorsInvolved: f['UA investors involved'] || '',
+    linkToNews:        f['Link to news'] || '',
+    investmentType:    f['Investment Type'] || '',
+  };
+}
+
+export async function getDealFlowStartups(filters: {
+  vertical?: string;
+  stage?: string;
+  search?: string;
+} = {}): Promise<DealFlowStartup[]> {
+  const url = new URL(`${DEALFLOW_ROOT}/tblFoWnsAmc40zupt`);
+  url.searchParams.set('sort[0][field]', 'Date of publishing');
+  url.searchParams.set('sort[0][direction]', 'desc');
+
+  const records: any[] = [];
+  let offset: string | undefined;
+  do {
+    if (offset) url.searchParams.set('offset', offset);
+    const res  = await fetch(url.toString(), { headers, cache: 'no-store' });
+    const data = await res.json();
+    if (!res.ok) throw new Error(`Airtable error: ${data.error?.message}`);
+    records.push(...(data.records || []));
+    offset = data.offset;
+  } while (offset);
+
+  let result = records.map(parseDealFlowStartup);
+
+  if (filters.vertical) result = result.filter(s => s.vertical === filters.vertical);
+  if (filters.stage)    result = result.filter(s => s.roundStage === filters.stage);
+  if (filters.search) {
+    const q = filters.search.toLowerCase();
+    result = result.filter(s =>
+      s.name.toLowerCase().includes(q) ||
+      s.description.toLowerCase().includes(q) ||
+      s.founders.toLowerCase().includes(q)
+    );
+  }
+
+  return result;
+}
+
 // ── Analytics ────────────────────────────────────────────────
 
 export interface AnalyticsData {

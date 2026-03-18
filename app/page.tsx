@@ -25,7 +25,7 @@ import { MyCriteriaView } from '@/components/views/my-criteria-view'
 type View = 'deal-room' | 'smart-matches' | 'analytics' | 'my-criteria'
 
 const navItems = [
-  { id: 'deal-room'      as View, label: 'Deal Room',        icon: Briefcase  },
+  { id: 'deal-room'      as View, label: 'Deal Flow Database', icon: Briefcase  },
   { id: 'smart-matches'  as View, label: 'Smart Matches',    icon: Sparkles   },
   { id: 'analytics'      as View, label: 'Market Analytics', icon: BarChart3  },
   { id: 'my-criteria'    as View, label: 'My Criteria',      icon: Settings   },
