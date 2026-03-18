@@ -48,8 +48,12 @@ function toViewStartup(s: AirtableStartup): Startup {
 }
 
 type SortOption = 'newest' | 'highest' | 'lowest'
-const ALL_VERTICALS = ['AI', 'Defense', 'SaaS', 'EdTech', 'HealthTech', 'FinTech']
-const ALL_STAGES    = ['Pre-seed', 'Seed', 'Series A', 'Series B+']
+const ALL_VERTICALS = [
+  'Defense / MilTech', 'AI / ML', 'Cybersecurity', 'Fintech', 'HealthTech', 'AgriTech',
+  'SaaS (General)', 'Hardware / IoT', 'EdTech', 'Marketing & Media', 'Energy & Environment',
+  'Consumer products', 'HRTech', 'Business Productivity', 'E-commerce & Retail', 'Logistics & Transportation',
+]
+const ALL_STAGES = ['Angel Investment', 'Pre-seed', 'Seed', 'Late Seed / Bridge', 'Series A', 'Series B+']
 
 export function DealRoomView() {
   const [startups, setStartups]               = useState<Startup[]>([])

@@ -10,8 +10,12 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
-const VERTICALS  = ['AI', 'Defense', 'SaaS', 'EdTech', 'HealthTech', 'FinTech']
-const STAGES     = ['Pre-seed', 'Seed', 'Series A', 'Series B+']
+const VERTICALS = [
+  'Defense / MilTech', 'AI / ML', 'Cybersecurity', 'Fintech', 'HealthTech', 'AgriTech',
+  'SaaS (General)', 'Hardware / IoT', 'EdTech', 'Marketing & Media', 'Energy & Environment',
+  'Consumer products', 'HRTech', 'Business Productivity', 'E-commerce & Retail', 'Logistics & Transportation',
+]
+const STAGES = ['Angel Investment', 'Pre-seed', 'Seed', 'Late Seed / Bridge', 'Series A', 'Series B+']
 
 export function MyCriteriaView() {
   const [loading, setLoading] = useState(true)
@@ -136,10 +140,11 @@ export function MyCriteriaView() {
             <Select value={formData.ticketSize} onValueChange={v => { setFormData(p => ({ ...p, ticketSize: v })); setSaved(false) }}>
               <SelectTrigger className="w-full sm:w-[280px]"><SelectValue placeholder="Select ticket size" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="<$50k">&lt;$50K</SelectItem>
-                <SelectItem value="$50k-$200k">$50K – $200K</SelectItem>
-                <SelectItem value="$200k-$500k">$200K – $500K</SelectItem>
-                <SelectItem value="$500k-$1M+">$500K – $1M+</SelectItem>
+                <SelectItem value="Small Tickets (<$50k)">Small Tickets (&lt;$50k)</SelectItem>
+                <SelectItem value="$50k - $200k">$50k – $200k</SelectItem>
+                <SelectItem value="$200k - $500k">$200k – $500k</SelectItem>
+                <SelectItem value="$500k - $1M">$500k – $1M</SelectItem>
+                <SelectItem value=">$5M">&gt;$5M</SelectItem>
               </SelectContent>
             </Select>
           </CardContent>
@@ -149,9 +154,9 @@ export function MyCriteriaView() {
           <CardHeader><CardTitle>Dual-Use / Defense Policy</CardTitle><CardDescription>Your stance on defense and dual-use technology investments</CardDescription></CardHeader>
           <CardContent>
             <RadioGroup value={formData.dualUsePolicy} onValueChange={v => { setFormData(p => ({ ...p, dualUsePolicy: v })); setSaved(false) }} className="space-y-3">
-              <div className="flex items-center space-x-3"><RadioGroupItem value="Agnostic" id="d-agnostic" /><Label htmlFor="d-agnostic" className="font-normal cursor-pointer">Agnostic (any)</Label></div>
-              <div className="flex items-center space-x-3"><RadioGroupItem value="Non-lethal only" id="d-nonlethal" /><Label htmlFor="d-nonlethal" className="font-normal cursor-pointer">Non-lethal only</Label></div>
-              <div className="flex items-center space-x-3"><RadioGroupItem value="No military" id="d-no" /><Label htmlFor="d-no" className="font-normal cursor-pointer">No military / defense investments</Label></div>
+              <div className="flex items-center space-x-3"><RadioGroupItem value="Yes - we actively look for Defense Tech" id="d-defense" /><Label htmlFor="d-defense" className="font-normal cursor-pointer">Yes – we actively look for Defense Tech</Label></div>
+              <div className="flex items-center space-x-3"><RadioGroupItem value="Yes - if it is Dual-use (non-lethal / software)" id="d-nonlethal" /><Label htmlFor="d-nonlethal" className="font-normal cursor-pointer">Yes – if it is Dual-use (non-lethal / software)</Label></div>
+              <div className="flex items-center space-x-3"><RadioGroupItem value="No - our mandate restricts this (ESG / LP restrictions)" id="d-no" /><Label htmlFor="d-no" className="font-normal cursor-pointer">No – our mandate restricts this (ESG / LP restrictions)</Label></div>
             </RadioGroup>
           </CardContent>
         </Card>

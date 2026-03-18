@@ -13,10 +13,10 @@ const headers = {
 
 // ── Types ────────────────────────────────────────────────────
 
-export type Vertical = 'AI' | 'Defense' | 'SaaS' | 'EdTech' | 'HealthTech' | 'FinTech';
-export type Stage    = 'Pre-seed' | 'Seed' | 'Series A' | 'Series B+';
-export type Ticket   = '<$50k' | '$50k-$200k' | '$200k-$500k' | '$500k-$1M+';
-export type DualUse  = 'Agnostic' | 'Non-lethal only' | 'No military';
+export type Vertical = 'Defense / MilTech' | 'AI / ML' | 'Cybersecurity' | 'Fintech' | 'HealthTech' | 'AgriTech' | 'SaaS (General)' | 'Hardware / IoT' | 'EdTech' | 'Marketing & Media' | 'Energy & Environment' | 'Consumer products' | 'HRTech' | 'Business Productivity' | 'E-commerce & Retail' | 'Logistics & Transportation';
+export type Stage    = 'Angel Investment' | 'Pre-seed' | 'Seed' | 'Late Seed / Bridge' | 'Series A' | 'Series B+';
+export type Ticket   = 'Small Tickets (<$50k)' | '$50k - $200k' | '$200k - $500k' | '$500k - $1M' | '>$5M';
+export type DualUse  = 'Yes - we actively look for Defense Tech' | 'Yes - if it is Dual-use (non-lethal / software)' | 'No - our mandate restricts this (ESG / LP restrictions)';
 export type Role     = 'VCC Member' | 'Admin';
 export type StartupStatus = 'New' | 'Actively Raising' | 'Rejected' | 'Closed' | 'Portfolio';
 export type MatchStatus   = 'Pending' | 'Requested' | 'Intro Sent' | 'Passed';
@@ -148,8 +148,8 @@ function parseInvestor(r: any): Investor {
     description:     f['Description'] || '',
     focusVerticals:  (f['Primary Focus Areas (Verticals)'] || []),
     stagePreference: (f['Stage Preference'] || []),
-    ticketSize:      (f['Ticket Size'] || []),
-    dualUsePolicy:   f['Does your mandate cover Dual-Use startups?'] || 'Agnostic',
+    ticketSize:      (f['Standard Ticket Size'] || []),
+    dualUsePolicy:   f['Does your mandate allow investment in Dual-use technologies?'] || '',
     role:            f['Role'] || 'VCC Member',
     whatsapp:        f['Contact Person (Whatsapp)'] || undefined,
   };
@@ -186,9 +186,8 @@ export async function updateInvestorCriteria(
       fields: {
         'Primary Focus Areas (Verticals)': data.focusVerticals,
         'Stage Preference':                data.stagePreference,
-        'Ticket Size':                     data.ticketSize,
-        'Does your mandate cover Dual-Use startups?': data.dualUsePolicy,
-        'Description':                     data.description || '',
+        'Standard Ticket Size':            data.ticketSize,
+        'Does your mandate allow investment in Dual-use technologies?': data.dualUsePolicy,
       },
     }),
   });
