@@ -418,7 +418,7 @@ function FilterDropdown({
 export function DealRoomView() {
   const [startups, setStartups]                   = useState<DealFlowStartup[]>([])
   const [loading, setLoading]                     = useState(true)
-  const [viewMode, setViewMode]                   = useState<ViewMode>('deals')
+  const [viewMode, setViewMode]                   = useState<ViewMode>('analytics')
   const [searchQuery, setSearchQuery]             = useState('')
   const [sortBy, setSortBy]                       = useState<SortOption>('newest')
   const [selectedVerticals, setSelectedVerticals] = useState<string[]>([])
