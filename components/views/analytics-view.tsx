@@ -400,7 +400,7 @@ export function AnalyticsView() {
         newsRes.json(), eventsRes.json(), dealsRes.json(),
       ])
 
-      setNews(Array.isArray(newsData) ? newsData : (newsData.articles ?? []))
+      setNews(Array.isArray(newsData) ? newsData : (newsData.articles ?? newsData.items ?? []))
       setEvents(Array.isArray(eventsData) ? eventsData : (eventsData.events ?? []))
 
       if (dealsData?.deals) {
@@ -628,77 +628,65 @@ export function AnalyticsView() {
                 className="text-xs font-semibold text-white rounded-lg px-3 py-1.5 hover:opacity-90 transition-opacity"
                 style={{ backgroundColor: '#e71d36' }}
               >
-                Add first event
-              </button>
+              Add first event
+            </button>
             </div>
           ) : (
             <div className="space-y-3">
-              {upcomingEvents.map(event => {
-                const { month, day, weekday } = formatEventDate(event.date)
-                const days = daysUntil(event.date)
-                return (
-                  <div
-                    key={event.id}
-                    className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-sm transition-shadow"
-                  >
-                    <div className="flex items-stretch">
-                      {/* Calendar date block */}
-                      <div
-                        className="flex-shrink-0 w-14 flex flex-col items-center justify-center py-3 text-center"
-                        style={{ backgroundColor: '#011627' }}
-                      >
-                        <span className="text-[9px] font-bold text-white/70 tracking-widest uppercase leading-none">
-                          {month}
-                        </span>
-                        <span className="text-2xl font-bold text-white leading-tight mt-0.5">
-                          {day}
-                        </span>
-                        <span className="text-[9px] text-white/60 leading-none mt-0.5">
-                          {weekday}
-                        </span>
-                      </div>
-
-                      {/* Event info */}
-                      <div className="flex-1 p-3 min-w-0">
-                        <div className="flex items-start gap-2 mb-1">
-                          <h3 className="flex-1 text-sm font-semibold text-gray-900 leading-snug line-clamp-2 min-w-0">
-                            {event.title}
-                          </h3>
-                          <DaysBadge days={days} />
-                        </div>
-
-                        {event.location && (
-                          <p className="flex items-center gap-1 text-xs text-gray-500 mt-1">
-                            <IconMapPin className="w-3 h-3 flex-shrink-0" />
-                            <span className="truncate">{event.location}</span>
-                          </p>
-                        )}
-
-                        {event.type && (
-                          <span className="inline-block mt-1.5 text-[10px] font-semibold bg-gray-100 text-gray-600 rounded-full px-2 py-0.5 uppercase tracking-wide">
-                            {event.type}
-                          </span>
-                        )}
-
-                        {event.url && (
-                          <a
-                            href={event.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 mt-1.5 text-[11px] font-semibold hover:underline"
-                            style={{ color: '#e71d36' }}
-                            onClick={e => e.stopPropagation()}
-                          >
-                            View details
-                            <IconExternalLink className="w-3 h-3" />
-                          </a>
-                        )}
-                      </div>
+              {upcomingEvents.map((event) => (
+                <div
+                  key={event.id}
+                  className="group rounded-xl border border-gray-150 bg-white p-3 hover:shadow-sm transition-all cursor-pointer"
+                  onClick={() => setSelectedEvent(event)}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-10 h-10 rounded-xl flex flex-col items-center justify-center text-white"
+                      style={{ backgroundColor: event.color }}
+                    >
+                      <span className="text-xs font-bold leading-none">{formatDate(event.date).day}</span>
+                      <span className="text-xxs leading-none opacity-85">{formatDate(event.date).month}</span>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-semibold text-gray-900 leading-snug">{event.title}</p>
+                      <p className="text-xxs text-gray-400 mt-0.5">{event.time}</p>
+                    </div>
+                    <div className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <IconChevronRight className="w-3.5 h-3.5 text-gray-300" />
                     </div>
                   </div>
-                )
-              })}
+                </div>
+              ))}
             </div>
+          )}
+        </div>
+      </div>
+    </div>
+
+    {/* â â Selected Event Modal ââ */}
+    {selectedEvent && (
+      <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setSelectedEvent(null)}>
+        <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-start justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl flex flex-col items-center justify-center text-white"
+                style={{ backgroundColor: selectedEvent.color }}
+              >
+                <span className="text-sm font-bold leading-none">{formatDate(selectedEvent.date).day}</span>
+                <span className="text-xs leading-none opacity-85">{formatDate(selectedEvent.date).month}</span>
+              </div>
+              <div>
+                <h3 className="font-bold text-gray-900">{selectedEvent.title}</h3>
+                <p className="text-sm text-gray-500">{selectedEvent.time}</p>
+              </div>
+            </div>
+            <button onClick={() => setSelectedEvent(null)} className="text-gray-400 hover:text-gray-600">
+              <IconX className="w-5 h-5" />
+            </button>
+          </div>
+          <p className="text-sm text-gray-600">{selectedEvent.description}</p>
+          <div className="flex gap-3 mt-5">
+            <button onClick={() => setSelectedEvent(null)} className="flex-1 text-sm font-medium text-gray-700 bg-gray-100 rounded-xl py-2.5 hover:bs-gray-200 transition-colors">Close</button>
+            <button className="flex-1 text-sm font-semibold text-white rounded-xl py-2.5 hover:oq§         </div>
           )}
         </div>
       </div>
