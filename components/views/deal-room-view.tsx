@@ -477,7 +477,8 @@ export function DealRoomView() {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Analytics / Deals toggle */}
+      {/* Analytics / Deals toggle + Add Deal button */}
+      <div className="flex items-center justify-between gap-4">
       <div className="flex items-center gap-1 rounded-lg border bg-muted/30 p-1 w-fit">
         <Button
           variant={viewMode === 'analytics' ? 'default' : 'ghost'}
@@ -498,6 +499,18 @@ export function DealRoomView() {
             {startups.length}
           </span>
         </Button>
+      </div>
+
+        <a
+          href="https://airtable.com/appzew2eaB6QOy0RF/pag0UYbAxuhakB0er/form"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Button size="sm" className="gap-1.5 h-8 text-white" style={{ background: RED }}>
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add Deal
+          </Button>
+        </a>
       </div>
 
       {viewMode === 'analytics' ? (
