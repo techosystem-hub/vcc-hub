@@ -46,12 +46,16 @@ function AppSidebar({ activeView, onViewChange }: { activeView: View; onViewChan
     <Sidebar collapsible="icon">
       <SidebarHeader className="p-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-sm">
-            TV
+          {/* Techosystem logo mark */}
+          <div
+            className="flex h-9 w-9 items-center justify-center rounded-lg flex-shrink-0 font-black text-white text-lg select-none"
+            style={{ background: '#e71d36', fontFamily: 'Georgia, serif', letterSpacing: '-1px' }}
+          >
+            T
           </div>
           <div className="flex flex-col group-data-[collapsible=icon]:hidden">
-            <span className="font-semibold text-foreground text-sm">Techosystem</span>
-            <span className="text-xs text-muted-foreground">VCC Hub</span>
+            <span className="font-bold text-sm tracking-wide" style={{ color: '#011627' }}>Techosystem</span>
+            <span className="text-xs text-muted-foreground">VCC Intelligence Hub</span>
           </div>
         </div>
       </SidebarHeader>
@@ -102,7 +106,7 @@ function AppSidebar({ activeView, onViewChange }: { activeView: View; onViewChan
 }
 
 export default function Home() {
-  const [activeView, setActiveView] = useState<View>('deal-room')
+  const [activeView, setActiveView] = useState<View>('analytics')
 
   return (
     <SidebarProvider>
@@ -114,6 +118,18 @@ export default function Home() {
             <h1 className="text-lg font-semibold text-foreground">
               {navItems.find((item) => item.id === activeView)?.label}
             </h1>
+          </div>
+          {/* Techosystem wordmark — top-right of every view */}
+          <div className="flex items-center gap-2 select-none">
+            <div
+              className="h-7 w-7 rounded-md flex items-center justify-center text-white font-black text-base"
+              style={{ background: '#e71d36', fontFamily: 'Georgia, serif' }}
+            >
+              T
+            </div>
+            <span className="text-sm font-semibold hidden sm:block" style={{ color: '#011627' }}>
+              Techosystem
+            </span>
           </div>
         </header>
         <main className="flex-1 overflow-auto p-6">
