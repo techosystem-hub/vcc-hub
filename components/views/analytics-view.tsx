@@ -165,10 +165,13 @@ function IconClock({ className = 'w-3 h-3' }: { className?: string }) {
 
 // ─── Stat Card ────────────────────────────────────────────────────────────────
 function StatCard({
-  icon, label, value, accent,
-}: { icon: React.ReactNode; label: string; value: string; accent: string }) {
+  icon, label, value, accent, onClick,
+}: { icon: React.ReactNode; label: string; value: string; accent: string; onClick?: () => void }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex items-center gap-4 hover:shadow-md transition-shadow">
+    <div
+      onClick={onClick}
+      className={`bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex items-center gap-4 transition-shadow ${onClick ? 'cursor-pointer hover:shadow-md hover:border-[#e71d36]' : 'hover:shadow-md'}`}
+    >
       <div className={`rounded-xl p-3 flex-shrink-0 ${accent}`}>{icon}</div>
       <div className="min-w-0">
         <p className="text-xs font-semibold tracking-widest uppercase text-gray-500 mb-0.5 truncate">
@@ -377,10 +380,10 @@ function AddEventModal({
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
-export function AnalyticsView() {
+export function AnalyticsView({ onNavigate }: { onNavigate?: (view: string) => void }) {
   const [news,        setNews]        = useState<NewsItem[]>([])
   const [events,      setEvents]      = useState<VCCEvent[]>([])
-  const [totalDeals,  setTotalDeals]  = useState(0)
+  const [yearDeals,   setYearDeals]   = useState(0)
   const [topVertical, setTopVertical] = useState('—')
   const [monthDeals,  setMonthDeals]  = useState(0)
   const [weekDeals,   setWeekDeals]   = useState(0)
@@ -407,22 +410,22 @@ export function AnalyticsView() {
       setNews(Array.isArray(newsData) ? newsData : (newsData.articles ?? newsData.items ?? []))
       setEvents(Array.isArray(eventsData) ? eventsData : (eventsData.events ?? []))
 
-      if (dealsData?.deals) {
-        const deals = dealsData.deals as Array<Record<string, unknown>>
-        const now = new Date()
-        setTotalDeals(deals.length)
-        setMonthDeals(deals.filter(d => {
-          const c = new Date(d.createdAt as string)
-          return c.getMonth() === now.getMonth() && c.getFullYear() === now.getFullYear()
-        }).length)
-        setWeekDeals(deals.filter(d =>
-          now.getTime() - new Date(d.createdAt as string).getTime() < 7 * 86_400_000
-        ).length)
-        const counts: Record<string, number> = {}
-        deals.forEach(d => { const v = (d.vertical as string) || 'Other'; counts[v] = (counts[v] || 0) + 1 })
-        const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]
-        setTopVertical(top ? top[0] : '—')
-      }
+      const deals = Array.isArray(dealsData) ? dealsData as Array<Record<string, unknown>> : []
+      const now = new Date()
+      const thisYear  = now.getFullYear()
+      const thisMonth = now.getMonth()
+      const yearDeals = deals.filter(d => d.year === thisYear)
+      setYearDeals(yearDeals.length)
+      setMonthDeals(deals.filter(d =>
+        d.year === thisYear && new Date(d.datePublished as string).getMonth() === thisMonth
+      ).length)
+      setWeekDeals(deals.filter(d =>
+        now.getTime() - new Date(d.datePublished as string).getTime() < 7 * 86_400_000
+      ).length)
+      const counts: Record<string, number> = {}
+      yearDeals.forEach(d => { const v = (d.vertical as string) || 'Other'; counts[v] = (counts[v] || 0) + 1 })
+      const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]
+      setTopVertical(top ? top[0] : '—')
     } finally {
       setLoading(false)
     }
@@ -511,27 +514,31 @@ export function AnalyticsView() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           icon={<IconBriefcase className="w-5 h-5 text-white" />}
-          label="Total Deals"
-          value={String(totalDeals)}
+          label="Deals This Year"
+          value={String(yearDeals)}
           accent="bg-[#011627]"
+          onClick={() => onNavigate?.('deal-room')}
         />
         <StatCard
           icon={<IconCalendar className="w-5 h-5 text-white" />}
           label="This Month"
           value={String(monthDeals)}
           accent="bg-[#e71d36]"
+          onClick={() => onNavigate?.('deal-room')}
         />
         <StatCard
           icon={<IconTrendingUp className="w-5 h-5 text-white" />}
           label="This Week"
           value={String(weekDeals)}
           accent="bg-teal-600"
+          onClick={() => onNavigate?.('deal-room')}
         />
         <StatCard
           icon={<IconTag className="w-5 h-5 text-white" />}
           label="Top Vertical"
           value={topVertical}
           accent="bg-violet-600"
+          onClick={() => onNavigate?.('deal-room')}
         />
       </div>
 
@@ -635,16 +642,7 @@ export function AnalyticsView() {
                 <IconPlus className="w-3 h-3" />
                 Add
               </button>
-              <a
-                href="https://airtable.com/appzew2eaB6QOy0RF/shrmHmDYsDaYrLFNM"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-xs font-semibold text-white rounded-lg px-2.5 py-1.5 hover:opacity-90 transition-opacity"
-                style={{ backgroundColor: '#6b7280' }}
-              >
-                <IconExternalLink className="w-3 h-3" />
-                Submit Event
-              </a>
+
             </div>
           </div>
 
