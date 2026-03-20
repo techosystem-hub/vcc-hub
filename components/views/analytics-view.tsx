@@ -607,14 +607,26 @@ export function AnalyticsView() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-gray-900">Upcoming Events</h2>
-            <button
-              onClick={() => setShowAdd(true)}
-              className="inline-flex items-center gap-1 text-xs font-semibold text-white rounded-lg px-2.5 py-1.5 hover:opacity-90 transition-opacity"
-              style={{ backgroundColor: '#e71d36' }}
-            >
-              <IconPlus className="w-3 h-3" />
-              Add
-            </button>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setShowAdd(true)}
+                className="inline-flex items-center gap-1 text-xs font-semibold text-white rounded-lg px-2.5 py-1.5 hover:opacity-90 transition-opacity"
+                style={{ backgroundColor: '#e71d36' }}
+              >
+                <IconPlus className="w-3 h-3" />
+                Add
+              </button>
+              <a
+                href="https://airtable.com/appzew2eaB6QOy0RF/shrmHmDYsDaYrLFNM"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-xs font-semibold text-white rounded-lg px-2.5 py-1.5 hover:opacity-90 transition-opacity"
+                style={{ backgroundColor: '#6b7280' }}
+              >
+                <IconExternalLink className="w-3 h-3" />
+                Submit Event
+              </a>
+            </div>
           </div>
 
           {upcomingEvents.length === 0 ? (
