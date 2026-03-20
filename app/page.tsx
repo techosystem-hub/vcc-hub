@@ -24,6 +24,13 @@ import { MyCriteriaView } from '@/components/views/my-criteria-view'
 
 type View = 'deal-room' | 'smart-matches' | 'analytics' | 'my-criteria'
 
+type DealFilter = {
+  years?: string[]
+  verticals?: string[]
+  dateFrom?: string
+  viewMode?: 'analytics' | 'deals'
+}
+
 const navItems = [
   { id: 'analytics'      as View, label: 'Dashboard',          icon: BarChart3  },
   { id: 'deal-room'      as View, label: 'Deal Flow Database',  icon: Briefcase  },
@@ -107,6 +114,7 @@ function AppSidebar({ activeView, onViewChange }: { activeView: View; onViewChan
 
 export default function Home() {
   const [activeView, setActiveView] = useState<View>('analytics')
+  const [dealFilter, setDealFilter] = useState<DealFilter | undefined>()
 
   return (
     <SidebarProvider>
@@ -133,9 +141,16 @@ export default function Home() {
           </div>
         </header>
         <main className="flex-1 overflow-auto p-6">
-          {activeView === 'deal-room'     && <DealRoomView />}
+          {activeView === 'deal-room'     && <DealRoomView initialFilter={dealFilter} />}
           {activeView === 'smart-matches' && <SmartMatchesView />}
-          {activeView === 'analytics'     && <AnalyticsView onNavigate={(v) => setActiveView(v as View)} />}
+          {activeView === 'analytics'     && (
+            <AnalyticsView
+              onNavigate={(v, filter) => {
+                setDealFilter(filter)
+                setActiveView(v as View)
+              }}
+            />
+          )}
           {activeView === 'my-criteria'   && <MyCriteriaView />}
         </main>
       </SidebarInset>
