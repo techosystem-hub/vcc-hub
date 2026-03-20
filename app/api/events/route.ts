@@ -19,7 +19,7 @@ export interface VCCEvent {
   tags: string[]
   isPrivate?: boolean
 }
-]
+
 
 async function getAirtableEvents(): Promise<VCCEvent[]> {
   if (!TABLE || !TOKEN) return []
