@@ -135,7 +135,7 @@ export default function Home() {
         <main className="flex-1 overflow-auto p-6">
           {activeView === 'deal-room'     && <DealRoomView />}
           {activeView === 'smart-matches' && <SmartMatchesView />}
-          {activeView === 'analytics'     && <AnalyticsView onNavigate={setActiveView} />}
+          {activeView === 'analytics'     && <AnalyticsView onNavigate={(v) => setActiveView(v as View)} />}
           {activeView === 'my-criteria'   && <MyCriteriaView />}
         </main>
       </SidebarInset>
