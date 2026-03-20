@@ -11,13 +11,23 @@ interface NewsItem {
   source: string
 }
 
+const STARTUP_INVEST_KW = [
+  'startup', 'invest', 'fund', 'venture', 'round', 'raise', 'raised',
+  'seed', 'series', 'accelerat', 'grant', 'ipo', 'acquisition', 'angel',
+  'pre-seed', 'valuation', 'exit',
+]
+
 const FEEDS = [
-  { name: 'AIN.UA',         url: 'https://ain.ua/feed/',                  filter: null as string[] | null },
-  { name: 'DOU.UA',         url: 'https://dou.ua/rss/news.xml',           filter: null },
-  { name: 'Forbes Ukraine', url: 'https://forbes.ua/rss',                 filter: null },
-  { name: 'EU-Startups',    url: 'https://www.eu-startups.com/feed/',     filter: ['ukraine','ukrainian','kyiv','lviv','cee','eastern europe'] },
-  { name: 'Sifted',         url: 'https://sifted.eu/feed/',               filter: ['ukraine','ukrainian','cee','eastern','venture','fund','invest'] },
-  { name: 'TechCrunch',     url: 'https://techcrunch.com/feed/',          filter: ['ukraine','ukrainian','venture','fund','cee','eastern europe'] },
+  // Ukrainian sources — startups & investments only
+  { name: 'AIN.UA',      url: 'https://en.ain.ua/feed/',          filter: STARTUP_INVEST_KW as string[] | null },
+  { name: 'Speka',       url: 'https://speka.media/feed/',        filter: null as string[] | null },
+  { name: 'Vector',      url: 'https://vctr.media/feed/',         filter: STARTUP_INVEST_KW },
+  { name: 'TechUkraine', url: 'https://techukraine.org/feed/',    filter: null },
+  { name: 'InVenture',   url: 'https://inventure.com.ua/rss',     filter: null },
+  // International sources — Ukraine-related only
+  { name: 'TechCrunch',  url: 'https://techcrunch.com/feed/',     filter: ['ukraine', 'ukrainian'] },
+  { name: 'VentureBeat', url: 'https://venturebeat.com/feed/',    filter: ['ukraine', 'ukrainian'] },
+  { name: 'Wired',       url: 'https://www.wired.com/feed/rss',   filter: ['ukraine', 'ukrainian'] },
 ]
 
 function getTag(xml: string, t: string): string {
