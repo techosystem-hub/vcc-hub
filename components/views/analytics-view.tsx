@@ -20,6 +20,13 @@ import {
 } from '@/components/ui/select'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
+export interface DealFilter {
+  years?: string[]
+  verticals?: string[]
+  dateFrom?: string
+  viewMode?: 'analytics' | 'deals'
+}
+
 interface NewsItem {
   id: string
   title: string
@@ -64,7 +71,7 @@ const EVENT_TYPE_OPTIONS = [
   'Workshop', 'Forum', 'Other',
 ]
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime()
   const h = Math.floor(diff / 3_600_000)
@@ -177,7 +184,7 @@ function StatCard({
         <p className="text-xs font-semibold tracking-widest uppercase text-gray-500 mb-0.5 truncate">
           {label}
         </p>
-        <p className="text-2xl font-bold text-gray-900 leading-none truncate">{value}</p>
+        <p className={`font-bold text-gray-900 leading-tight ${value.length > 14 ? 'text-xs' : value.length > 9 ? 'text-base' : 'text-2xl'}`}>{value}</p>
       </div>
     </div>
   )
@@ -380,7 +387,7 @@ function AddEventModal({
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
-export function AnalyticsView({ onNavigate }: { onNavigate?: (view: string) => void }) {
+export function AnalyticsView({ onNavigate }: { onNavigate?: (view: string, filter?: DealFilter) => void }) {
   const [news,        setNews]        = useState<NewsItem[]>([])
   const [events,      setEvents]      = useState<VCCEvent[]>([])
   const [yearDeals,   setYearDeals]   = useState(0)
@@ -465,7 +472,7 @@ export function AnalyticsView({ onNavigate }: { onNavigate?: (view: string) => v
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
   })
 
-  // ── Loading state ──────────────────────────────────────────────────────────
+  // ── Loading state ──────────────────────────────────────────────────────────────────
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -480,7 +487,7 @@ export function AnalyticsView({ onNavigate }: { onNavigate?: (view: string) => v
     )
   }
 
-  // ── Main render ────────────────────────────────────────────────────────────
+  // ── Main render ──────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-gray-50/60 p-6 space-y-6">
 
@@ -517,28 +524,45 @@ export function AnalyticsView({ onNavigate }: { onNavigate?: (view: string) => v
           label="Deals This Year"
           value={String(yearDeals)}
           accent="bg-[#011627]"
-          onClick={() => onNavigate?.('deal-room')}
+          onClick={() => {
+            const yr = String(new Date().getFullYear())
+            onNavigate?.('deal-room', { years: [yr], viewMode: 'deals' })
+          }}
         />
         <StatCard
           icon={<IconCalendar className="w-5 h-5 text-white" />}
           label="This Month"
           value={String(monthDeals)}
           accent="bg-[#e71d36]"
-          onClick={() => onNavigate?.('deal-room')}
+          onClick={() => {
+            const now = new Date()
+            const d = new Date(now.getFullYear(), now.getMonth(), 1)
+            onNavigate?.('deal-room', { dateFrom: d.toISOString().slice(0, 10), viewMode: 'deals' })
+          }}
         />
         <StatCard
           icon={<IconTrendingUp className="w-5 h-5 text-white" />}
           label="This Week"
           value={String(weekDeals)}
           accent="bg-teal-600"
-          onClick={() => onNavigate?.('deal-room')}
+          onClick={() => {
+            const d = new Date(Date.now() - 7 * 86_400_000)
+            onNavigate?.('deal-room', { dateFrom: d.toISOString().slice(0, 10), viewMode: 'deals' })
+          }}
         />
         <StatCard
           icon={<IconTag className="w-5 h-5 text-white" />}
           label="Top Vertical"
           value={topVertical}
           accent="bg-violet-600"
-          onClick={() => onNavigate?.('deal-room')}
+          onClick={() => {
+            const yr = String(new Date().getFullYear())
+            onNavigate?.('deal-room', {
+              years: [yr],
+              verticals: topVertical !== '—' ? [topVertical] : undefined,
+              viewMode: 'deals',
+            })
+          }}
         />
       </div>
 
@@ -595,7 +619,7 @@ export function AnalyticsView({ onNavigate }: { onNavigate?: (view: string) => v
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                         <SourceBadge source={article.source} />
-                        <span className="text-gray-300 select-none">Â·</span>
+                        <span className="text-gray-300 select-none">·</span>
                         <span className="inline-flex items-center gap-1 text-xs text-gray-400">
                           <IconClock />
                           {timeAgo(article.publishedAt)}
@@ -642,7 +666,6 @@ export function AnalyticsView({ onNavigate }: { onNavigate?: (view: string) => v
                 <IconPlus className="w-3 h-3" />
                 Add
               </button>
-
             </div>
           </div>
 
