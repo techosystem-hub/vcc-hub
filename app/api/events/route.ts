@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 
-export const revalidate = 300
+export const revalidate = 0
 
 const BASE   = 'https://api.airtable.com/v0/appzew2eaB6QOy0RF'
 const TABLE  = process.env.AIRTABLE_EVENTS_TABLE_ID ?? ''
@@ -26,7 +26,7 @@ async function getAirtableEvents(): Promise<VCCEvent[]> {
   try {
     const res = await fetch(
       BASE + '/' + TABLE + '?sort[0][field]=Date&sort[0][direction]=asc',
-      { headers: { Authorization: 'Bearer ' + TOKEN }, next: { revalidate: 300 } }
+      { headers: { Authorization: 'Bearer ' + TOKEN }, next: { revalidate: 0 } }
     )
     if (!res.ok) return []
     const data = await res.json()
