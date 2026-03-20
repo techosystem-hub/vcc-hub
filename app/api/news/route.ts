@@ -3,9 +3,10 @@ import { NextResponse } from 'next/server'
 export const revalidate = 3600
 
 interface NewsItem {
+  id: string
   title: string
-  link: string
-  pubDate: string
+  url: string
+  publishedAt: string
   timestamp: number
   description: string
   source: string
@@ -45,18 +46,32 @@ async function parseFeed(feed: typeof FEEDS[0]): Promise<NewsItem[]> {
     })
     if (!res.ok) return []
     const xml = await res.text()
-    const items = xml.match(/<item[\s>]([\s\S]*?)<\/item>/g) ?? []
+    // handle both RSS <item> and Atom <entry>
+    const items = xml.match(/<item[\s>]([\s\S]*?)<\/item>/g)
+               ?? xml.match(/<entry[\s>]([\s\S]*?)<\/entry>/g)
+               ?? []
     return items.slice(0, 25).flatMap(item => {
-      const title       = getTag(item, 'title')
-      const link        = item.match(/<link>([^<\s]+)/)?.[1]?.trim() ?? getTag(item, 'guid')
-      const pubDate     = getTag(item, 'pubDate')
-      const description = getTag(item, 'description').slice(0, 300)
-      if (!title || !link) return []
+      const title = getTag(item, 'title')
+      const url   = item.match(/<link>([^<\s]+)/)?.[1]?.trim()
+                 ?? item.match(/<link[^>]+href=["']([^"']+)["']/)?.[1]?.trim()
+                 ?? getTag(item, 'guid')
+      // try multiple date field names used by different feeds
+      const rawDate = getTag(item, 'pubDate')
+                   || getTag(item, 'published')
+                   || getTag(item, 'updated')
+                   || getTag(item, 'dc:date')
+      const ts = rawDate ? (new Date(rawDate).getTime() || 0) : 0
+      const publishedAt = ts > 0 ? new Date(ts).toISOString() : new Date().toISOString()
+      // strip HTML tags from description
+      const rawDesc = getTag(item, 'description') || getTag(item, 'summary') || getTag(item, 'content')
+      const description = rawDesc.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 300)
+      if (!title || !url) return []
       if (feed.filter) {
         const txt = (title + ' ' + description).toLowerCase()
         if (!feed.filter.some(kw => txt.includes(kw))) return []
       }
-      return [{ title, link, pubDate, timestamp: new Date(pubDate).getTime() || 0, description, source: feed.name }]
+      const id = url
+      return [{ id, title, url, publishedAt, timestamp: ts > 0 ? ts : Date.now(), description, source: feed.name }]
     })
   } catch { return [] }
 }
