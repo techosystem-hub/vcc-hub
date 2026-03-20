@@ -415,17 +415,27 @@ function FilterDropdown({
 }
 
 // ── Main View ─────────────────────────────────────────────────
-export function DealRoomView() {
+interface DealRoomProps {
+  initialFilter?: {
+    years?: string[]
+    verticals?: string[]
+    dateFrom?: string
+    viewMode?: 'analytics' | 'deals'
+  }
+}
+
+export function DealRoomView({ initialFilter }: DealRoomProps = {}) {
   const [startups, setStartups]                   = useState<DealFlowStartup[]>([])
   const [loading, setLoading]                     = useState(true)
-  const [viewMode, setViewMode]                   = useState<ViewMode>('analytics')
+  const [viewMode, setViewMode]                   = useState<ViewMode>(initialFilter?.viewMode ?? 'analytics')
   const [searchQuery, setSearchQuery]             = useState('')
   const [sortBy, setSortBy]                       = useState<SortOption>('newest')
-  const [selectedVerticals, setSelectedVerticals] = useState<string[]>([])
+  const [selectedVerticals, setSelectedVerticals] = useState<string[]>(initialFilter?.verticals ?? [])
   const [selectedStages, setSelectedStages]       = useState<string[]>([])
-  const [selectedYears, setSelectedYears]         = useState<string[]>([])
+  const [selectedYears, setSelectedYears]         = useState<string[]>(initialFilter?.years ?? [])
   const [selectedInvType, setSelectedInvType]     = useState('')
   const [techosystemOnly, setTechosystemOnly]     = useState(false)
+  const [dateFrom, setDateFrom]                   = useState<string | null>(initialFilter?.dateFrom ?? null)
 
   useEffect(() => {
     fetch('/api/dealflow')
@@ -452,21 +462,22 @@ export function DealRoomView() {
     if (selectedYears.length > 0)     result = result.filter(s => selectedYears.includes(String(s.year)))
     if (selectedInvType)              result = result.filter(s => s.investmentType === selectedInvType)
     if (techosystemOnly)              result = result.filter(s => s.techosystemMember === 'Member')
+    if (dateFrom)                     result = result.filter(s => s.datePublished >= dateFrom)
     if (sortBy === 'highest') result.sort((a, b) => b.investmentSizeUSD - a.investmentSizeUSD)
     if (sortBy === 'lowest')  result.sort((a, b) => a.investmentSizeUSD - b.investmentSizeUSD)
     if (sortBy === 'newest')  result.sort((a, b) =>
       b.year - a.year || b.datePublished.localeCompare(a.datePublished)
     )
     return result
-  }, [startups, searchQuery, selectedVerticals, selectedStages, selectedYears, selectedInvType, techosystemOnly, sortBy])
+  }, [startups, searchQuery, selectedVerticals, selectedStages, selectedYears, selectedInvType, techosystemOnly, sortBy, dateFrom])
 
   const activeFilters =
     selectedVerticals.length + selectedStages.length + selectedYears.length +
-    (selectedInvType ? 1 : 0) + (techosystemOnly ? 1 : 0)
+    (selectedInvType ? 1 : 0) + (techosystemOnly ? 1 : 0) + (dateFrom ? 1 : 0)
 
   const clearAll = () => {
     setSelectedVerticals([]); setSelectedStages([]); setSelectedYears([])
-    setSelectedInvType(''); setTechosystemOnly(false); setSearchQuery('')
+    setSelectedInvType(''); setTechosystemOnly(false); setSearchQuery(''); setDateFrom(null)
   }
 
   if (loading) return (
@@ -573,6 +584,14 @@ export function DealRoomView() {
             >
               Techosystem only
             </Button>
+
+            {dateFrom && (
+              <div className="inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-sm font-medium"
+                style={{ borderColor: '#e71d36', color: '#e71d36', background: '#e71d3610' }}>
+                <span>From {new Date(dateFrom + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                <button onClick={() => setDateFrom(null)} className="ml-0.5 font-bold hover:opacity-70 leading-none">×</button>
+              </div>
+            )}
 
             {activeFilters > 0 && (
               <Button variant="ghost" size="sm" className="h-8 text-muted-foreground" onClick={clearAll}>
