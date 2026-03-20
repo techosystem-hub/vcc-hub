@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 
-// âââ Types ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Types ────────────────────────────────────────────────────────────────────
 interface NewsItem {
   id: string
   title: string
@@ -44,7 +44,7 @@ interface VCCEvent {
   source: 'curated' | 'custom'
 }
 
-// âââ Constants ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Constants ────────────────────────────────────────────────────────────────
 const NEWS_SOURCES = ['All', 'TechCrunch', 'VentureBeat', 'Forbes', 'Reuters', 'Wired']
 
 const SOURCE_COLORS: Record<string, string> = {
@@ -60,7 +60,7 @@ const EVENT_TYPE_OPTIONS = [
   'Workshop', 'Forum', 'Other',
 ]
 
-// âââ Helpers ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime()
   const h = Math.floor(diff / 3_600_000)
@@ -84,7 +84,7 @@ function formatEventDate(dateStr: string) {
   }
 }
 
-// âââ Inline SVG Icons âââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Inline SVG Icons ─────────────────────────────────────────────────────────
 function IconBriefcase({ className = 'w-5 h-5' }: { className?: string }) {
   return (
     <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -159,7 +159,7 @@ function IconClock({ className = 'w-3 h-3' }: { className?: string }) {
   )
 }
 
-// âââ Stat Card ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Stat Card ────────────────────────────────────────────────────────────────
 function StatCard({
   icon, label, value, accent,
 }: { icon: React.ReactNode; label: string; value: string; accent: string }) {
@@ -176,7 +176,7 @@ function StatCard({
   )
 }
 
-// âââ Source Badge âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Source Badge ─────────────────────────────────────────────────────────────
 function SourceBadge({ source }: { source: string }) {
   const color = SOURCE_COLORS[source] ?? '#6f7280'
   return (
@@ -187,7 +187,7 @@ function SourceBadge({ source }: { source: string }) {
   )
 }
 
-// âââ Days Badge âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Days Badge ───────────────────────────────────────────────────────────────
 function DaysBadge({ days }: { days: number }) {
   if (days < 0) return null
   let cls = 'bg-green-50 text-green-700 border-green-200'
@@ -201,7 +201,7 @@ function DaysBadge({ days }: { days: number }) {
   )
 }
 
-// âââ Add Event Modal ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Add Event Modal ──────────────────────────────────────────────────────────
 function AddEventModal({
   open, onClose, onAdded,
 }: { open: boolean; onClose: () => void; onAdded: () => void }) {
@@ -298,7 +298,7 @@ function AddEventModal({
               <Label htmlFor="ev-type" className="text-xs font-semibold text-gray-700">Type</Label>
               <Select value={form.type} onValueChange={v => update('type', v)}>
                 <SelectTrigger id="ev-type">
-                  <SelectValue placeholder="Select typeâ¦" />
+                  <SelectValue placeholder="Select type…" />
                 </SelectTrigger>
                 <SelectContent>
                   {EVENT_TYPE_OPTIONS.map(t => (
@@ -317,14 +317,14 @@ function AddEventModal({
           {/* URL */}
           <div className="space-y-1.5">
             <Label htmlFor="ev-url" className="text-xs font-semibold text-gray-700">Event URL</Label>
-            <Input id="ev-url" type="url" placeholder="https://â¦"
+            <Input id="ev-url" type="url" placeholder="https://…"
               value={form.url} onChange={e => update('url', e.target.value)} />
           </div>
 
           {/* Description */}
           <div className="space-y-1.5">
             <Label htmlFor="ev-desc" className="text-xs font-semibold text-gray-700">Description</Label>
-            <Textarea id="ev-desc" rows={2} placeholder="Brief descriptionâ¦"
+            <Textarea id="ev-desc" rows={2} placeholder="Brief description…"
               value={form.description} onChange={e => update('description', e.target.value)} />
           </div>
 
@@ -348,7 +348,7 @@ function AddEventModal({
               style={{ accentColor: '#e71d36' }}
             />
             <Label htmlFor="ev-private" className="text-sm font-normal text-gray-700 cursor-pointer">
-              Private â visible to VCC members only
+              Private — visible to VCC members only
             </Label>
           </div>
 
@@ -363,7 +363,7 @@ function AddEventModal({
               style={{ backgroundColor: '#e71d36', borderColor: '#e71d36' }}
               className="text-white hover:opacity-90 transition-opacity"
             >
-              {saving ? 'Savingâ¦' : 'Add Event'}
+              {saving ? 'Saving…' : 'Add Event'}
             </Button>
           </div>
         </form>
@@ -372,12 +372,12 @@ function AddEventModal({
   )
 }
 
-// âââ Main Component âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Main Component ───────────────────────────────────────────────────────────
 export function AnalyticsView() {
   const [news,        setNews]        = useState<NewsItem[]>([])
   const [events,      setEvents]      = useState<VCCEvent[]>([])
   const [totalDeals,  setTotalDeals]  = useState(0)
-  const [topVertical, setTopVertical] = useState('â')
+  const [topVertical, setTopVertical] = useState('—')
   const [monthDeals,  setMonthDeals]  = useState(0)
   const [weekDeals,   setWeekDeals]   = useState(0)
   const [activeSource, setActiveSource] = useState('All')
@@ -417,7 +417,7 @@ export function AnalyticsView() {
         const counts: Record<string, number> = {}
         deals.forEach(d => { const v = (d.vertical as string) || 'Other'; counts[v] = (counts[v] || 0) + 1 })
         const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]
-        setTopVertical(top ? top[0] : 'â')
+        setTopVertical(top ? top[0] : '—')
       }
     } finally {
       setLoading(false)
@@ -443,7 +443,7 @@ export function AnalyticsView() {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
   })
 
-  // ââ Loading state ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+  // ── Loading state ──────────────────────────────────────────────────────────
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -452,17 +452,17 @@ export function AnalyticsView() {
             className="w-8 h-8 border-2 border-gray-200 rounded-full animate-spin"
             style={{ borderTopColor: '#e71d36' }}
           />
-          <p className="text-sm text-gray-500">Loading Intelligence Hubâ¦</p>
+          <p className="text-sm text-gray-500">Loading Intelligence Hub…</p>
         </div>
       </div>
     )
   }
 
-  // ââ Main render ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+  // ── Main render ────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-gray-50/60 p-6 space-y-6">
 
-      {/* ââ Header ââ */}
+      {/* ── Header ── */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div
@@ -488,7 +488,7 @@ export function AnalyticsView() {
         </button>
       </div>
 
-      {/* ââ Stats Strip ââ */}
+      {/* ── Stats Strip ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           icon={<IconBriefcase className="w-5 h-5 text-white" />}
@@ -516,10 +516,10 @@ export function AnalyticsView() {
         />
       </div>
 
-      {/* ââ Main Content Grid ââ */}
+      {/* ── Main Content Grid ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-        {/* ââ News Feed (left 2/3) ââ */}
+        {/* ── News Feed (left 2/3) ── */}
         <div className="lg:col-span-2 space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-gray-900">Market News</h2>
@@ -569,7 +569,7 @@ export function AnalyticsView() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                         <SourceBadge source={article.source} />
-                        <span className="text-gray-300 select-none">Â·</span>
+                        <span className="text-gray-300 select-none">·</span>
                         <span className="inline-flex items-center gap-1 text-xs text-gray-400">
                           <IconClock />
                           {timeAgo(article.publishedAt)}
@@ -603,7 +603,7 @@ export function AnalyticsView() {
           )}
         </div>
 
-        {/* ââ Events Sidebar (right 1/3) ââ */}
+        {/* ── Events Sidebar (right 1/3) ── */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-gray-900">Upcoming Events</h2>
@@ -628,70 +628,82 @@ export function AnalyticsView() {
                 className="text-xs font-semibold text-white rounded-lg px-3 py-1.5 hover:opacity-90 transition-opacity"
                 style={{ backgroundColor: '#e71d36' }}
               >
-              Add first event
-            </button>
+                Add first event
+              </button>
             </div>
           ) : (
             <div className="space-y-3">
-              {upcomingEvents.map((event) => (
-                <div
-                  key={event.id}
-                  className="group rounded-xl border border-gray-150 bg-white p-3 hover:shadow-sm transition-all cursor-pointer"
-                  onClick={() => setSelectedEvent(event)}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-10 h-10 rounded-xl flex flex-col items-center justify-center text-white"
-                      style={{ backgroundColor: event.color }}
-                    >
-                      <span className="text-xs font-bold leading-none">{formatDate(event.date).day}</span>
-                      <span className="text-xxs leading-none opacity-85">{formatDate(event.date).month}</span>
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs font-semibold text-gray-900 leading-snug">{event.title}</p>
-                      <p className="text-xxs text-gray-400 mt-0.5">{event.time}</p>
-                    </div>
-                    <div className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <IconChevronRight className="w-3.5 h-3.5 text-gray-300" />
+              {upcomingEvents.map(event => {
+                const { month, day, weekday } = formatEventDate(event.date)
+                const days = daysUntil(event.date)
+                return (
+                  <div
+                    key={event.id}
+                    className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-sm transition-shadow"
+                  >
+                    <div className="flex items-stretch">
+                      {/* Calendar date block */}
+                      <div
+                        className="flex-shrink-0 w-14 flex flex-col items-center justify-center py-3 text-center"
+                        style={{ backgroundColor: '#011627' }}
+                      >
+                        <span className="text-[9px] font-bold text-white/70 tracking-widest uppercase leading-none">
+                          {month}
+                        </span>
+                        <span className="text-2xl font-bold text-white leading-tight mt-0.5">
+                          {day}
+                        </span>
+                        <span className="text-[9px] text-white/60 leading-none mt-0.5">
+                          {weekday}
+                        </span>
+                      </div>
+
+                      {/* Event info */}
+                      <div className="flex-1 p-3 min-w-0">
+                        <div className="flex items-start gap-2 mb-1">
+                          <h3 className="flex-1 text-sm font-semibold text-gray-900 leading-snug line-clamp-2 min-w-0">
+                            {event.title}
+                          </h3>
+                          <DaysBadge days={days} />
+                        </div>
+
+                        {event.location && (
+                          <p className="flex items-center gap-1 text-xs text-gray-500 mt-1">
+                            <IconMapPin className="w-3 h-3 flex-shrink-0" />
+                            <span className="truncate">{event.location}</span>
+                          </p>
+                        )}
+
+                        {event.type && (
+                          <span className="inline-block mt-1.5 text-[10px] font-semibold bg-gray-100 text-gray-600 rounded-full px-2 py-0.5 uppercase tracking-wide">
+                            {event.type}
+                          </span>
+                        )}
+
+                        {event.url && (
+                          <a
+                            href={event.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 mt-1.5 text-[11px] font-semibold hover:underline"
+                            style={{ color: '#e71d36' }}
+                            onClick={e => e.stopPropagation()}
+                          >
+                            View details
+                            <IconExternalLink className="w-3 h-3" />
+                          </a>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </div>
       </div>
-    </div>
 
-    {/* â â Selected Event Modal ââ */}
-    {selectedEvent && (
-      <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setSelectedEvent(null)}>
-        <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl flex flex-col items-center justify-center text-white"
-                style={{ backgroundColor: selectedEvent.color }}
-              >
-                <span className="text-sm font-bold leading-none">{formatDate(selectedEvent.date).day}</span>
-                <span className="text-xs leading-none opacity-85">{formatDate(selectedEvent.date).month}</span>
-              </div>
-              <div>
-                <h3 className="font-bold text-gray-900">{selectedEvent.title}</h3>
-                <p className="text-sm text-gray-500">{selectedEvent.time}</p>
-              </div>
-            </div>
-            <button onClick={() => setSelectedEvent(null)} className="text-gray-400 hover:text-gray-600">
-              <IconX className="w-5 h-5" />
-            </button>
-          </div>
-          <p className="text-sm text-gray-600">{selectedEvent.description}</p>
-          <div className="flex gap-3 mt-5">
-            <button onClick={() => setSelectedEvent(null)} className="flex-1 text-sm font-medium text-gray-700 bg-gray-100 rounded-xl py-2.5 hover:bs-gray-200 transition-colors">Close</button>
-            <button className="flex-1 text-sm font-semibold text-white rounded-xl py-2.5 hover:oq§         </div>
-          )}
-        </div>
-      </div>
-
-      {/* ââ Add Event Modal ââ */}
+      {/* ── Add Event Modal ── */}
       <AddEventModal
         open={showAdd}
         onClose={() => setShowAdd(false)}
