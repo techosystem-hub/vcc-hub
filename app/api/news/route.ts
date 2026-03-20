@@ -20,11 +20,13 @@ const FEEDS: Array<{ name: string; url: string; filter: string[] | null }> = [
   { name: 'TechUkraine', url: 'https://techukraine.org/feed/',       filter: null       },
   { name: 'Speka',       url: 'https://speka.ua/rss',                filter: null       },
   { name: 'InVenture',   url: 'https://inventure.com.ua/news.rss',   filter: null       },
-  { name: 'AIN.UA',      url: 'https://ain.ua/feed/',                filter: null       },
+  { name: 'AIN.UA',      url: 'https://en.ain.ua/feed/',             filter: null       },
   { name: 'Vector',      url: 'https://vctr.media/ua/feed/',         filter: null       },
-  { name: 'TechCrunch',  url: 'https://techcrunch.com/feed/',        filter: UKRAINE_KW },
-  { name: 'VentureBeat', url: 'https://venturebeat.com/feed/',       filter: UKRAINE_KW },
-  { name: 'Wired',       url: 'https://www.wired.com/feed/rss',      filter: UKRAINE_KW },
+  { name: 'The Recursive', url: 'https://therecursive.com/feed/',    filter: null       },
+  { name: 'TechCrunch',   url: 'https://techcrunch.com/feed/',       filter: UKRAINE_KW },
+  { name: 'Sifted',       url: 'https://sifted.eu/feed',             filter: UKRAINE_KW },
+  { name: 'VentureBeat',  url: 'https://venturebeat.com/feed/',      filter: UKRAINE_KW },
+  { name: 'Wired',        url: 'https://www.wired.com/feed/rss',     filter: UKRAINE_KW },
 ]
 
 function getTagText(block: string, tag: string): string {
