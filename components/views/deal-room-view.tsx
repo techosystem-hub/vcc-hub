@@ -97,7 +97,15 @@ function StatCard({
 }
 
 // ── Analytics Panel ───────────────────────────────────────────
-function AnalyticsPanel({ startups }: { startups: DealFlowStartup[] }) {
+type ChartFilter = { verticals?: string[]; stages?: string[]; years?: string[] }
+
+function AnalyticsPanel({
+  startups,
+  onFilter,
+}: {
+  startups: DealFlowStartup[]
+  onFilter: (f: ChartFilter) => void
+}) {
   const stats = useMemo(() => {
     const total      = startups.length
     const totalInv   = startups.reduce((s, d) => s + (d.investmentSizeUSD || 0), 0)
@@ -155,6 +163,7 @@ function AnalyticsPanel({ startups }: { startups: DealFlowStartup[] }) {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold">Deals by Vertical</CardTitle>
+            <p className="text-[11px] text-muted-foreground -mt-1">Click a bar to explore deals</p>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -163,8 +172,11 @@ function AnalyticsPanel({ startups }: { startups: DealFlowStartup[] }) {
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f0f0f0" />
                 <XAxis type="number" tick={{ fontSize: 11, fill: '#888' }} />
                 <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: '#444' }} width={148} />
-                <Tooltip content={(p) => <ChartTooltip {...p} />} />
-                <Bar dataKey="value" name="Deals" radius={[0, 4, 4, 0]}>
+                <Tooltip content={(p) => <ChartTooltip {...p} />} cursor={{ fill: 'rgba(0,0,0,0.06)' }} />
+                <Bar dataKey="value" name="Deals" radius={[0, 4, 4, 0]}
+                  onClick={(data) => onFilter({ verticals: [data.name] })}
+                  cursor="pointer"
+                >
                   {stats.verticals.map((_, i) => (
                     <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
                   ))}
@@ -177,6 +189,7 @@ function AnalyticsPanel({ startups }: { startups: DealFlowStartup[] }) {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold">Round Stage Breakdown</CardTitle>
+            <p className="text-[11px] text-muted-foreground -mt-1">Click a slice to explore deals</p>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -191,6 +204,8 @@ function AnalyticsPanel({ startups }: { startups: DealFlowStartup[] }) {
                     percent > 0.05 ? `${name} ${(percent * 100).toFixed(0)}%` : ''
                   }
                   labelLine={false}
+                  onClick={(data) => onFilter({ stages: [data.name] })}
+                  cursor="pointer"
                 >
                   {stats.stages.map((_, i) => (
                     <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
@@ -208,6 +223,7 @@ function AnalyticsPanel({ startups }: { startups: DealFlowStartup[] }) {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold">Deal Flow by Year</CardTitle>
+            <p className="text-[11px] text-muted-foreground -mt-1">Click a bar to explore deals</p>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={200}>
@@ -215,8 +231,11 @@ function AnalyticsPanel({ startups }: { startups: DealFlowStartup[] }) {
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
                 <XAxis dataKey="year" tick={{ fontSize: 12, fill: '#555' }} />
                 <YAxis tick={{ fontSize: 11, fill: '#888' }} />
-                <Tooltip content={(p) => <ChartTooltip {...p} />} />
-                <Bar dataKey="deals" name="Deals" fill={RED} radius={[4, 4, 0, 0]} />
+                <Tooltip content={(p) => <ChartTooltip {...p} />} cursor={{ fill: 'rgba(0,0,0,0.06)' }} />
+                <Bar dataKey="deals" name="Deals" fill={RED} radius={[4, 4, 0, 0]}
+                  onClick={(data) => onFilter({ years: [String(data.year)] })}
+                  cursor="pointer"
+                />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -225,6 +244,7 @@ function AnalyticsPanel({ startups }: { startups: DealFlowStartup[] }) {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold">Investment Volume by Vertical ($M)</CardTitle>
+            <p className="text-[11px] text-muted-foreground -mt-1">Click a bar to explore deals</p>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={200}>
@@ -233,8 +253,11 @@ function AnalyticsPanel({ startups }: { startups: DealFlowStartup[] }) {
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f0f0f0" />
                 <XAxis type="number" tick={{ fontSize: 11, fill: '#888' }} />
                 <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: '#444' }} width={148} />
-                <Tooltip content={(p) => <ChartTooltip {...p} fmt={(v: number) => `$${v}M`} />} />
-                <Bar dataKey="value" name="Investment" fill={NAVY} radius={[0, 4, 4, 0]} />
+                <Tooltip content={(p) => <ChartTooltip {...p} fmt={(v: number) => `$${v}M`} />} cursor={{ fill: 'rgba(0,0,0,0.06)' }} />
+                <Bar dataKey="value" name="Investment" fill={NAVY} radius={[0, 4, 4, 0]}
+                  onClick={(data) => onFilter({ verticals: [data.name] })}
+                  cursor="pointer"
+                />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -523,7 +546,15 @@ export function DealRoomView({ initialFilter }: DealRoomProps = {}) {
       </div>
 
       {viewMode === 'analytics' ? (
-        <AnalyticsPanel startups={startups} />
+        <AnalyticsPanel
+          startups={startups}
+          onFilter={(f) => {
+            if (f.verticals) setSelectedVerticals(f.verticals)
+            if (f.stages)    setSelectedStages(f.stages)
+            if (f.years)     setSelectedYears(f.years)
+            setViewMode('deals')
+          }}
+        />
       ) : (
         <>
           {/* Search + Sort */}
