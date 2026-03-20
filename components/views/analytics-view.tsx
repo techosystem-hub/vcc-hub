@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 
-// âââ Types ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Types ────────────────────────────────────────────────────────────────────
 interface NewsItem {
   id: string
   title: string
@@ -45,7 +45,7 @@ interface VCCEvent {
   source: 'curated' | 'custom'
 }
 
-// âââ Constants ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Constants ────────────────────────────────────────────────────────────────
 // Source filter list is derived dynamically from loaded articles (see component state)
 
 const SOURCE_COLORS: Record<string, string> = {
@@ -64,7 +64,7 @@ const EVENT_TYPE_OPTIONS = [
   'Workshop', 'Forum', 'Other',
 ]
 
-// âââ Helpers ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime()
   const h = Math.floor(diff / 3_600_000)
@@ -88,7 +88,7 @@ function formatEventDate(dateStr: string) {
   }
 }
 
-// âââ Inline SVG Icons âââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Inline SVG Icons ─────────────────────────────────────────────────────────
 function IconBriefcase({ className = 'w-5 h-5' }: { className?: string }) {
   return (
     <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -163,7 +163,7 @@ function IconClock({ className = 'w-3 h-3' }: { className?: string }) {
   )
 }
 
-// âââ Stat Card ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Stat Card ────────────────────────────────────────────────────────────────
 function StatCard({
   icon, label, value, accent,
 }: { icon: React.ReactNode; label: string; value: string; accent: string }) {
@@ -180,7 +180,7 @@ function StatCard({
   )
 }
 
-// âââ Source Badge âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Source Badge ─────────────────────────────────────────────────────────────
 function SourceBadge({ source }: { source: string }) {
   const color = SOURCE_COLORS[source] ?? '#6f7280'
   return (
@@ -191,7 +191,7 @@ function SourceBadge({ source }: { source: string }) {
   )
 }
 
-// âââ Days Badge âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Days Badge ───────────────────────────────────────────────────────────────
 function DaysBadge({ days }: { days: number }) {
   if (days < 0) return null
   let cls = 'bg-green-50 text-green-700 border-green-200'
@@ -205,7 +205,7 @@ function DaysBadge({ days }: { days: number }) {
   )
 }
 
-// âââ Add Event Modal ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Add Event Modal ──────────────────────────────────────────────────────────
 function AddEventModal({
   open, onClose, onAdded,
 }: { open: boolean; onClose: () => void; onAdded: () => void }) {
@@ -302,7 +302,7 @@ function AddEventModal({
               <Label htmlFor="ev-type" className="text-xs font-semibold text-gray-700">Type</Label>
               <Select value={form.type} onValueChange={v => update('type', v)}>
                 <SelectTrigger id="ev-type">
-                  <SelectValue placeholder="Select typeâ¦" />
+                  <SelectValue placeholder="Select type…" />
                 </SelectTrigger>
                 <SelectContent>
                   {EVENT_TYPE_OPTIONS.map(t => (
@@ -321,14 +321,14 @@ function AddEventModal({
           {/* URL */}
           <div className="space-y-1.5">
             <Label htmlFor="ev-url" className="text-xs font-semibold text-gray-700">Event URL</Label>
-            <Input id="ev-url" type="url" placeholder="https://â¦"
+            <Input id="ev-url" type="url" placeholder="https://…"
               value={form.url} onChange={e => update('url', e.target.value)} />
           </div>
 
           {/* Description */}
           <div className="space-y-1.5">
             <Label htmlFor="ev-desc" className="text-xs font-semibold text-gray-700">Description</Label>
-            <Textarea id="ev-desc" rows={2} placeholder="Brief descriptionâ¦"
+            <Textarea id="ev-desc" rows={2} placeholder="Brief description…"
               value={form.description} onChange={e => update('description', e.target.value)} />
           </div>
 
@@ -352,7 +352,7 @@ function AddEventModal({
               style={{ accentColor: '#e71d36' }}
             />
             <Label htmlFor="ev-private" className="text-sm font-normal text-gray-700 cursor-pointer">
-              Private â visible to VCC members only
+              Private — visible to VCC members only
             </Label>
           </div>
 
@@ -367,7 +367,7 @@ function AddEventModal({
               style={{ backgroundColor: '#e71d36', borderColor: '#e71d36' }}
               className="text-white hover:opacity-90 transition-opacity"
             >
-              {saving ? 'Savingâ¦' : 'Add Event'}
+              {saving ? 'Saving…' : 'Add Event'}
             </Button>
           </div>
         </form>
@@ -376,12 +376,12 @@ function AddEventModal({
   )
 }
 
-// âââ Main Component âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Main Component ───────────────────────────────────────────────────────────
 export function AnalyticsView() {
   const [news,        setNews]        = useState<NewsItem[]>([])
   const [events,      setEvents]      = useState<VCCEvent[]>([])
   const [totalDeals,  setTotalDeals]  = useState(0)
-  const [topVertical, setTopVertical] = useState('â')
+  const [topVertical, setTopVertical] = useState('—')
   const [monthDeals,  setMonthDeals]  = useState(0)
   const [weekDeals,   setWeekDeals]   = useState(0)
   const [activeSource, setActiveSource] = useState('All')
@@ -421,7 +421,7 @@ export function AnalyticsView() {
         const counts: Record<string, number> = {}
         deals.forEach(d => { const v = (d.vertical as string) || 'Other'; counts[v] = (counts[v] || 0) + 1 })
         const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]
-        setTopVertical(top ? top[0] : 'â')
+        setTopVertical(top ? top[0] : '—')
       }
     } finally {
       setLoading(false)
@@ -462,7 +462,7 @@ export function AnalyticsView() {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
   })
 
-  // ââ Loading state ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+  // ── Loading state ──────────────────────────────────────────────────────────
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -471,17 +471,17 @@ export function AnalyticsView() {
             className="w-8 h-8 border-2 border-gray-200 rounded-full animate-spin"
             style={{ borderTopColor: '#e71d36' }}
           />
-          <p className="text-sm text-gray-500">Loading Intelligence Hubâ¦</p>
+          <p className="text-sm text-gray-500">Loading Intelligence Hub…</p>
         </div>
       </div>
     )
   }
 
-  // ââ Main render ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+  // ── Main render ────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-gray-50/60 p-6 space-y-6">
 
-      {/* ââ Header ââ */}
+      {/* ── Header ── */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div
@@ -507,7 +507,7 @@ export function AnalyticsView() {
         </button>
       </div>
 
-      {/* ââ Stats Strip ââ */}
+      {/* ── Stats Strip ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           icon={<IconBriefcase className="w-5 h-5 text-white" />}
@@ -535,17 +535,17 @@ export function AnalyticsView() {
         />
       </div>
 
-      {/* ââ Main Content Grid ââ */}
+      {/* ── Main Content Grid ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-        {/* ââ News Feed (left 2/3) ââ */}
+        {/* ── News Feed (left 2/3) ── */}
         <div className="lg:col-span-2 space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-gray-900">Market News</h2>
             <span className="text-xs text-gray-400">{filteredNews.length} articles</span>
           </div>
 
-          {/* Source filter pills â built from actual articles */}
+          {/* Source filter pills — built from actual articles */}
           <div className="flex flex-wrap gap-1.5">
             {newsSources.map(src => (
               <button
@@ -622,7 +622,7 @@ export function AnalyticsView() {
           )}
         </div>
 
-        {/* ââ Events Sidebar (right 1/3) ââ */}
+        {/* ── Events Sidebar (right 1/3) ── */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-gray-900">Upcoming Events</h2>
@@ -734,7 +734,7 @@ export function AnalyticsView() {
         </div>
       </div>
 
-      {/* ââ Add Event Modal ââ */}
+      {/* ── Add Event Modal ── */}
       <AddEventModal
         open={showAdd}
         onClose={() => setShowAdd(false)}
