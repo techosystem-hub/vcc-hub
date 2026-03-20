@@ -18,7 +18,7 @@ const UKRAINE_KW = ['ukraine', 'ukrainian']
 
 const FEEDS: Array<{ name: string; url: string; filter: string[] | null }> = [
   { name: 'TechUkraine',   url: 'https://techukraine.org/feed/',       filter: null       },
-  { name: 'InVenture',     url: 'https://inventure.com.ua/news.rss',   filter: null       },
+  { name: 'InVenture',     url: 'https://inventure.com.ua/en/news.rss', filter: null       },
   { name: 'AIN.UA',        url: 'https://en.ain.ua/feed/',             filter: null       },
   { name: 'The Recursive', url: 'https://therecursive.com/feed/',      filter: null       },
   { name: 'TechCrunch',    url: 'https://techcrunch.com/feed/',        filter: UKRAINE_KW },
