@@ -14,21 +14,17 @@ interface FeedItem {
   source: string
 }
 
-const STARTUP_KW = [
-  'startup','invest','fund','venture','round','rais','seed',
-  'series','accelerat','grant','ipo','acqui','angel','valuat','exit','pitch',
-]
-const UKRAINE_KW = ['ukraine','ukrainian']
+const UKRAINE_KW = ['ukraine', 'ukrainian']
 
 const FEEDS: Array<{ name: string; url: string; filter: string[] | null }> = [
-  { name: 'TechUkraine', url: 'https://techukraine.org/feed/',    filter: null       },
-  { name: 'Speka',       url: 'https://speka.media/feed/',        filter: null       },
-  { name: 'InVenture',   url: 'https://inventure.com.ua/rss',     filter: null       },
-  { name: 'AIN.UA',      url: 'https://ain.ua/feed/',             filter: STARTUP_KW },
-  { name: 'Vector',      url: 'https://vctr.media/feed/',         filter: STARTUP_KW },
-  { name: 'TechCrunch',  url: 'https://techcrunch.com/feed/',     filter: UKRAINE_KW },
-  { name: 'VentureBeat', url: 'https://venturebeat.com/feed/',    filter: UKRAINE_KW },
-  { name: 'Wired',       url: 'https://www.wired.com/feed/rss',   filter: UKRAINE_KW },
+  { name: 'TechUkraine', url: 'https://techukraine.org/feed/',       filter: null       },
+  { name: 'Speka',       url: 'https://speka.ua/rss',                filter: null       },
+  { name: 'InVenture',   url: 'https://inventure.com.ua/news.rss',   filter: null       },
+  { name: 'AIN.UA',      url: 'https://ain.ua/feed/',                filter: null       },
+  { name: 'Vector',      url: 'https://vctr.media/ua/feed/',         filter: null       },
+  { name: 'TechCrunch',  url: 'https://techcrunch.com/feed/',        filter: UKRAINE_KW },
+  { name: 'VentureBeat', url: 'https://venturebeat.com/feed/',       filter: UKRAINE_KW },
+  { name: 'Wired',       url: 'https://www.wired.com/feed/rss',      filter: UKRAINE_KW },
 ]
 
 function getTagText(block: string, tag: string): string {
@@ -37,7 +33,7 @@ function getTagText(block: string, tag: string): string {
   const cdRe = new RegExp(`<${esc}[^>]*>\\s*<!\\[CDATA\\[([\\s\\S]*?)\\]\\]>`, 'i')
   const cdM = cdRe.exec(block)
   if (cdM) return cdM[1].trim()
-  // Plain text: <tag>...</tag>
+  // Plain text: <tag>text</tag>
   const txRe = new RegExp(`<${esc}[^>]*>([^<]*)<`, 'i')
   const txM = txRe.exec(block)
   if (txM) return txM[1].trim()
