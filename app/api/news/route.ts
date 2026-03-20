@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server'
 
-export const revalidate = 3600
+export const revalidate = 0
 
-interface NewsItem {
+const UA = 'Mozilla/5.0 (compatible; VCC-HubBot/1.0)'
+
+interface FeedItem {
   id: string
   title: string
   url: string
@@ -12,74 +14,130 @@ interface NewsItem {
   source: string
 }
 
-const STARTUP_INVEST_KW = [
-  'startup', 'invest', 'fund', 'venture', 'round', 'raise', 'raised',
-  'seed', 'series', 'accelerat', 'grant', 'ipo', 'acquisition', 'angel',
-  'pre-seed', 'valuation', 'exit',
+const STARTUP_KW = [
+  'startup','invest','fund','venture','round','rais','seed',
+  'series','accelerat','grant','ipo','acqui','angel','valuat','exit','pitch',
+]
+const UKRAINE_KW = ['ukraine','ukrainian']
+
+const FEEDS: Array<{ name: string; url: string; filter: string[] | null }> = [
+  { name: 'TechUkraine', url: 'https://techukraine.org/feed/',    filter: null       },
+  { name: 'Speka',       url: 'https://speka.media/feed/',        filter: null       },
+  { name: 'InVenture',   url: 'https://inventure.com.ua/rss',     filter: null       },
+  { name: 'AIN.UA',      url: 'https://ain.ua/feed/',             filter: STARTUP_KW },
+  { name: 'Vector',      url: 'https://vctr.media/feed/',         filter: STARTUP_KW },
+  { name: 'TechCrunch',  url: 'https://techcrunch.com/feed/',     filter: UKRAINE_KW },
+  { name: 'VentureBeat', url: 'https://venturebeat.com/feed/',    filter: UKRAINE_KW },
+  { name: 'Wired',       url: 'https://www.wired.com/feed/rss',   filter: UKRAINE_KW },
 ]
 
-const FEEDS = [
-  // Ukrainian sources — startups & investments only
-  { name: 'AIN.UA',      url: 'https://en.ain.ua/feed/',          filter: STARTUP_INVEST_KW as string[] | null },
-  { name: 'Speka',       url: 'https://speka.media/feed/',        filter: null as string[] | null },
-  { name: 'Vector',      url: 'https://vctr.media/feed/',         filter: STARTUP_INVEST_KW },
-  { name: 'TechUkraine', url: 'https://techukraine.org/feed/',    filter: null },
-  { name: 'InVenture',   url: 'https://inventure.com.ua/rss',     filter: null },
-  // International sources — Ukraine-related only
-  { name: 'TechCrunch',  url: 'https://techcrunch.com/feed/',     filter: ['ukraine', 'ukrainian'] },
-  { name: 'VentureBeat', url: 'https://venturebeat.com/feed/',    filter: ['ukraine', 'ukrainian'] },
-  { name: 'Wired',       url: 'https://www.wired.com/feed/rss',   filter: ['ukraine', 'ukrainian'] },
-]
-
-function getTag(xml: string, t: string): string {
-  const cdata = xml.match(new RegExp('<' + t + '[^>]*><!\\[CDATA\\[([\\s\\S]*?)\\]\\]>', 'i'))
-  if (cdata) return cdata[1].trim()
-  const plain = xml.match(new RegExp('<' + t + '[^>]*>([\\s\\S]*?)<\\/' + t + '>', 'i'))
-  return plain ? plain[1].replace(/<[^>]+>/g, '').trim() : ''
+function getTagText(block: string, tag: string): string {
+  // CDATA: <tag><![CDATA[...]]></tag>
+  const esc = tag.replace(':', '\\:')
+  const cdRe = new RegExp(`<${esc}[^>]*>\\s*<!\\[CDATA\\[([\\s\\S]*?)\\]\\]>`, 'i')
+  const cdM = cdRe.exec(block)
+  if (cdM) return cdM[1].trim()
+  // Plain text: <tag>...</tag>
+  const txRe = new RegExp(`<${esc}[^>]*>([^<]*)<`, 'i')
+  const txM = txRe.exec(block)
+  if (txM) return txM[1].trim()
+  return ''
 }
 
-async function parseFeed(feed: typeof FEEDS[0]): Promise<NewsItem[]> {
-  try {
-    const res = await fetch(feed.url, {
-      headers: { 'User-Agent': 'VCC-Hub/1.0 RSS Reader' },
-      next: { revalidate: 3600 },
+function getLinkUrl(block: string): string {
+  // Atom: <link href="https://..."/>
+  const atomM = /<link[^>]+href="([^"]+)"/i.exec(block)
+  if (atomM) return atomM[1]
+  // RSS: <link>https://...</link>
+  const rssM = /<link[^>]*>\s*(https?:\/\/[^<\s]+)/i.exec(block)
+  if (rssM) return rssM[1].trim()
+  return ''
+}
+
+function stripHtml(s: string): string {
+  return s
+    .replace(/<!\[CDATA\[|\]\]>/g, '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+    .replace(/&#\d+;/g, ' ').replace(/&[a-z]+;/g, ' ')
+    .replace(/\s+/g, ' ').trim().slice(0, 300)
+}
+
+function parseFeed(xml: string, source: string, filter: string[] | null): FeedItem[] {
+  const items: FeedItem[] = []
+  const re = /<(item|entry)[\s>]([\s\S]*?)<\/\1>/gi
+  let m: RegExpExecArray | null
+  while ((m = re.exec(xml)) !== null) {
+    const b = m[2]
+    const title = getTagText(b, 'title')
+    if (!title) continue
+
+    const url = getLinkUrl(b) ||
+      getTagText(b, 'guid') ||
+      getTagText(b, 'id')
+    if (!url.startsWith('http')) continue
+
+    const rawDate =
+      getTagText(b, 'pubDate') ||
+      getTagText(b, 'published') ||
+      getTagText(b, 'updated') ||
+      getTagText(b, 'dc:date')
+    const ts = rawDate ? Date.parse(rawDate) : 0
+    const timestamp = isNaN(ts) || ts === 0 ? Date.now() : ts
+
+    const rawDesc =
+      getTagText(b, 'description') ||
+      getTagText(b, 'summary') ||
+      getTagText(b, 'content:encoded') ||
+      getTagText(b, 'content')
+    const description = stripHtml(rawDesc)
+
+    if (filter) {
+      const hay = (title + ' ' + description).toLowerCase()
+      if (!filter.some(k => hay.includes(k))) continue
+    }
+
+    items.push({
+      id: url,
+      title: stripHtml(title),
+      url,
+      publishedAt: new Date(timestamp).toISOString(),
+      timestamp,
+      description,
+      source,
     })
-    if (!res.ok) return []
-    const xml = await res.text()
-    // handle both RSS <item> and Atom <entry>
-    const items = xml.match(/<item[\s>]([\s\S]*?)<\/item>/g)
-               ?? xml.match(/<entry[\s>]([\s\S]*?)<\/entry>/g)
-               ?? []
-    return items.slice(0, 25).flatMap(item => {
-      const title = getTag(item, 'title')
-      const url   = item.match(/<link>([^<\s]+)/)?.[1]?.trim()
-                 ?? item.match(/<link[^>]+href=["']([^"']+)["']/)?.[1]?.trim()
-                 ?? getTag(item, 'guid')
-      // try multiple date field names used by different feeds
-      const rawDate = getTag(item, 'pubDate')
-                   || getTag(item, 'published')
-                   || getTag(item, 'updated')
-                   || getTag(item, 'dc:date')
-      const ts = rawDate ? (new Date(rawDate).getTime() || 0) : 0
-      const publishedAt = ts > 0 ? new Date(ts).toISOString() : new Date().toISOString()
-      // strip HTML tags from description
-      const rawDesc = getTag(item, 'description') || getTag(item, 'summary') || getTag(item, 'content')
-      const description = rawDesc.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 300)
-      if (!title || !url) return []
-      if (feed.filter) {
-        const txt = (title + ' ' + description).toLowerCase()
-        if (!feed.filter.some(kw => txt.includes(kw))) return []
-      }
-      const id = url
-      return [{ id, title, url, publishedAt, timestamp: ts > 0 ? ts : Date.now(), description, source: feed.name }]
-    })
-  } catch { return [] }
+  }
+  return items.sort((a, b) => b.timestamp - a.timestamp).slice(0, 10)
 }
 
 export async function GET() {
-  const settled = await Promise.allSettled(FEEDS.map(parseFeed))
-  const items: NewsItem[] = []
-  settled.forEach(r => { if (r.status === 'fulfilled') items.push(...r.value) })
-  items.sort((a, b) => b.timestamp - a.timestamp)
-  return NextResponse.json({ items: items.slice(0, 80) })
+  const settled = await Promise.allSettled(
+    FEEDS.map(async ({ name, url, filter }) => {
+      const ctrl = new AbortController()
+      const t = setTimeout(() => ctrl.abort(), 8000)
+      try {
+        const res = await fetch(url, {
+          signal: ctrl.signal,
+          headers: {
+            'User-Agent': UA,
+            'Accept': 'application/rss+xml, application/atom+xml, application/xml, text/xml, */*',
+          },
+          cache: 'no-store',
+        })
+        clearTimeout(t)
+        if (!res.ok) return []
+        const xml = await res.text()
+        return parseFeed(xml, name, filter)
+      } catch {
+        clearTimeout(t)
+        return []
+      }
+    })
+  )
+
+  const items = settled
+    .flatMap(r => r.status === 'fulfilled' ? r.value : [])
+    .sort((a, b) => b.timestamp - a.timestamp)
+
+  return NextResponse.json(items)
 }
