@@ -56,7 +56,7 @@ export async function GET() {
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
   return NextResponse.json({ events: filtered })
 }
-}
+
 
 export async function POST(req: Request) {
   if (!TABLE || !TOKEN) {
