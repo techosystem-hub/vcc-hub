@@ -25,10 +25,10 @@ import { MyCriteriaView } from '@/components/views/my-criteria-view'
 type View = 'deal-room' | 'smart-matches' | 'analytics' | 'my-criteria'
 
 const navItems = [
-  { id: 'deal-room'      as View, label: 'Deal Flow Database', icon: Briefcase  },
-  { id: 'smart-matches'  as View, label: 'Smart Matches',    icon: Sparkles   },
-  { id: 'analytics'      as View, label: 'Market Analytics', icon: BarChart3  },
-  { id: 'my-criteria'    as View, label: 'My Criteria',      icon: Settings   },
+  { id: 'analytics'      as View, label: 'Dashboard',          icon: BarChart3  },
+  { id: 'deal-room'      as View, label: 'Deal Flow Database',  icon: Briefcase  },
+  { id: 'smart-matches'  as View, label: 'Smart Matches',       icon: Sparkles   },
+  { id: 'my-criteria'    as View, label: 'My Criteria',         icon: Settings   },
 ]
 
 function AppSidebar({ activeView, onViewChange }: { activeView: View; onViewChange: (v: View) => void }) {
@@ -135,7 +135,7 @@ export default function Home() {
         <main className="flex-1 overflow-auto p-6">
           {activeView === 'deal-room'     && <DealRoomView />}
           {activeView === 'smart-matches' && <SmartMatchesView />}
-          {activeView === 'analytics'     && <AnalyticsView />}
+          {activeView === 'analytics'     && <AnalyticsView onNavigate={setActiveView} />}
           {activeView === 'my-criteria'   && <MyCriteriaView />}
         </main>
       </SidebarInset>
