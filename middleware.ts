@@ -1,16 +1,16 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
-// Tell Clerk which pages and APIs can be accessed WITHOUT logging in
+// 1. ONLY list pages here that an anonymous person is allowed to see.
+// Notice that '/' (the home page) is NOT on this list.
 const isPublicRoute = createRouteMatcher([
-  '/', 
   '/sign-in(.*)', 
   '/sign-up(.*)',
-  '/api/(.*)',      // <-- THIS UNBLOCKS YOUR AIRTABLE API CONNECTION
-  '/startups(.*)',  // <-- Unblocks the startups page (if the form is here)
-  '/add-deal(.*)'   // <-- Unblocks the add-deal page (if the form is here)
+  '/api/(.*)'      // Keeps your Airtable forms working!
 ]);
 
 export default clerkMiddleware((auth, request) => {
+  // 2. If the user tries to go to '/' (or any private page) while logged out,
+  // this protect() function forces them to '/sign-in'.
   if (!isPublicRoute(request)) {
     auth().protect();
   }
