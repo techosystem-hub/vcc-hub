@@ -1,18 +1,22 @@
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
+// This defines which routes do NOT require a login
 const isPublicRoute = createRouteMatcher([
-  '/sign-in(.*)',
-  '/apply(.*)',
-  '/api/apply(.*)',
+  '/', 
+  '/sign-in(.*)', 
+  '/sign-up(.*)'
 ]);
 
-export default clerkMiddleware((auth, req) => {
-  if (!isPublicRoute(req)) auth().protect();
+export default clerkMiddleware((auth, request) => {
+  if (!isPublicRoute(request)) {
+    auth().protect();
+  }
 });
 
 export const config = {
   matcher: [
-    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
-    '/(api|trpc)(.*)',
+    '/((?!.*\\..*|_next).*)', // Skip static files (images, etc)
+    '/', 
+    '/(api|trpc)(.*)'
   ],
 };
