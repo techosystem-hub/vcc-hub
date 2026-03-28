@@ -10,15 +10,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import {
   BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts'
 import type { DealFlowStartup } from '@/lib/airtable'
 
-// ── Brand palette ─────────────────────────────────────────────
-const RED  = '#e71d36'   // Techosystem brand red
-const NAVY = '#011627'   // Techosystem brand navy
+const RED  = '#e71d36'
+const NAVY = '#011627'
 
 const CHART_COLORS = [
   '#e71d36', '#c0392b', '#011627', '#1a5276',
@@ -26,12 +26,12 @@ const CHART_COLORS = [
   '#a93226', '#1f3a5f',
 ]
 
-// ── Static filter options (matched to real Airtable values) ───
 const ALL_VERTICALS = [
   'Defense', 'Business Productivity', 'Finance', 'Marketing & Media',
   'Healthcare', 'Cybersecurity', 'Aerospace', 'Education',
   'Energy & Environment', 'Property & Construction',
   'Logistics & Transportation', 'Communications', 'HR', 'Legal', 'Gaming',
+  'Agrifood', 'Travel & Leisure',
 ]
 
 const ALL_STAGES = [
@@ -39,12 +39,11 @@ const ALL_STAGES = [
   'Angel', 'Series B', 'Series C', 'Corporate funding', 'Series D',
 ]
 
-const ALL_YEARS = ['2024', '2025', '2026']
+const ALL_YEARS = ['2021', '2022', '2023', '2024', '2025', '2026']
 
 type SortOption = 'newest' | 'highest' | 'lowest'
 type ViewMode   = 'analytics' | 'deals'
 
-// ── Helpers ───────────────────────────────────────────────────
 function formatUSD(n: number): string {
   if (!n) return '—'
   if (n >= 1e9) return `$${(n / 1e9).toFixed(1)}B`
@@ -53,7 +52,11 @@ function formatUSD(n: number): string {
   return `$${n}`
 }
 
-// ── Custom Recharts Tooltip ───────────────────────────────────
+function isUkrainian(s: DealFlowStartup): boolean {
+  const o = (s.startupOrigin || '').toLowerCase()
+  return o.includes('ukrainian') || o === 'ukraine'
+}
+
 function ChartTooltip({ active, payload, label, fmt }: any) {
   if (!active || !payload?.length) return null
   return (
@@ -72,20 +75,30 @@ function ChartTooltip({ active, payload, label, fmt }: any) {
   )
 }
 
-// ── KPI Stat Card ─────────────────────────────────────────────
 function StatCard({
-  icon: Icon, label, value, sub,
+  icon: Icon, label, value, sub, onClick, hint,
 }: {
   icon: React.ElementType; label: string; value: string; sub?: string
+  onClick?: () => void; hint?: string
 }) {
   return (
-    <Card className="border-l-4" style={{ borderLeftColor: RED }}>
+    <Card
+      className={`border-l-4 transition-shadow ${onClick ? 'cursor-pointer hover:shadow-md' : ''}`}
+      style={{ borderLeftColor: RED }}
+      onClick={onClick}
+      title={hint}
+    >
       <CardContent className="pt-5 pb-4">
         <div className="flex items-start justify-between gap-2">
           <div>
             <div className="text-2xl font-bold text-foreground">{value}</div>
             <div className="text-sm font-medium text-foreground mt-0.5">{label}</div>
             {sub && <div className="text-xs text-muted-foreground mt-0.5">{sub}</div>}
+            {onClick && (
+              <div className="text-[10px] mt-1.5 font-medium" style={{ color: RED }}>
+                Click to explore →
+              </div>
+            )}
           </div>
           <div className="rounded-lg p-2" style={{ background: `${RED}18` }}>
             <Icon className="h-4 w-4" style={{ color: RED }} />
@@ -96,8 +109,14 @@ function StatCard({
   )
 }
 
-// ── Analytics Panel ───────────────────────────────────────────
-type ChartFilter = { verticals?: string[]; stages?: string[]; years?: string[] }
+type ChartFilter = {
+  verticals?: string[]
+  stages?: string[]
+  years?: string[]
+  techosystemOnly?: boolean
+  uaOnly?: boolean
+  sortBy?: SortOption
+}
 
 function AnalyticsPanel({
   startups,
@@ -107,35 +126,29 @@ function AnalyticsPanel({
   onFilter: (f: ChartFilter) => void
 }) {
   const stats = useMemo(() => {
-    const total      = startups.length
-    const totalInv   = startups.reduce((s, d) => s + (d.investmentSizeUSD || 0), 0)
-    const uaCount    = startups.filter(d =>
-      d.startupOrigin?.toLowerCase().includes('ukrainian') || d.startupOrigin === 'Ukraine'
-    ).length
+    const total       = startups.length
+    const totalInv    = startups.reduce((s, d) => s + (d.investmentSizeUSD || 0), 0)
+    const uaCount     = startups.filter(isUkrainian).length
     const memberCount = startups.filter(d => d.techosystemMember === 'Member').length
 
-    // Deals by vertical — top 10
     const vMap: Record<string, number> = {}
     startups.forEach(d => { if (d.vertical) vMap[d.vertical] = (vMap[d.vertical] || 0) + 1 })
     const verticals = Object.entries(vMap)
       .sort((a, b) => b[1] - a[1]).slice(0, 10)
       .map(([name, value]) => ({ name, value }))
 
-    // Round stages
     const sMap: Record<string, number> = {}
     startups.forEach(d => { if (d.roundStage) sMap[d.roundStage] = (sMap[d.roundStage] || 0) + 1 })
     const stages = Object.entries(sMap)
       .sort((a, b) => b[1] - a[1])
       .map(([name, value]) => ({ name, value }))
 
-    // Deals by year
     const yMap: Record<string, number> = {}
     startups.forEach(d => { if (d.year) yMap[String(d.year)] = (yMap[String(d.year)] || 0) + 1 })
     const byYear = Object.entries(yMap)
       .sort((a, b) => Number(a[0]) - Number(b[0]))
       .map(([year, deals]) => ({ year, deals }))
 
-    // Investment volume by vertical — top 8
     const invMap: Record<string, number> = {}
     startups.forEach(d => {
       if (d.vertical && d.investmentSizeUSD > 0)
@@ -148,17 +161,39 @@ function AnalyticsPanel({
     return { total, totalInv, uaCount, memberCount, verticals, stages, byYear, invByVertical }
   }, [startups])
 
+  const pct = (n: number) =>
+    stats.total > 0 ? `${Math.round(n / stats.total * 100)}%` : '0%'
+
   return (
     <div className="flex flex-col gap-6">
-      {/* KPI Cards */}
       <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-        <StatCard icon={TrendingUp} label="Total Deals"         value={String(stats.total)}           sub="in the database" />
-        <StatCard icon={DollarSign} label="Total Invested"      value={formatUSD(stats.totalInv)}     sub="tracked investment volume" />
-        <StatCard icon={Globe}      label="Ukrainian-founded"   value={`${Math.round(stats.uaCount / stats.total * 100)}%`} sub={`${stats.uaCount} startups`} />
-        <StatCard icon={Award}      label="Techosystem Members" value={String(stats.memberCount)}     sub={`${Math.round(stats.memberCount / stats.total * 100)}% of portfolio`} />
+        <StatCard
+          icon={TrendingUp} label="Total Deals"
+          value={String(stats.total)} sub="in the database"
+          hint="Click to browse all deals"
+          onClick={() => onFilter({})}
+        />
+        <StatCard
+          icon={DollarSign} label="Total Invested"
+          value={formatUSD(stats.totalInv)} sub="tracked investment volume"
+          hint="Click to browse sorted by investment size"
+          onClick={() => onFilter({ sortBy: 'highest' })}
+        />
+        <StatCard
+          icon={Globe} label="Ukrainian-founded"
+          value={pct(stats.uaCount)} sub={`${stats.uaCount} startups`}
+          hint="Click to browse Ukrainian-founded startups"
+          onClick={() => onFilter({ uaOnly: true })}
+        />
+        <StatCard
+          icon={Award} label="Techosystem Members"
+          value={String(stats.memberCount)}
+          sub={`${pct(stats.memberCount)} of portfolio`}
+          hint="Click to browse Techosystem member companies"
+          onClick={() => onFilter({ techosystemOnly: true })}
+        />
       </div>
 
-      {/* Row 1: Deals by Vertical + Stage Donut */}
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader className="pb-2">
@@ -218,7 +253,6 @@ function AnalyticsPanel({
         </Card>
       </div>
 
-      {/* Row 2: Deal Flow by Year + Investment Volume by Vertical */}
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader className="pb-2">
@@ -267,12 +301,111 @@ function AnalyticsPanel({
   )
 }
 
-// ── Deal Card ─────────────────────────────────────────────────
-function DealCard({ startup }: { startup: DealFlowStartup }) {
+function DealDetailSheet({
+  startup,
+  onClose,
+}: {
+  startup: DealFlowStartup | null
+  onClose: () => void
+}) {
+  if (!startup) return null
+
+  const initials = startup.name
+    .split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || '??'
+
+  function Row({ label, value }: { label: string; value?: string | number | boolean | null }) {
+    if (value === undefined || value === null || value === '' || value === 0 || value === false) return null
+    const display = typeof value === 'boolean' ? 'Yes' : String(value)
+    return (
+      <div className="flex flex-col gap-0.5 py-2.5 border-b border-gray-100 last:border-0">
+        <span className="text-[11px] text-muted-foreground uppercase tracking-wide">{label}</span>
+        <span className="text-sm font-medium text-foreground">{display}</span>
+      </div>
+    )
+  }
+
+  return (
+    <Sheet open={!!startup} onOpenChange={v => { if (!v) onClose() }}>
+      <SheetContent className="w-full sm:max-w-[420px] overflow-y-auto" side="right">
+        <SheetHeader className="pb-4 border-b border-gray-100">
+          <div className="flex items-start gap-3">
+            <div
+              className="flex h-12 w-12 items-center justify-center rounded-xl font-bold text-sm flex-shrink-0 text-white"
+              style={{ background: NAVY }}
+            >
+              {initials}
+            </div>
+            <div className="flex-1 min-w-0">
+              <SheetTitle className="text-base font-bold leading-tight text-foreground pr-6">
+                {startup.name}
+              </SheetTitle>
+              <div className="flex flex-wrap gap-1 mt-1.5">
+                {startup.vertical   && <Badge variant="outline" className="text-xs">{startup.vertical}</Badge>}
+                {startup.roundStage && <Badge variant="outline" className="text-xs">{startup.roundStage}</Badge>}
+                {startup.techosystemMember === 'Member' && (
+                  <Badge className="text-xs text-white border-0" style={{ background: RED }}>Techosystem</Badge>
+                )}
+              </div>
+            </div>
+          </div>
+        </SheetHeader>
+
+        <div className="mt-4 pb-6">
+          {startup.description && (
+            <div className="mb-5 p-3 rounded-lg text-sm text-muted-foreground leading-relaxed" style={{ background: '#f8f8fa' }}>
+              {startup.description}
+            </div>
+          )}
+
+          <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Investment</div>
+          <Row label="Amount (USD)"    value={startup.investmentSizeUSD > 0 ? formatUSD(startup.investmentSizeUSD) : null} />
+          <Row label="Round stage"     value={startup.roundStage} />
+          <Row label="Investment type" value={startup.investmentType} />
+          <Row label="Date published"  value={startup.datePublished} />
+          <Row label="Year"            value={startup.year > 0 ? startup.year : null} />
+
+          <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1 mt-5">Investors</div>
+          <Row label="Investor(s)"           value={startup.investors || '—'} />
+          <Row label="UA investors involved" value={startup.uaInvestorsInvolved} />
+
+          <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1 mt-5">Company</div>
+          <Row label="Founders"          value={startup.founders} />
+          <Row label="Legal HQ"          value={startup.legalHQ} />
+          <Row label="Startup origin"    value={startup.startupOrigin} />
+          <Row label="Born year"         value={startup.bornYear} />
+          <Row label="Office in Ukraine" value={startup.officeInUkraine} />
+
+          {startup.linkToNews && (
+            <a
+              href={startup.linkToNews}
+              target="_blank" rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 w-full mt-6 rounded-md py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+              style={{ background: RED }}
+            >
+              <ExternalLink className="h-4 w-4" />
+              Read the news article
+            </a>
+          )}
+        </div>
+      </SheetContent>
+    </Sheet>
+  )
+}
+
+function DealCard({
+  startup,
+  onClick,
+}: {
+  startup: DealFlowStartup
+  onClick: () => void
+}) {
   const initials = startup.name
     .split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || '??'
   return (
-    <Card className="flex flex-col hover:shadow-md transition-shadow">
+    <Card
+      className="flex flex-col hover:shadow-md transition-shadow cursor-pointer"
+      onClick={onClick}
+    >
       <CardHeader className="pb-3">
         <div className="flex items-start gap-3">
           <div
@@ -329,24 +462,26 @@ function DealCard({ startup }: { startup: DealFlowStartup }) {
             </div>
           )}
         </div>
-        {startup.linkToNews && (
-          <a
-            href={startup.linkToNews}
-            target="_blank" rel="noopener noreferrer"
-            className="flex items-center gap-1 text-xs font-medium hover:underline mt-1"
-            style={{ color: RED }}
-            onClick={e => e.stopPropagation()}
-          >
-            <ExternalLink className="h-3 w-3" />
-            View news
-          </a>
-        )}
+        <div className="flex items-center justify-between mt-1">
+          {startup.linkToNews ? (
+            <a
+              href={startup.linkToNews}
+              target="_blank" rel="noopener noreferrer"
+              className="flex items-center gap-1 text-xs font-medium hover:underline"
+              style={{ color: RED }}
+              onClick={e => e.stopPropagation()}
+            >
+              <ExternalLink className="h-3 w-3" />
+              View news
+            </a>
+          ) : <span />}
+          <span className="text-[10px] text-muted-foreground">Tap for details →</span>
+        </div>
       </CardContent>
     </Card>
   )
 }
 
-// ── Custom Dropdown (avoids Radix popper position bugs in fixed layouts) ──
 function FilterDropdown({
   label, items, selected, onToggle,
 }: {
@@ -365,12 +500,10 @@ function FilterDropdown({
     setOpen(o => !o)
   }, [])
 
-  // Close on outside click
   useEffect(() => {
     if (!open) return
     const handler = (e: MouseEvent) => {
       if (btnRef.current && !btnRef.current.contains(e.target as Node)) {
-        // Check if click is inside the menu portal
         const menus = document.querySelectorAll('[data-filter-menu]')
         for (const m of menus) {
           if (m.contains(e.target as Node)) return
@@ -437,7 +570,6 @@ function FilterDropdown({
   )
 }
 
-// ── Main View ─────────────────────────────────────────────────
 interface DealRoomProps {
   initialFilter?: {
     years?: string[]
@@ -458,7 +590,9 @@ export function DealRoomView({ initialFilter }: DealRoomProps = {}) {
   const [selectedYears, setSelectedYears]         = useState<string[]>(initialFilter?.years ?? [])
   const [selectedInvType, setSelectedInvType]     = useState('')
   const [techosystemOnly, setTechosystemOnly]     = useState(false)
+  const [uaOnly, setUaOnly]                       = useState(false)
   const [dateFrom, setDateFrom]                   = useState<string | null>(initialFilter?.dateFrom ?? null)
+  const [selectedDeal, setSelectedDeal]           = useState<DealFlowStartup | null>(null)
 
   useEffect(() => {
     fetch('/api/dealflow')
@@ -485,6 +619,7 @@ export function DealRoomView({ initialFilter }: DealRoomProps = {}) {
     if (selectedYears.length > 0)     result = result.filter(s => selectedYears.includes(String(s.year)))
     if (selectedInvType)              result = result.filter(s => s.investmentType === selectedInvType)
     if (techosystemOnly)              result = result.filter(s => s.techosystemMember === 'Member')
+    if (uaOnly)                       result = result.filter(isUkrainian)
     if (dateFrom)                     result = result.filter(s => s.datePublished >= dateFrom)
     if (sortBy === 'highest') result.sort((a, b) => b.investmentSizeUSD - a.investmentSizeUSD)
     if (sortBy === 'lowest')  result.sort((a, b) => a.investmentSizeUSD - b.investmentSizeUSD)
@@ -492,77 +627,78 @@ export function DealRoomView({ initialFilter }: DealRoomProps = {}) {
       b.year - a.year || b.datePublished.localeCompare(a.datePublished)
     )
     return result
-  }, [startups, searchQuery, selectedVerticals, selectedStages, selectedYears, selectedInvType, techosystemOnly, sortBy, dateFrom])
+  }, [startups, searchQuery, selectedVerticals, selectedStages, selectedYears, selectedInvType, techosystemOnly, uaOnly, sortBy, dateFrom])
+
+  const handleAnalyticsFilter = useCallback((f: ChartFilter) => {
+    if (f.verticals !== undefined)       setSelectedVerticals(f.verticals)
+    if (f.stages !== undefined)          setSelectedStages(f.stages)
+    if (f.years !== undefined)           setSelectedYears(f.years)
+    if (f.techosystemOnly !== undefined) setTechosystemOnly(f.techosystemOnly)
+    if (f.uaOnly !== undefined)          setUaOnly(f.uaOnly)
+    if (f.sortBy !== undefined)          setSortBy(f.sortBy)
+    setViewMode('deals')
+  }, [])
 
   const activeFilters =
     selectedVerticals.length + selectedStages.length + selectedYears.length +
-    (selectedInvType ? 1 : 0) + (techosystemOnly ? 1 : 0) + (dateFrom ? 1 : 0)
+    (selectedInvType ? 1 : 0) + (techosystemOnly ? 1 : 0) + (uaOnly ? 1 : 0) + (dateFrom ? 1 : 0)
 
   const clearAll = () => {
     setSelectedVerticals([]); setSelectedStages([]); setSelectedYears([])
-    setSelectedInvType(''); setTechosystemOnly(false); setSearchQuery(''); setDateFrom(null)
+    setSelectedInvType(''); setTechosystemOnly(false); setUaOnly(false)
+    setSearchQuery(''); setDateFrom(null)
   }
 
   if (loading) return (
     <div className="flex items-center justify-center py-20 text-muted-foreground">
-      Loading deal flow data…
+      Loading deal flow data...
     </div>
   )
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Analytics / Deals toggle + Add Deal button */}
       <div className="flex items-center justify-between gap-4">
-      <div className="flex items-center gap-1 rounded-lg border bg-muted/30 p-1 w-fit">
-        <Button
-          variant={viewMode === 'analytics' ? 'default' : 'ghost'}
-          size="sm" className="gap-1.5 h-8"
-          onClick={() => setViewMode('analytics')}
-        >
-          <BarChart2 className="h-4 w-4" />
-          Analytics
-        </Button>
-        <Button
-          variant={viewMode === 'deals' ? 'default' : 'ghost'}
-          size="sm" className="gap-1.5 h-8"
-          onClick={() => setViewMode('deals')}
-        >
-          <LayoutGrid className="h-4 w-4" />
-          Deals
-          <span className="rounded-full bg-foreground/10 px-1.5 py-0.5 text-[10px] font-medium">
-            {startups.length}
-          </span>
-        </Button>
-      </div>
+        <div className="flex items-center gap-1 rounded-lg border bg-muted/30 p-1 w-fit">
+          <Button
+            variant={viewMode === 'analytics' ? 'default' : 'ghost'}
+            size="sm" className="gap-1.5 h-8"
+            onClick={() => setViewMode('analytics')}
+          >
+            <BarChart2 className="h-4 w-4" />
+            Analytics
+          </Button>
+          <Button
+            variant={viewMode === 'deals' ? 'default' : 'ghost'}
+            size="sm" className="gap-1.5 h-8"
+            onClick={() => setViewMode('deals')}
+          >
+            <LayoutGrid className="h-4 w-4" />
+            Deals
+            <span className="rounded-full bg-foreground/10 px-1.5 py-0.5 text-[10px] font-medium">
+              {startups.length}
+            </span>
+          </Button>
+        </div>
 
-        <a
-          href="/add-deal"
-        >
+        <a href="/add-deal">
           <Button size="sm" className="gap-1.5 h-8 text-white" style={{ background: RED }}>
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
             Add Deal
           </Button>
         </a>
       </div>
 
       {viewMode === 'analytics' ? (
-        <AnalyticsPanel
-          startups={startups}
-          onFilter={(f) => {
-            if (f.verticals) setSelectedVerticals(f.verticals)
-            if (f.stages)    setSelectedStages(f.stages)
-            if (f.years)     setSelectedYears(f.years)
-            setViewMode('deals')
-          }}
-        />
+        <AnalyticsPanel startups={startups} onFilter={handleAnalyticsFilter} />
       ) : (
         <>
-          {/* Search + Sort */}
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Search by name, description, founders…"
+                placeholder="Search by name, description, founders..."
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 className="pl-9"
@@ -578,49 +714,48 @@ export function DealRoomView({ initialFilter }: DealRoomProps = {}) {
             </Select>
           </div>
 
-          {/* Filters */}
           <div className="flex flex-wrap items-center gap-2">
             <FilterDropdown
-              label="Vertical"
-              items={ALL_VERTICALS}
-              selected={selectedVerticals}
+              label="Vertical" items={ALL_VERTICALS} selected={selectedVerticals}
               onToggle={v => setSelectedVerticals(p => p.includes(v) ? p.filter(x => x !== v) : [...p, v])}
             />
             <FilterDropdown
-              label="Round Stage"
-              items={ALL_STAGES}
-              selected={selectedStages}
+              label="Round Stage" items={ALL_STAGES} selected={selectedStages}
               onToggle={v => setSelectedStages(p => p.includes(v) ? p.filter(x => x !== v) : [...p, v])}
             />
             <FilterDropdown
-              label="Year"
-              items={ALL_YEARS}
-              selected={selectedYears}
+              label="Year" items={ALL_YEARS} selected={selectedYears}
               onToggle={v => setSelectedYears(p => p.includes(v) ? p.filter(x => x !== v) : [...p, v])}
             />
-
-            {/* Investment type */}
             <FilterDropdown
-              label="Investment Type"
-              items={['New', 'Follow-up']}
+              label="Investment Type" items={['New', 'Follow-up']}
               selected={selectedInvType ? [selectedInvType] : []}
               onToggle={v => setSelectedInvType(p => p === v ? '' : v)}
             />
 
-            {/* Techosystem members only */}
             <Button
               variant={techosystemOnly ? 'default' : 'outline'}
               size="sm" className="h-8"
+              style={techosystemOnly ? { background: RED, color: '#fff', borderColor: RED } : {}}
               onClick={() => setTechosystemOnly(p => !p)}
             >
               Techosystem only
             </Button>
 
+            <Button
+              variant={uaOnly ? 'default' : 'outline'}
+              size="sm" className="h-8"
+              style={uaOnly ? { background: NAVY, color: '#fff', borderColor: NAVY } : {}}
+              onClick={() => setUaOnly(p => !p)}
+            >
+              Ukrainian only
+            </Button>
+
             {dateFrom && (
               <div className="inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-sm font-medium"
-                style={{ borderColor: '#e71d36', color: '#e71d36', background: '#e71d3610' }}>
+                style={{ borderColor: RED, color: RED, background: '#e71d3610' }}>
                 <span>From {new Date(dateFrom + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
-                <button onClick={() => setDateFrom(null)} className="ml-0.5 font-bold hover:opacity-70 leading-none">×</button>
+                <button onClick={() => setDateFrom(null)} className="ml-0.5 font-bold hover:opacity-70 leading-none">x</button>
               </div>
             )}
 
@@ -637,7 +772,9 @@ export function DealRoomView({ initialFilter }: DealRoomProps = {}) {
 
           {filtered.length > 0 ? (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {filtered.map(s => <DealCard key={s.id} startup={s} />)}
+              {filtered.map(s => (
+                <DealCard key={s.id} startup={s} onClick={() => setSelectedDeal(s)} />
+              ))}
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -647,6 +784,8 @@ export function DealRoomView({ initialFilter }: DealRoomProps = {}) {
           )}
         </>
       )}
+
+      <DealDetailSheet startup={selectedDeal} onClose={() => setSelectedDeal(null)} />
     </div>
   )
 }
