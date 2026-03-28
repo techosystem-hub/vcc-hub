@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import {
   Sparkles, ArrowUpRight, CheckCircle, RefreshCw, Target, ThumbsUp, ThumbsDown,
-  Building2, Globe, Layers, DollarSign, ShieldCheck, X,
+  Building2, Globe, Layers, DollarSign, ShieldCheck, X, Mail, Link2, TrendingUp,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -18,22 +18,24 @@ import type { Investor } from '@/lib/airtable'
 // ── Types ───────────────────────────────────────────────────────────────
 
 interface ComputedMatch {
-  startupId:     string
-  startupName:   string
-  description:   string
-  verticals:     string[]
-  roundStage:    string
-  targetRaise:   string
-  isDualUse:     string
-  pitchDeckUrl?: string
-  jurisdiction?: string
-  score:         number
-  scoreLabel:    '🔥 Hot' | '💪 Strong' | '👍 Good' | '😐 Weak'
-  reasons:       string[]
-  introStatus?:  string | null
+  startupId:        string
+  startupName:      string
+  description:      string
+  verticals:        string[]
+  roundStage:       string
+  targetRaise:      string
+  isDualUse:        string
+  pitchDeckUrl?:    string
+  jurisdiction?:    string
+  score:            number
+  scoreLabel:       '🔥 Hot' | '💪 Strong' | '👍 Good' | '😐 Weak'
+  reasons:          string[]
+  introStatus?:     string | null
+  email?:           string
+  website?:         string
+  valuationCap?:    string
+  committedCapital?: string
 }
-
-type IntroStatus = 'Interested' | 'Not Interested' | null
 
 // ── Color palettes ──────────────────────────────────────────────────────
 
@@ -141,16 +143,18 @@ function MatchCardSkeleton() {
   )
 }
 
-// ── Match card (summary, fully clickable) ──────────────────────────────
+// ── Match card (summary, fully clickable) ────────────────────────────────
 
 function MatchCard({
   match,
   status,
   onClick,
+  muted = false,
 }: {
   match: ComputedMatch
   status: string | undefined
   onClick: () => void
+  muted?: boolean
 }) {
   return (
     <Card
@@ -158,12 +162,12 @@ function MatchCard({
       tabIndex={0}
       onClick={onClick}
       onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && onClick()}
-      className="cursor-pointer transition-all hover:shadow-md hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary flex flex-col"
+      className={`cursor-pointer transition-all hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary flex flex-col ${muted ? 'opacity-80 hover:opacity-100 border-dashed hover:border-solid hover:border-primary/30' : 'hover:border-primary/40'}`}
     >
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3 flex-1 min-w-0">
-            <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-[#011627] text-sm font-bold text-white flex-shrink-0">
+            <div className={`flex h-11 w-11 items-center justify-center rounded-lg text-sm font-bold text-white flex-shrink-0 ${muted ? 'bg-gray-500' : 'bg-[#011627]'}`}>
               {initials(match.startupName)}
             </div>
             <div className="min-w-0">
@@ -184,7 +188,13 @@ function MatchCard({
               </div>
             </div>
           </div>
-          <ScoreBadge label={match.scoreLabel} score={match.score} />
+          {muted ? (
+            <span className="text-xs text-muted-foreground bg-gray-50 border border-gray-200 rounded-full px-2 py-0.5 whitespace-nowrap">
+              {match.score}/100
+            </span>
+          ) : (
+            <ScoreBadge label={match.scoreLabel} score={match.score} />
+          )}
         </div>
       </CardHeader>
 
@@ -192,7 +202,7 @@ function MatchCard({
         {/* Score bar */}
         <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
           <div
-            className={`h-full rounded-full ${SCORE_BAR[match.scoreLabel] ?? 'bg-gray-300'}`}
+            className={`h-full rounded-full ${muted ? 'bg-gray-300' : (SCORE_BAR[match.scoreLabel] ?? 'bg-gray-300')}`}
             style={{ width: `${match.score}%` }}
           />
         </div>
@@ -215,7 +225,7 @@ function MatchCard({
         </div>
 
         {/* Why it matches (top 2 reasons) */}
-        {match.reasons.length > 0 && (
+        {!muted && match.reasons.length > 0 && (
           <div className="flex flex-col gap-0.5">
             {match.reasons.slice(0, 2).map((r, i) => (
               <span key={i} className="text-xs text-muted-foreground flex items-center gap-1">
@@ -262,56 +272,61 @@ function MatchDetailSheet({
 }) {
   if (!match) return null
 
-  const isInterested   = status === 'Interested' || status === 'Intro Sent'
-  const isPassed       = status === 'Not Interested'
+  const isInterested = status === 'Interested' || status === 'Intro Sent'
+  const isPassed     = status === 'Not Interested'
+
+  const hasContactInfo = match.email || match.website || match.valuationCap || match.committedCapital
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="w-full sm:max-w-2xl overflow-y-auto flex flex-col"
+        className="w-full sm:max-w-3xl overflow-y-auto flex flex-col p-0"
       >
-        <SheetHeader className="pb-4 text-left">
-          <div className="flex items-center gap-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-[#011627] text-lg font-bold text-white flex-shrink-0">
-              {initials(match.startupName)}
-            </div>
-            <div className="flex-1 min-w-0">
-              <SheetTitle className="text-xl leading-tight">{match.startupName}</SheetTitle>
-              <div className="flex flex-wrap gap-1.5 mt-1.5">
-                {match.verticals.map(v => <VerticalPill key={v} v={v} />)}
-                {match.isDualUse === 'Yes' && (
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium">
-                    Dual-use
-                  </span>
-                )}
+        {/* Header */}
+        <div className="px-8 pt-8 pb-5">
+          <SheetHeader className="text-left space-y-0">
+            <div className="flex items-start gap-5">
+              <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-[#011627] text-xl font-bold text-white flex-shrink-0">
+                {initials(match.startupName)}
               </div>
+              <div className="flex-1 min-w-0 pt-0.5">
+                <SheetTitle className="text-2xl leading-tight">{match.startupName}</SheetTitle>
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {match.verticals.map(v => <VerticalPill key={v} v={v} />)}
+                  {match.isDualUse === 'Yes' && (
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium">
+                      Dual-use
+                    </span>
+                  )}
+                </div>
+              </div>
+              <ScoreBadge label={match.scoreLabel} score={match.score} />
             </div>
-            <ScoreBadge label={match.scoreLabel} score={match.score} />
-          </div>
-          <SheetDescription className="sr-only">Match details for {match.startupName}</SheetDescription>
-        </SheetHeader>
+            <SheetDescription className="sr-only">Match details for {match.startupName}</SheetDescription>
+          </SheetHeader>
+        </div>
 
         <Separator />
 
         {/* Score breakdown */}
-        <div className="py-4 space-y-2">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-sm font-medium">Match Score</span>
+        <div className="px-8 py-6 space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-semibold text-foreground">Match Score</span>
             <span className="text-sm font-bold">{match.score}/100</span>
           </div>
-          <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+          <div className="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden">
             <div
               className={`h-full rounded-full ${SCORE_BAR[match.scoreLabel] ?? 'bg-gray-300'}`}
               style={{ width: `${match.score}%` }}
             />
           </div>
           {match.reasons.length > 0 && (
-            <div className="rounded-lg bg-muted/40 px-3 py-3 mt-2 space-y-1.5">
+            <div className="rounded-xl bg-muted/40 border px-4 py-4 mt-1 space-y-2">
               <p className="text-xs font-semibold text-foreground uppercase tracking-wide">
                 Why it matches
               </p>
-              <ul className="space-y-1">
+              <ul className="space-y-1.5">
                 {match.reasons.map((r, i) => (
                   <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
                     <span className="text-[#e71d36] mt-0.5 flex-shrink-0">✓</span>
@@ -326,34 +341,34 @@ function MatchDetailSheet({
         <Separator />
 
         {/* Key metrics */}
-        <div className="py-4 grid grid-cols-2 gap-3">
+        <div className="px-8 py-6 grid grid-cols-2 gap-3">
           {match.roundStage && (
-            <div className="rounded-lg border p-3">
-              <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
+            <div className="rounded-xl border p-4">
+              <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1.5">
                 <Layers className="h-3.5 w-3.5" /> Stage
               </div>
               <div className="font-semibold text-sm">{match.roundStage}</div>
             </div>
           )}
           {match.targetRaise && (
-            <div className="rounded-lg border p-3">
-              <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
+            <div className="rounded-xl border p-4">
+              <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1.5">
                 <DollarSign className="h-3.5 w-3.5" /> Target Raise
               </div>
               <div className="font-semibold text-sm">{match.targetRaise}</div>
             </div>
           )}
           {match.jurisdiction && (
-            <div className="rounded-lg border p-3">
-              <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
+            <div className="rounded-xl border p-4">
+              <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1.5">
                 <Globe className="h-3.5 w-3.5" /> Jurisdiction
               </div>
               <div className="font-semibold text-sm">{match.jurisdiction}</div>
             </div>
           )}
           {match.isDualUse && (
-            <div className="rounded-lg border p-3">
-              <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
+            <div className="rounded-xl border p-4">
+              <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1.5">
                 <ShieldCheck className="h-3.5 w-3.5" /> Dual-use
               </div>
               <div className="font-semibold text-sm">{match.isDualUse}</div>
@@ -361,12 +376,12 @@ function MatchDetailSheet({
           )}
         </div>
 
-        {/* Description */}
+        {/* About */}
         {match.description && (
           <>
             <Separator />
-            <div className="py-4">
-              <h3 className="text-sm font-semibold mb-2">About</h3>
+            <div className="px-8 py-6">
+              <h3 className="text-sm font-semibold mb-3">About</h3>
               <p className="text-sm text-muted-foreground leading-relaxed">{match.description}</p>
             </div>
           </>
@@ -376,7 +391,7 @@ function MatchDetailSheet({
         {match.pitchDeckUrl && (
           <>
             <Separator />
-            <div className="py-3">
+            <div className="px-8 py-5">
               <a
                 href={match.pitchDeckUrl}
                 target="_blank"
@@ -391,24 +406,93 @@ function MatchDetailSheet({
           </>
         )}
 
-        {/* Spacer to push actions to bottom */}
+        {/* ── Contact & Deal Info (shown immediately when investor is interested) ── */}
+        {isInterested && hasContactInfo && (
+          <>
+            <Separator />
+            <div className="px-8 py-6 space-y-4">
+              <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 text-emerald-600" />
+                Contact & Deal Details
+              </h3>
+              <div className="grid grid-cols-1 gap-3">
+                {match.email && (
+                  <div className="flex items-center gap-3 rounded-xl border bg-emerald-50/50 px-4 py-3">
+                    <Mail className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                    <div className="min-w-0">
+                      <div className="text-xs text-muted-foreground mb-0.5">Email</div>
+                      <a
+                        href={`mailto:${match.email}`}
+                        className="text-sm font-medium text-[#e71d36] hover:underline truncate block"
+                      >
+                        {match.email}
+                      </a>
+                    </div>
+                  </div>
+                )}
+                {match.website && (
+                  <div className="flex items-center gap-3 rounded-xl border bg-emerald-50/50 px-4 py-3">
+                    <Link2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                    <div className="min-w-0">
+                      <div className="text-xs text-muted-foreground mb-0.5">Website / LinkedIn</div>
+                      <a
+                        href={match.website.startsWith('http') ? match.website : `https://${match.website}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm font-medium text-[#e71d36] hover:underline truncate block"
+                      >
+                        {match.website}
+                        <ArrowUpRight className="w-3 h-3 inline ml-1" />
+                      </a>
+                    </div>
+                  </div>
+                )}
+                {(match.valuationCap || match.committedCapital) && (
+                  <div className="grid grid-cols-2 gap-3">
+                    {match.valuationCap && (
+                      <div className="rounded-xl border bg-emerald-50/50 px-4 py-3">
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+                          <TrendingUp className="w-3.5 h-3.5 text-emerald-600" /> Valuation Cap
+                        </div>
+                        <div className="font-semibold text-sm">{match.valuationCap}</div>
+                      </div>
+                    )}
+                    {match.committedCapital && (
+                      <div className="rounded-xl border bg-emerald-50/50 px-4 py-3">
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+                          <DollarSign className="w-3.5 h-3.5 text-emerald-600" /> Committed Capital
+                        </div>
+                        <div className="font-semibold text-sm">{match.committedCapital}</div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Spacer */}
         <div className="flex-1" />
 
         <Separator />
 
         {/* Action buttons */}
-        <div className="py-5 space-y-3">
+        <div className="px-8 py-7 space-y-3">
           {/* Current status */}
           {status && (
             <div className="flex items-center gap-2 mb-1">
               <StatusChip status={status} />
               <span className="text-xs text-muted-foreground">
-                {status === 'Intro Sent' ? 'VCC is arranging the introduction.' : 'You can change your response below.'}
+                {status === 'Intro Sent'
+                  ? 'VCC is arranging the introduction.'
+                  : isInterested
+                    ? 'Contact details are now visible above.'
+                    : 'You can change your response below.'}
               </span>
             </div>
           )}
 
-          {/* Action buttons — always visible so investor can change their mind */}
           <div className="flex flex-col gap-2">
             <Button
               onClick={() => onAction('Interested')}
@@ -428,9 +512,11 @@ function MatchDetailSheet({
               {isPassed ? 'You passed on this one' : 'Pass'}
             </Button>
           </div>
-          <p className="text-xs text-muted-foreground text-center">
-            VCC team is notified when you express interest.
-          </p>
+          {!isInterested && (
+            <p className="text-xs text-muted-foreground text-center">
+              Contact details are revealed when you express interest.
+            </p>
+          )}
         </div>
       </SheetContent>
     </Sheet>
@@ -441,6 +527,7 @@ function MatchDetailSheet({
 
 export function SmartMatchesView() {
   const [matches,  setMatches]  = useState<ComputedMatch[]>([])
+  const [others,   setOthers]   = useState<ComputedMatch[]>([])
   const [investor, setInvestor] = useState<Investor | null>(null)
   const [loading,  setLoading]  = useState(true)
   const [error,    setError]    = useState<string | null>(null)
@@ -462,12 +549,13 @@ export function SmartMatchesView() {
       const res  = await fetch('/api/matches')
       const data = await res.json()
       if (!res.ok) { setError(data.error || 'Failed to load matches'); return }
-      if (data.noCriteria) { setNoCriteria(true); setMatches([]); return }
+      if (data.noCriteria) { setNoCriteria(true); setMatches([]); setOthers([]); return }
       setNoCriteria(false)
       setInvestor(data.investor ?? null)
       setMatches(data.matches ?? [])
+      setOthers(data.others ?? [])
       const statuses: Record<string, string> = {}
-      ;(data.matches ?? []).forEach((m: ComputedMatch) => {
+      ;[...(data.matches ?? []), ...(data.others ?? [])].forEach((m: ComputedMatch) => {
         if (m.introStatus) statuses[m.startupId] = m.introStatus
       })
       setIntroStatuses(statuses)
@@ -593,8 +681,8 @@ export function SmartMatchesView() {
           </div>
         )}
 
-        {/* Empty */}
-        {!loading && !error && matches.length === 0 && (
+        {/* Empty state for matches (but others might still exist) */}
+        {!loading && !error && matches.length === 0 && others.length === 0 && (
           <div className="flex flex-col items-center justify-center py-24 text-center">
             <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-6">
               <Sparkles className="w-8 h-8 text-muted-foreground" />
@@ -609,7 +697,7 @@ export function SmartMatchesView() {
           </div>
         )}
 
-        {/* Cards grid */}
+        {/* Curated matches grid */}
         {!loading && !error && matches.length > 0 && (
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {matches.map(match => (
@@ -620,6 +708,31 @@ export function SmartMatchesView() {
                 onClick={() => { setSelectedMatch(match); setSheetOpen(true) }}
               />
             ))}
+          </div>
+        )}
+
+        {/* ── Other startups raising (score < 30) ── */}
+        {!loading && !error && others.length > 0 && (
+          <div className="mt-4 space-y-4">
+            <div className="flex items-center gap-3">
+              <div>
+                <h2 className="text-lg font-semibold text-foreground">Other Startups Raising</h2>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  These {others.length} startup{others.length !== 1 ? 's' : ''} are actively raising but didn&apos;t fully match your current criteria — worth a look.
+                </p>
+              </div>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {others.map(match => (
+                <MatchCard
+                  key={match.startupId}
+                  match={match}
+                  status={introStatuses[match.startupId]}
+                  onClick={() => { setSelectedMatch(match); setSheetOpen(true) }}
+                  muted
+                />
+              ))}
+            </div>
           </div>
         )}
       </div>
