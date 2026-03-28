@@ -1,0 +1,94 @@
+// POST /api/request-intro
+// Creates or updates a record in the Airtable Matches table
+// with status "Interested" when an investor requests an intro.
+
+import { NextRequest, NextResponse } from 'next/server'
+import { auth, currentUser } from '@clerk/nextjs/server'
+import { getInvestorByEmail } from '@/lib/airtable'
+
+const BASE_ID = process.env.AIRTABLE_BASE_ID!
+const TOKEN   = process.env.AIRTABLE_API_TOKEN!
+const ROOT    = 'https://api.airtable.com/v0/' + BASE_ID
+
+const VALID_SCORE_LABELS = ['🔥 Hot', '💪 Strong', '👍 Good', '😐 Weak']
+
+function safeSelect(value: string | undefined, allowed: string[]): string | undefined {
+  return value && allowed.includes(value) ? value : undefined
+}
+
+export async function POST(req: NextRequest) {
+  const { userId } = await auth()
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  try {
+    const user  = await currentUser()
+    const email = user?.emailAddresses?.[0]?.emailAddress
+    if (!email) return NextResponse.json({ error: 'No email' }, { status: 400 })
+
+    const body = await req.json()
+    const { startupId, startupName, score, scoreLabel, reasons } = body
+    if (!startupId) return NextResponse.json({ error: 'Missing startupId' }, { status: 400 })
+
+    const investor = await getInvestorByEmail(email)
+    if (!investor) return NextResponse.json({ error: 'Investor not found' }, { status: 404 })
+
+    // Check whether a match record for this investor + startup already exists
+    const formula = 'AND(FIND("' + investor.id + '",ARRAYJOIN({Investor},",")),FIND("' + startupId + '",ARRAYJOIN({Startup},",")))'
+    const checkRes = await fetch(
+      ROOT + '/' + encodeURIComponent('Matches') + '?filterByFormula=' + encodeURIComponent(formula) + '&maxRecords=1',
+      { headers: { Authorization: 'Bearer ' + TOKEN } }
+    )
+    const checkData = await checkRes.json()
+
+    const matchFields: Record<string, any> = { 'Match Status': 'Interested' }
+    if (!isNaN(Number(score)) && Number(score) > 0) matchFields['Score'] = Number(score)
+    const safeLbl = safeSelect(scoreLabel, VALID_SCORE_LABELS)
+    if (safeLbl) matchFields['Score Label'] = safeLbl
+    if (Array.isArray(reasons) && reasons.length > 0) matchFields['Notes'] = reasons.join('\n')
+
+    if (checkData.records?.length > 0) {
+      const matchId = checkData.records[0].id
+      const patchRes = await fetch(
+        ROOT + '/' + encodeURIComponent('Matches') + '/' + matchId,
+        {
+          method: 'PATCH',
+          headers: { Authorization: 'Bearer ' + TOKEN, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fields: matchFields }),
+        }
+      )
+      if (!patchRes.ok) {
+        const err = await patchRes.json()
+        return NextResponse.json({ error: err.error?.message || 'Failed to update match' }, { status: 500 })
+      }
+      return NextResponse.json({ success: true, matchId })
+    }
+
+    // Create new match record
+    const matchId = investor.id.slice(-6) + '-' + startupId.slice(-6)
+    const createRes = await fetch(
+      ROOT + '/' + encodeURIComponent('Matches'),
+      {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + TOKEN, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fields: {
+            'Match ID': matchId,
+            'Investor': [investor.id],
+            'Startup':  [startupId],
+            ...matchFields,
+          },
+        }),
+      }
+    )
+
+    if (!createRes.ok) {
+      const err = await createRes.json()
+      return NextResponse.json({ error: err.error?.message || 'Failed to create match' }, { status: 500 })
+    }
+    const created = await createRes.json()
+    return NextResponse.json({ success: true, matchId: created.id })
+  } catch (e: any) {
+    console.error('request-intro error:', e)
+    return NextResponse.json({ error: e.message }, { status: 500 })
+  }
+}
