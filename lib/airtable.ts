@@ -1,6 +1,6 @@
-// ───────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
 // Airtable API layer — all data fetching lives here
-// ───────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
 
 const BASE_ID = process.env.AIRTABLE_BASE_ID!;
 const TOKEN   = process.env.AIRTABLE_API_TOKEN!;
@@ -11,7 +11,7 @@ const headers = {
   'Content-Type': 'application/json',
 };
 
-// ── Types ────────────────────────────────────────────────────────
+// ── Types ────────────────────────────────────────────────────
 
 export type Vertical = 'Defense / MilTech' | 'AI / ML' | 'Cybersecurity' | 'Fintech' | 'HealthTech' | 'AgriTech' | 'SaaS (General)' | 'Hardware / IoT' | 'EdTech' | 'Marketing & Media' | 'Energy & Environment' | 'Consumer products' | 'HRTech' | 'Business Productivity' | 'E-commerce & Retail' | 'Logistics & Transportation';
 export type Stage    = 'Angel Investment' | 'Pre-seed' | 'Seed' | 'Late Seed / Bridge' | 'Series A' | 'Series B+';
@@ -41,13 +41,18 @@ export interface Startup {
   logo?: string;
   primaryVertical: Vertical[];
   roundStage: Stage;
-  targetRaise: string;
-  targetRaiseAmount?: number;
+  targetRaise: string;           // formatted label e.g. "$500K"
+  targetRaiseAmount?: number;    // raw number from Airtable "Target Raise" field
   status: StartupStatus;
   isDualUse: string;
   pitchDeckUrl?: string;
   entityType?: string;
   addedDate?: string;
+  // Contact & deal details (shown to investors who express interest)
+  email?: string;
+  website?: string;
+  valuationCap?: string;
+  committedCapital?: string;
 }
 
 export interface Match {
@@ -58,6 +63,7 @@ export interface Match {
   scoreLabel: string;
   whyItMatches: string;
   status: MatchStatus;
+  // Populated via two-pass fetch from Startup Pipeline
   startupName: string;
   startupDescription: string;
   startupLogo?: string;
@@ -90,7 +96,7 @@ export interface Event {
   registrationLink?: string;
 }
 
-// ── Generic fetch helper ─────────────────────────────────────────
+// ── Generic fetch helper ─────────────────────────────────────
 
 async function fetchTable<T>(
   table: string,
@@ -99,6 +105,7 @@ async function fetchTable<T>(
   const url = new URL(`${ROOT}/${encodeURIComponent(table)}`);
   const { sort, ...otherParams } = params;
   Object.entries(otherParams).forEach(([k, v]) => url.searchParams.set(k, v));
+  // Airtable requires array-style sort params: sort[0][field]=X&sort[0][direction]=asc
   if (sort) {
     try {
       const sortArr = JSON.parse(sort) as Array<{ field: string; direction: string }>;
@@ -114,6 +121,8 @@ async function fetchTable<T>(
 
   do {
     if (offset) url.searchParams.set('offset', offset);
+    // 5-minute cache: avoids hammering Airtable on every page load
+    // PATCH/POST calls use no-store, so writes are always fresh
     const res  = await fetch(url.toString(), { headers, next: { revalidate: 300 } });
     const data = await res.json();
     if (!res.ok) throw new Error(`Airtable error: ${data.error?.message}`);
@@ -124,7 +133,18 @@ async function fetchTable<T>(
   return records;
 }
 
-// ── Investors ────────────────────────────────────────────────────
+// ── Investors ────────────────────────────────────────────────
+// Table: "Investor Profile"
+// Key field mappings:
+//   Fund / Organization Name  → name
+//   Email for Deal Flow       → email
+//   Description               → description  (add as Long text field in Airtable if missing)
+//   Primary Focus Areas (Verticals) → focusVerticals
+//   Stage Preference          → stagePreference
+//   Ticket Size               → ticketSize
+//   Does your mandate cover Dual-Use startups? → dualUsePolicy
+//   Role                      → role
+//   Contact Person (Whatsapp) → whatsapp
 
 function parseInvestor(r: any): Investor {
   const f = r.fields;
@@ -185,10 +205,21 @@ export async function updateInvestorCriteria(
   return res.json();
 }
 
-// ── Startups ─────────────────────────────────────────────────────
+// ── Startups ─────────────────────────────────────────────────
+// Table: "Startup Pipeline"
+// Key field mappings:
+//   Startup Name      → name
+//   Admin Notes       → description
+//   Investment Stage  → roundStage
+//   Target Raise      → targetRaise (singleSelect label string, e.g. "$500K")
+//   Is Dual-use?      → isDualUse
+//   Pitch Deck URL    → pitchDeckUrl
+//   Status            → status
 
 function parseStartup(r: any): Startup {
   const f = r.fields;
+  // Target Raise is a singleSelect in Airtable (stores label strings like "$500K", "$1M-$2M")
+  // We store it directly as a display string — no numeric conversion needed
   const targetRaiseLabel: string = f['Target Raise'] || '';
   return {
     id:                r.id,
@@ -200,12 +231,17 @@ function parseStartup(r: any): Startup {
                          : f['Primary Vertical'] ? [f['Primary Vertical']] : [],
     roundStage:        f['Investment Stage'] || '',
     targetRaise:       targetRaiseLabel,
-    targetRaiseAmount: undefined,
+    targetRaiseAmount: undefined,  // field is a text label, not a number — removed to avoid confusion
     status:            f['Status'] || 'New',
     isDualUse:         f['Is Dual-use?'] || 'No',
     pitchDeckUrl:      f['Pitch Deck URL'] || undefined,
     entityType:        f['Jurisdiction'] || undefined,
     addedDate:         r.createdTime || undefined,
+    // Contact & deal details
+    email:             f['Email'] || undefined,
+    website:           f['Website / LinkedIn'] || undefined,
+    valuationCap:      f['Valuation Cap (USD)'] || undefined,
+    committedCapital:  f['Committed Capital (USD)'] || undefined,
   };
 }
 
@@ -219,6 +255,7 @@ export async function getActiveStartups(filters: {
 
   const records = await fetchTable<any>('Startup Pipeline', {
     filterByFormula: formula,
+    // sorted by most recently created first (Airtable default is oldest first)
     sort: '[{"field":"Startup Name","direction":"asc"}]',
   });
   return records.map(parseStartup);
@@ -229,7 +266,13 @@ export async function getAllStartups(): Promise<Startup[]> {
   return records.map(parseStartup);
 }
 
-// ── Matches ──────────────────────────────────────────────────────
+// ── Matches ──────────────────────────────────────────────────
+// Table: "Matches"
+// Fields: Startup (linked), Investor (linked), Score, Score Label,
+//         Why It Matches, Status, Created Date
+//
+// Startup detail fields are fetched via a second pass from "Startup Pipeline"
+// rather than relying on lookup fields (which haven't been set up in Airtable yet).
 
 function parseMatchBase(r: any) {
   const f = r.fields;
@@ -239,12 +282,13 @@ function parseMatchBase(r: any) {
     investorId:   Array.isArray(f['Investor']) ? f['Investor'][0] : '',
     score:        f['Score'] || 0,
     scoreLabel:   f['Score Label'] || '',
-    whyItMatches: f['Notes'] || '',
-    status:       (f['Match Status'] || 'Pending') as MatchStatus,
+    whyItMatches: f['Notes'] || '',           // Airtable field is "Notes", not "Why It Matches"
+    status:       (f['Match Status'] || 'Pending') as MatchStatus, // Airtable field is "Match Status"
   };
 }
 
 export async function getMatchesForInvestor(investorId: string): Promise<Match[]> {
+  // Filter matches for this investor using FIND on the linked record array
   const formula = `FIND("${investorId}", ARRAYJOIN({Investor}, ","))`;
   const records = await fetchTable<any>('Matches', {
     filterByFormula: formula,
@@ -253,9 +297,11 @@ export async function getMatchesForInvestor(investorId: string): Promise<Match[]
 
   if (records.length === 0) return [];
 
+  // Two-pass: collect unique startup IDs, then fetch their details
   const baseMatches = records.map(parseMatchBase);
   const startupIds  = Array.from(new Set(baseMatches.map(m => m.startupId).filter(Boolean)));
 
+  // Fetch startup records by ID
   const startupMap: Record<string, Startup> = {};
   if (startupIds.length > 0) {
     const idFilter = `OR(${startupIds.map(id => `RECORD_ID()="${id}"`).join(',')})`;
@@ -267,6 +313,7 @@ export async function getMatchesForInvestor(investorId: string): Promise<Match[]
     });
   }
 
+  // Join and filter to only actively raising startups
   return baseMatches
     .map(m => {
       const s = startupMap[m.startupId];
@@ -291,13 +338,14 @@ export async function updateMatchStatus(matchId: string, status: MatchStatus) {
   const res = await fetch(`${ROOT}/Matches/${matchId}`, {
     method: 'PATCH',
     headers,
-    body: JSON.stringify({ fields: { 'Match Status': status } }),
+    body: JSON.stringify({ fields: { 'Match Status': status } }), // Airtable field is "Match Status"
   });
   if (!res.ok) throw new Error('Failed to update match status');
   return res.json();
 }
 
-// ── Deal Flow Database ───────────────────────────────────────────
+// ── Deal Flow Database ───────────────────────────────────────
+// Separate Airtable base: appzew2eaB6QOy0RF / "Imported table"
 
 const DEALFLOW_ROOT = `https://api.airtable.com/v0/appzew2eaB6QOy0RF`;
 
@@ -382,7 +430,7 @@ export async function getDealFlowStartups(filters: {
   return result;
 }
 
-// ── Analytics ────────────────────────────────────────────────────
+// ── Analytics ────────────────────────────────────────────────
 
 export interface AnalyticsData {
   totalStartups: number;
@@ -429,7 +477,11 @@ export async function getAnalytics(): Promise<AnalyticsData> {
   };
 }
 
-// ── Announcements ────────────────────────────────────────────────
+// ── Announcements ────────────────────────────────────────────
+// Table: "Announcements"
+// Fields: Title, Body, Published Date, Author (created by), Category
+// Note: "Image" (attachment) and "Pinned" (checkbox) fields don't exist yet
+//       — they'll gracefully return undefined/false until added to Airtable.
 
 export async function getAnnouncements(): Promise<Announcement[]> {
   const records = await fetchTable<any>('Announcements', {
@@ -439,14 +491,18 @@ export async function getAnnouncements(): Promise<Announcement[]> {
     id:            r.id,
     title:         r.fields['Title'] || '',
     body:          r.fields['Body'] || '',
-    image:         r.fields['Image']?.[0]?.url,
+    image:         r.fields['Image']?.[0]?.url,      // attachment — add field to Airtable to enable
     publishedDate: r.fields['Published Date'] || '',
-    pinned:        r.fields['Pinned'] || false,
+    pinned:        r.fields['Pinned'] || false,       // checkbox — add field to Airtable to enable
     category:      r.fields['Category'] || undefined,
   }));
 }
 
-// ── Events ───────────────────────────────────────────────────────
+// ── Events ───────────────────────────────────────────────────
+// Table: "Events"
+// Fields: Event Name, Date, Description, Location, RSVP Link
+// Note: "Access Level" single-select doesn't exist yet
+//       — defaults to 'Public' until added to Airtable.
 
 export async function getUpcomingEvents(): Promise<Event[]> {
   const today   = new Date().toISOString().split('T')[0];
@@ -460,7 +516,7 @@ export async function getUpcomingEvents(): Promise<Event[]> {
     date:             r.fields['Date'] || '',
     location:         r.fields['Location'] || undefined,
     description:      r.fields['Description'] || undefined,
-    accessLevel:      r.fields['Access Level'] || 'Public',
+    accessLevel:      r.fields['Access Level'] || 'Public',  // add field to Airtable to enable
     registrationLink: r.fields['RSVP Link'] || undefined,
   }));
 }
