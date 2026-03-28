@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Briefcase, Sparkles, BarChart3, Settings, LogOut, Bookmark } from 'lucide-react'
 import { useUser, useClerk } from '@clerk/nextjs'
 import {
@@ -33,28 +33,31 @@ type DealFilter = {
 }
 
 const navItems = [
-  { id: 'analytics'      as View, label: 'Dashboard',          icon: BarChart3  },
-  { id: 'deal-room'      as View, label: 'Deal Flow Database',  icon: Briefcase  },
-  { id: 'smart-matches'  as View, label: 'Smart Matches',       icon: Sparkles   },
-  { id: 'saved-startups' as View, label: 'Saved Startups',      icon: Bookmark   },
-  { id: 'my-criteria'    as View, label: 'My Criteria',         icon: Settings   },
+  { id: 'analytics' as View, label: 'Dashboard', icon: BarChart3 },
+  { id: 'deal-room' as View, label: 'Deal Flow Database', icon: Briefcase },
+  { id: 'smart-matches' as View, label: 'Smart Matches', icon: Sparkles },
+  { id: 'saved-startups' as View, label: 'Saved Startups', icon: Bookmark },
+  { id: 'my-criteria' as View, label: 'My Criteria', icon: Settings },
 ]
+
 function AppSidebar({ activeView, onViewChange }: { activeView: View; onViewChange: (v: View) => void }) {
-  const { user }    = useUser()
+  const { user } = useUser()
   const { signOut } = useClerk()
 
-  const initials = user?.firstName?.[0] && user?.lastName?.[0]
-    ? `${user.firstName[0]}${user.lastName[0]}`
-    : user?.emailAddresses?.[0]?.emailAddress?.slice(0, 2).toUpperCase() || 'TV'
+  const initials =
+    user?.firstName?.[0] && user?.lastName?.[0]
+      ? `${user.firstName[0]}${user.lastName[0]}`
+      : user?.emailAddresses?.[0]?.emailAddress?.slice(0, 2).toUpperCase() || 'TV'
 
-  const displayName = user?.firstName || user?.emailAddresses?.[0]?.emailAddress?.split('@')[0] || 'Member'
-  const fundName    = (user?.publicMetadata?.fund as string) || 'VCC Member'
+  const displayName =
+    user?.firstName || user?.emailAddresses?.[0]?.emailAddress?.split('@')[0] || 'Member'
+
+  const fundName = (user?.publicMetadata?.fund as string) || 'VCC Member'
 
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="p-4">
         <div className="flex items-center gap-3">
-          {/* Techosystem logo mark */}
           <div
             className="flex h-9 w-9 items-center justify-center rounded-lg flex-shrink-0 font-black text-white text-lg select-none"
             style={{ background: '#e71d36', fontFamily: 'Georgia, serif', letterSpacing: '-1px' }}
@@ -67,9 +70,7 @@ function AppSidebar({ activeView, onViewChange }: { activeView: View; onViewChan
           </div>
         </div>
       </SidebarHeader>
-
       <Separator className="mx-4 w-auto" />
-
       <SidebarContent className="p-2">
         <SidebarMenu>
           {navItems.map((item) => (
@@ -87,7 +88,6 @@ function AppSidebar({ activeView, onViewChange }: { activeView: View; onViewChan
           ))}
         </SidebarMenu>
       </SidebarContent>
-
       <SidebarFooter className="p-4">
         <Separator className="mb-4" />
         <div className="flex items-center gap-3 group-data-[collapsible=icon]:justify-center">
@@ -117,9 +117,21 @@ export default function Home() {
   const [activeView, setActiveView] = useState<View>('analytics')
   const [dealFilter, setDealFilter] = useState<DealFilter | undefined>()
 
+  useEffect(() => {
+    const saved = localStorage.getItem('vcc_active_view') as View | null
+    if (saved && navItems.some((i) => i.id === saved)) {
+      setActiveView(saved)
+    }
+  }, [])
+
+  const handleViewChange = (v: View) => {
+    setActiveView(v)
+    localStorage.setItem('vcc_active_view', v)
+  }
+
   return (
     <SidebarProvider>
-      <AppSidebar activeView={activeView} onViewChange={setActiveView} />
+      <AppSidebar activeView={activeView} onViewChange={handleViewChange} />
       <SidebarInset>
         <header className="flex h-14 items-center gap-4 border-b px-6">
           <SidebarTrigger />
@@ -128,7 +140,6 @@ export default function Home() {
               {navItems.find((item) => item.id === activeView)?.label}
             </h1>
           </div>
-          {/* Techosystem wordmark â top-right of every view */}
           <div className="flex items-center gap-2 select-none">
             <div
               className="h-7 w-7 rounded-md flex items-center justify-center text-white font-black text-base"
@@ -142,21 +153,20 @@ export default function Home() {
           </div>
         </header>
         <main className="flex-1 overflow-auto p-6">
-          {activeView === 'deal-room'     && <DealRoomView initialFilter={dealFilter} />}
+          {activeView === 'deal-room' && <DealRoomView initialFilter={dealFilter} />}
           {activeView === 'smart-matches' && <SmartMatchesView />}
-          {activeView === 'analytics'     && (
+          {activeView === 'analytics' && (
             <AnalyticsView
               onNavigate={(v, filter) => {
                 setDealFilter(filter)
-                setActiveView(v as View)
+                handleViewChange(v as View)
               }}
             />
           )}
-          {activeView === 'my-criteria'   && <MyCriteriaView />}
+          {activeView === 'my-criteria' && <MyCriteriaView />}
           {activeView === 'saved-startups' && <SavedStartupsView />}
         </main>
       </SidebarInset>
     </SidebarProvider>
   )
 }
-
