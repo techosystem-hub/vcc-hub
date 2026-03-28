@@ -1,8 +1,11 @@
 // ─────────────────────────────────────────────────────────────
 // GET /api/matches
 // Auto-computes Smart Matches for the authenticated investor.
-// Replaces the previous static read from Airtable Matches table
-// with a real-time scoring algorithm (lib/matching.ts).
+// Returns:
+//   matches — startups scoring >= 30 (curated matches), sorted desc
+//   others  — startups scoring <  30 (still actively raising), sorted desc
+//   investor — investor profile
+//   noCriteria — true if investor hasn't set criteria yet
 // ─────────────────────────────────────────────────────────────
 
 import { NextResponse } from 'next/server'
@@ -12,7 +15,7 @@ import {
   getActiveStartups,
   getMatchesForInvestor,
 } from '@/lib/airtable'
-import { computeMatches } from '@/lib/matching'
+import { scoreStartup, SCORE_THRESHOLD } from '@/lib/matching'
 
 export async function GET() {
   const { userId } = await auth()
@@ -21,18 +24,18 @@ export async function GET() {
   try {
     const user  = await currentUser()
     const email = user?.emailAddresses?.[0]?.emailAddress
-    if (!email) return NextResponse.json({ matches: [], investor: null, noCriteria: false })
+    if (!email) return NextResponse.json({ matches: [], others: [], investor: null, noCriteria: false })
 
     // Load investor profile
     const investor = await getInvestorByEmail(email)
-    if (!investor) return NextResponse.json({ matches: [], investor: null, noCriteria: false })
+    if (!investor) return NextResponse.json({ matches: [], others: [], investor: null, noCriteria: false })
 
     // If investor hasn't set any criteria yet, return early with a flag
     const hasCriteria =
       investor.focusVerticals.length > 0 || investor.stagePreference.length > 0
 
     if (!hasCriteria) {
-      return NextResponse.json({ matches: [], investor, noCriteria: true })
+      return NextResponse.json({ matches: [], others: [], investor, noCriteria: true })
     }
 
     // Fetch actively-raising startups and any existing intro request records in parallel
@@ -41,22 +44,27 @@ export async function GET() {
       getMatchesForInvestor(investor.id).catch(() => []), // non-fatal
     ])
 
-    // Build a map: startupId -> existing intro status
+    // Build a map: startupId → existing intro status
     const introStatusMap: Record<string, string> = {}
     existingMatches.forEach(m => {
       introStatusMap[m.startupId] = m.status
     })
 
-    // Score all startups against this investor's criteria
-    const computed = computeMatches(investor, startups)
+    // Score ALL startups (scoreStartup never returns null now)
+    const allScored = startups.map(s => scoreStartup(investor, s))
 
-    // Overlay any existing intro-request statuses from Airtable
-    const matches = computed.map(m => ({
-      ...m,
-      introStatus: introStatusMap[m.startupId] ?? null,
-    }))
+    // Split into curated matches (>= threshold) and others (< threshold)
+    const matches = allScored
+      .filter(m => m.score >= SCORE_THRESHOLD)
+      .sort((a, b) => b.score - a.score)
+      .map(m => ({ ...m, introStatus: introStatusMap[m.startupId] ?? null }))
 
-    return NextResponse.json({ matches, investor, noCriteria: false })
+    const others = allScored
+      .filter(m => m.score < SCORE_THRESHOLD)
+      .sort((a, b) => b.score - a.score)
+      .map(m => ({ ...m, introStatus: introStatusMap[m.startupId] ?? null }))
+
+    return NextResponse.json({ matches, others, investor, noCriteria: false })
   } catch (e: any) {
     console.error('auto-matches error:', e)
     return NextResponse.json({ error: e.message }, { status: 500 })
