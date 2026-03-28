@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Briefcase, Sparkles, BarChart3, Settings, LogOut } from 'lucide-react'
+import { Briefcase, Sparkles, BarChart3, Settings, LogOut, Bookmark } from 'lucide-react'
 import { useUser, useClerk } from '@clerk/nextjs'
 import {
   Sidebar,
@@ -21,8 +21,9 @@ import { DealRoomView } from '@/components/views/deal-room-view'
 import { SmartMatchesView } from '@/components/views/smart-matches-view'
 import { AnalyticsView } from '@/components/views/analytics-view'
 import { MyCriteriaView } from '@/components/views/my-criteria-view'
+import { SavedStartupsView } from '@/components/views/saved-startups-view'
 
-type View = 'deal-room' | 'smart-matches' | 'analytics' | 'my-criteria'
+type View = 'deal-room' | 'smart-matches' | 'analytics' | 'my-criteria' | 'saved-startups'
 
 type DealFilter = {
   years?: string[]
@@ -35,9 +36,9 @@ const navItems = [
   { id: 'analytics'      as View, label: 'Dashboard',          icon: BarChart3  },
   { id: 'deal-room'      as View, label: 'Deal Flow Database',  icon: Briefcase  },
   { id: 'smart-matches'  as View, label: 'Smart Matches',       icon: Sparkles   },
+  { id: 'saved-startups' as View, label: 'Saved Startups',      icon: Bookmark   },
   { id: 'my-criteria'    as View, label: 'My Criteria',         icon: Settings   },
 ]
-
 function AppSidebar({ activeView, onViewChange }: { activeView: View; onViewChange: (v: View) => void }) {
   const { user }    = useUser()
   const { signOut } = useClerk()
@@ -127,7 +128,7 @@ export default function Home() {
               {navItems.find((item) => item.id === activeView)?.label}
             </h1>
           </div>
-          {/* Techosystem wordmark — top-right of every view */}
+          {/* Techosystem wordmark â top-right of every view */}
           <div className="flex items-center gap-2 select-none">
             <div
               className="h-7 w-7 rounded-md flex items-center justify-center text-white font-black text-base"
@@ -152,8 +153,10 @@ export default function Home() {
             />
           )}
           {activeView === 'my-criteria'   && <MyCriteriaView />}
+          {activeView === 'saved-startups' && <SavedStartupsView />}
         </main>
       </SidebarInset>
     </SidebarProvider>
   )
 }
+
