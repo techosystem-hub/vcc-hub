@@ -1,12 +1,14 @@
-// ───────────────────────────────────────────────────────────────
-// Smart Matching — pure scoring logic, no Airtable I/O here
-// Weights:  Vertical 40pts  |  Stage 30pts  |  Ticket 20pts  |  Dual-use 10pts
-// Max: 100pts.  Minimum threshold to surface a match: 30pts.
-// ───────────────────────────────────────────────────────────────
+// Core weights (main matching criteria):
+//   Investment Focus (Verticals)  40 pts
+//   Stage Preference              30 pts
+//   Standard Ticket Size          20 pts
+//   Dual-use alignment bonus      10 pts  <- additive only, never a filter
+//
+// Max: 100 pts. Minimum threshold: 30 pts.
+// All startups are considered regardless of dual-use status.
 
 import type { Investor, Startup } from './airtable'
 
-// Maps startup "Target Raise" singleSelect → investor ticket sizes that cover it
 const RAISE_TO_TICKET: Record<string, string[]> = {
   '<$100k':        ['Small Tickets (<$50k)', '$50k - $200k'],
   '$100k - $300k': ['$50k - $200k', '$200k - $500k'],
@@ -16,7 +18,6 @@ const RAISE_TO_TICKET: Record<string, string[]> = {
   '>$3M':          ['>$5M'],
 }
 
-// Matches Airtable "Score Label" singleSelect options exactly
 export type ScoreLabel = '🔥 Hot' | '💪 Strong' | '👍 Good' | '😐 Weak'
 
 export interface ComputedMatch {
@@ -46,15 +47,7 @@ export function scoreStartup(investor: Investor, startup: Startup): ComputedMatc
   let score = 0
   const reasons: string[] = []
 
-  // ESG / LP mandate conflict → hard reject
-  if (
-    startup.isDualUse === 'Yes' &&
-    investor.dualUsePolicy === 'No - our mandate restricts this (ESG / LP restrictions)'
-  ) {
-    return null
-  }
-
-  // Vertical match — 40 pts
+  // Investment Focus (Verticals) -- 40 pts
   const matchedVerticals = startup.primaryVertical.filter(v =>
     investor.focusVerticals.includes(v as any)
   )
@@ -63,13 +56,13 @@ export function scoreStartup(investor: Investor, startup: Startup): ComputedMatc
     reasons.push('Vertical: ' + matchedVerticals.join(', '))
   }
 
-  // Stage match — 30 pts
+  // Stage Preference -- 30 pts
   if (startup.roundStage && investor.stagePreference.includes(startup.roundStage as any)) {
     score += 30
     reasons.push('Stage: ' + startup.roundStage)
   }
 
-  // Ticket size match — 20 pts
+  // Standard Ticket Size -- 20 pts
   if (startup.targetRaise) {
     const coveringTickets = RAISE_TO_TICKET[startup.targetRaise] || []
     if (investor.ticketSize.some(t => coveringTickets.includes(t))) {
@@ -78,13 +71,17 @@ export function scoreStartup(investor: Investor, startup: Startup): ComputedMatc
     }
   }
 
-  // Dual-use alignment bonus — 10 pts
-  if (startup.isDualUse === 'Yes') {
+  // Dual-use alignment bonus -- +10 pts (additive only, never a filter)
+  // Only awarded when investor explicitly welcomes defense / dual-use tech.
+  if (
+    startup.isDualUse === 'Yes' &&
+    investor.dualUsePolicy !== 'No - our mandate restricts this (ESG / LP restrictions)'
+  ) {
     score += 10
-    reasons.push('Dual-use tech aligned with mandate')
+    reasons.push('Dual-use tech -- fits your mandate')
   }
 
-  // Below threshold → hide
+  // Below threshold -> exclude
   if (score < 30) return null
 
   return {
