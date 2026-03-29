@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import {
   Search, SlidersHorizontal, ExternalLink, MapPin, Calendar, Users,
-  BarChart2, LayoutGrid, TrendingUp, DollarSign, Globe, Award, ChevronDown, Check,
+  BarChart2, LayoutGrid, LayoutList, TrendingUp, DollarSign, Globe, Award, ChevronDown, Check,
 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -42,10 +42,10 @@ const ALL_STAGES = [
 const ALL_YEARS = ['2021', '2022', '2023', '2024', '2025', '2026']
 
 type SortOption = 'newest' | 'highest' | 'lowest'
-type ViewMode   = 'analytics' | 'deals'
+type ViewMode   = 'analytics' | 'deals' | 'list'
 
 function formatUSD(n: number): string {
-  if (!n) return '—'
+  if (!n) return 'â'
   if (n >= 1e9) return `$${(n / 1e9).toFixed(1)}B`
   if (n >= 1e6) return `$${(n / 1e6).toFixed(1)}M`
   if (n >= 1e3) return `$${(n / 1e3).toFixed(0)}K`
@@ -96,11 +96,11 @@ function StatCard({
             {sub && <div className="text-xs text-muted-foreground mt-0.5">{sub}</div>}
             {onClick && (
               <div className="text-[10px] mt-1.5 font-medium" style={{ color: RED }}>
-                Click to explore →
+                Click to explore â
               </div>
             )}
           </div>
-          <div className="rounded-lg p-2" style={{ background: `${RED}18` }}>
+          <div className="rounded-lg p-2" style={{ background: `${RED}18 `}}>
             <Icon className="h-4 w-4" style={{ color: RED }} />
           </div>
         </div>
@@ -265,7 +265,7 @@ function AnalyticsPanel({
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
                 <XAxis dataKey="year" tick={{ fontSize: 12, fill: '#555' }} />
                 <YAxis tick={{ fontSize: 11, fill: '#888' }} />
-                <Tooltip content={(p) => <ChartTooltip {...p} />} cursor={{ fill: 'rgba(0,0,0,0.06)' }} />
+                <Tooltip content=y(p) => <ChartTooltip {...p} />} cursor={{ fill: 'rgba(0,0,0,0.06)' }} />
                 <Bar dataKey="deals" name="Deals" fill={RED} radius={[4, 4, 0, 0]}
                   onClick={(data) => onFilter({ years: [String(data.year)] })}
                   cursor="pointer"
@@ -326,7 +326,7 @@ function DealDetailSheet({
 
   return (
     <Sheet open={!!startup} onOpenChange={v => { if (!v) onClose() }}>
-      <SheetContent className="w-full sm:max-w-[420px] overflow-y-auto" side="right">
+      <SheetContent className="w-full sm:max-w-[600px] overflow-y-auto" side="right">
         <SheetHeader className="pb-4 border-b border-gray-100">
           <div className="flex items-start gap-3">
             <div
@@ -365,7 +365,7 @@ function DealDetailSheet({
           <Row label="Year"            value={startup.year > 0 ? startup.year : null} />
 
           <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1 mt-5">Investors</div>
-          <Row label="Investor(s)"           value={startup.investors || '—'} />
+          <Row label="Investor(s)"           value={startup.investors || 'â'} />
           <Row label="UA investors involved" value={startup.uaInvestorsInvolved} />
 
           <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1 mt-5">Company</div>
@@ -392,6 +392,52 @@ function DealDetailSheet({
   )
 }
 
+function DealListRow({
+  startup,
+  onClick,
+}: {
+  startup: DealFlowStartup
+  onClick: () => void
+}) {
+  return (
+    <div
+      className="flex items-center gap-4 bg-white border border-gray-200 rounded-xl px-4 py-3 hover:shadow-sm hover:border-gray-300 transition-all cursor-pointer"
+      onClick={onClick}
+    >
+      {/* Avatar */}
+      <div
+        className="flex-shrink-0 h-9 w-9 rounded-lg flex items-center justify-center font-bold text-xs text-white"
+        style={{ background: NAVY }}
+      >
+        {startup.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || '??'}
+      </div>
+      {/* Name + badges */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="font-semibold text-sm text-foreground truncate">{startup.name}</span>
+          {startup.techosystemMember === 'Member' && (
+            <Badge className="text-[10px] px-1.5 py-0 text-white border-0 shrink-0" style={{ background: RED }}>â Member</Badge>
+          )}
+        </div>
+        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+          {startup.vertical   && <span className="text-[10px] text-gray-500 bg-gray-100 rounded-full px-2 py-0.5">{startup.vertical}</span>}
+          {startup.roundStage && <span className="text-[10px] text-gray-500 bg-gray-100 rounded-full px-2 py-0.5">{startup.roundStage}</span>}
+          {startup.legalHQ    && <span className="text-[10px] text-gray-400 flex items-center gap-1"><MapPin className="h-2.5 w-2.5" />{startup.legalHQ}</span>}
+        </div>
+      </div>
+      {/* Investment */}
+      <div className="flex-shrink-0 text-right hidden sm:block">
+        {startup.investmentSizeUSD > 0 && (
+          <p className="text-sm font-semibold text-foreground">{formatUSD(startup.investmentSizeUSD)}</p>
+        )}
+        {startup.year > 0 && <p className="text-[10px] text-gray-400">{startup.year}</p>}
+      </div>
+      {/* Arrow */}
+      <div className="flex-shrink-0 text-gray-300 text-sm">âº</div>
+    </div>
+  )
+}
+
 function DealCard({
   startup,
   onClick,
@@ -415,17 +461,17 @@ function DealCard({
             {initials}
           </div>
           <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-2">
-              <h3 className="font-semibold text-foreground leading-tight truncate">{startup.name}</h3>
+            <div className="flex items-start gap-2">
+              <h3 className="font-semibold text-foreground leading-tight truncate flex-1 min-w-0">{startup.name}</h3>
               {startup.techosystemMember === 'Member' && (
-                <Badge className="text-xs shrink-0 text-white border-0" style={{ background: RED }}>
-                  Techosystem
+                <Badge className="text-[10px] shrink-0 text-white border-0 px-1.5 py-0" style={{ background: RED }}>
+                  â Member
                 </Badge>
               )}
             </div>
             <div className="flex flex-wrap gap-1 mt-1">
-              {startup.vertical   && <Badge variant="outline" className="text-xs">{startup.vertical}</Badge>}
-              {startup.roundStage && <Badge variant="outline" className="text-xs">{startup.roundStage}</Badge>}
+              {startup.vertical   && <Badge variant="outline" className="text-[10px] px-1.5 py-0 max-w-[120px] truncate">{startup.vertical}</Badge>}
+              {startup.roundStage && <Badge variant="outline" className="text-[10px] px-1.5 py-0">{startup.roundStage}</Badge>}
             </div>
           </div>
         </div>
@@ -475,7 +521,7 @@ function DealCard({
               View news
             </a>
           ) : <span />}
-          <span className="text-[10px] text-muted-foreground">Tap for details →</span>
+          <span className="text-[10px] text-muted-foreground">Tap for details â</span>
         </div>
       </CardContent>
     </Card>
@@ -673,10 +719,18 @@ export function DealRoomView({ initialFilter }: DealRoomProps = {}) {
             onClick={() => setViewMode('deals')}
           >
             <LayoutGrid className="h-4 w-4" />
-            Deals
+            Grid
             <span className="rounded-full bg-foreground/10 px-1.5 py-0.5 text-[10px] font-medium">
               {startups.length}
             </span>
+          </Button>
+          <Button
+            variant={viewMode === 'list' ? 'default' : 'ghost'}
+            size="sm" className="gap-1.5 h-8"
+            onClick={() => setViewMode('list')}
+          >
+            <LayoutList className="h-4 w-4" />
+            List
           </Button>
         </div>
 
@@ -692,6 +746,49 @@ export function DealRoomView({ initialFilter }: DealRoomProps = {}) {
 
       {viewMode === 'analytics' ? (
         <AnalyticsPanel startups={startups} onFilter={handleAnalyticsFilter} />
+      ) : viewMode === 'list' ? (
+        <>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search by name, description, founders..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <Select value={sortBy} onValueChange={v => setSortBy(v as SortOption)}>
+              <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="newest">Newest First</SelectItem>
+                <SelectItem value="highest">Highest Investment</SelectItem>
+                <SelectItem value="lowest">Lowest Investment</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <FilterDropdown label="Vertical" items={ALL_VERTICALS} selected={selectedVerticals} onToggle={v => setSelectedVerticals(p => p.includes(v) ? p.filter(x => x !== v) : [...p, v])} />
+            <FilterDropdown label="Round Stage" items={ALL_STAGES} selected={selectedStages} onToggle={v => setSelectedStages(p => p.includes(v) ? p.filter(x => x !== v) : [...p, v])} />
+            <FilterDropdown label="Year" items={ALL_YEARS} selected={selectedYears} onToggle={v => setSelectedYears(p => p.includes(v) ? p.filter(x => x !== v) : [...p, v])} />
+            <Button variant={techosystemOnly ? 'default' : 'outline'} size="sm" className="h-8" style={techosystemOnly ? { background: RED, color: '#fff', borderColor: RED } : {}} onClick={() => setTechosystemOnly(p => !p)}>Techosystem only</Button>
+            <Button variant={uaOnly ? 'default' : 'outline'} size="sm" className="h-8" style={uaOnly ? { background: NAVY, color: '#fff', borderColor: NAVY } : {}} onClick={() => setUaOnly(p => !p)}>Ukrainian only</Button>
+            {activeFilters > 0 && <Button variant="ghost" size="sm" className="h-8 text-muted-foreground" onClick={clearAll}>Clear all ({activeFilters})</Button>}
+          </div>
+          <div className="text-sm text-muted-foreground">Showing {filtered.length} of {startups.length} deals</div>
+          {filtered.length > 0 ? (
+            <div className="flex flex-col gap-2">
+              {filtered.map(s => (
+                <DealListRow key={s.id} startup={s} onClick={() => setSelectedDeal(s)} />
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <div className="text-muted-foreground">No deals match your filters</div>
+              <Button variant="link" onClick={clearAll}>Clear all filters</Button>
+            </div>
+          )}
+        </>
       ) : (
         <>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
