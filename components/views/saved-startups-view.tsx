@@ -187,7 +187,7 @@ function DetailSheet({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ startupId: startup.id, status: 'Not Interested' }),
       })
-      onRemove(item.matchId)
+      onRemove(item!.matchId)
       onClose()
     } catch {
       setRemoving(false)
