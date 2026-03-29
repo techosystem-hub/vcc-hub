@@ -663,7 +663,7 @@ export function DealRoomView({ initialFilter }: DealRoomProps = {}) {
     if (selectedVerticals.length > 0) result = result.filter(s => selectedVerticals.includes(s.vertical))
     if (selectedStages.length > 0)    result = result.filter(s => selectedStages.includes(s.roundStage))
     if (selectedYears.length > 0)     result = result.filter(s => selectedYears.includes(String(s.year)))
-    if (selectedInvType)              result = result.filter(s => s.investmentType === selectedIntType)
+    if (selectedInvType)              result = result.filter(s => s.investmentType === selectedInvType)
     if (techosystemOnly)              result = result.filter(s => s.techosystemMember === 'Member')
     if (uaOnly)                       result = result.filter(isUkrainian)
     if (dateFrom)                     result = result.filter(s => s.datePublished >= dateFrom)
