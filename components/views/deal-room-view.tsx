@@ -668,7 +668,7 @@ export function DealRoomView({ initialFilter }: DealRoomProps = {}) {
     if (uaOnly)                       result = result.filter(isUkrainian)
     if (dateFrom)                     result = result.filter(s => s.datePublished >= dateFrom)
     if (sortBy === 'highest') result.sort((a, b) => b.investmentSizeUSD - a.investmentSizeUSD)
-    if (sortBy === 'lowest')  result.sort((a, b) => a.investmentSizeUSD t b.investmentSizeUSD)
+    if (sortBy === 'lowest')  result.sort((a, b) => a.investmentSizeUSD - b.investmentSizeUSD)
     if (sortBy === 'newest')  result.sort((a, b) =>
       b.year - a.year || b.datePublished.localeCompare(a.datePublished)
     )
