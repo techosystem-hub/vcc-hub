@@ -18,8 +18,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet'
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// âââ Types ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 export interface DealFilter {
   years?: string[]
   verticals?: string[]
@@ -52,7 +58,7 @@ interface VCCEvent {
   source: 'curated' | 'custom'
 }
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+// âââ Constants ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 // Source filter list is derived dynamically from loaded articles (see component state)
 
 const SOURCE_COLORS: Record<string, string> = {
@@ -71,7 +77,7 @@ const EVENT_TYPE_OPTIONS = [
   'Workshop', 'Forum', 'Other',
 ]
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// âââ Helpers âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime()
   const h = Math.floor(diff / 3_600_000)
@@ -95,7 +101,7 @@ function formatEventDate(dateStr: string) {
   }
 }
 
-// ─── Inline SVG Icons ─────────────────────────────────────────────────────────
+// âââ Inline SVG Icons âââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function IconBriefcase({ className = 'w-5 h-5' }: { className?: string }) {
   return (
     <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -170,7 +176,7 @@ function IconClock({ className = 'w-3 h-3' }: { className?: string }) {
   )
 }
 
-// ─── Stat Card ────────────────────────────────────────────────────────────────
+// âââ Stat Card ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function StatCard({
   icon, label, value, accent, onClick,
 }: { icon: React.ReactNode; label: string; value: string; accent: string; onClick?: () => void }) {
@@ -190,7 +196,7 @@ function StatCard({
   )
 }
 
-// ─── Source Badge ─────────────────────────────────────────────────────────────
+// âââ Source Badge âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function SourceBadge({ source }: { source: string }) {
   const color = SOURCE_COLORS[source] ?? '#6f7280'
   return (
@@ -201,7 +207,7 @@ function SourceBadge({ source }: { source: string }) {
   )
 }
 
-// ─── Days Badge ───────────────────────────────────────────────────────────────
+// âââ Days Badge âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function DaysBadge({ days }: { days: number }) {
   if (days < 0) return null
   let cls = 'bg-green-50 text-green-700 border-green-200'
@@ -215,22 +221,22 @@ function DaysBadge({ days }: { days: number }) {
   )
 }
 
-// ─── Add Event Modal ──────────────────────────────────────────────────────────
+// âââ Add Event Modal ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function AddEventModal({
   open, onClose, onAdded,
 }: { open: boolean; onClose: () => void; onAdded: () => void }) {
   const [form, setForm] = useState({
     title: '', date: '', endDate: '', location: '', url: '',
-    description: '', type: '', tags: '', isPrivate: false,
+    description: '', type: '',
   })
   const [saving, setSaving] = useState(false)
 
-  const update = (k: string, v: string | boolean) =>
+  const update = (k: string, v: string) =>
     setForm(f => ({ ...f, [k]: v }))
 
   const reset = () =>
     setForm({ title: '', date: '', endDate: '', location: '', url: '',
-      description: '', type: '', tags: '', isPrivate: false })
+      description: '', type: '' })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -248,8 +254,6 @@ function AddEventModal({
           url:         form.url         || undefined,
           description: form.description || undefined,
           type:        form.type        || undefined,
-          tags:        form.tags ? form.tags.split(',').map(t => t.trim()).filter(Boolean) : [],
-          isPrivate:   form.isPrivate,
         }),
       })
       onAdded()
@@ -312,7 +316,7 @@ function AddEventModal({
               <Label htmlFor="ev-type" className="text-xs font-semibold text-gray-700">Type</Label>
               <Select value={form.type} onValueChange={v => update('type', v)}>
                 <SelectTrigger id="ev-type">
-                  <SelectValue placeholder="Select type…" />
+                  <SelectValue placeholder="Select typeâ¦" />
                 </SelectTrigger>
                 <SelectContent>
                   {EVENT_TYPE_OPTIONS.map(t => (
@@ -331,39 +335,21 @@ function AddEventModal({
           {/* URL */}
           <div className="space-y-1.5">
             <Label htmlFor="ev-url" className="text-xs font-semibold text-gray-700">Event URL</Label>
-            <Input id="ev-url" type="url" placeholder="https://…"
+            <Input id="ev-url" type="url" placeholder="https://â¦"
               value={form.url} onChange={e => update('url', e.target.value)} />
           </div>
 
           {/* Description */}
           <div className="space-y-1.5">
             <Label htmlFor="ev-desc" className="text-xs font-semibold text-gray-700">Description</Label>
-            <Textarea id="ev-desc" rows={2} placeholder="Brief description…"
-              value={form.description} onChange={e => update('description', e.target.value)} />
-          </div>
-
-          {/* Tags */}
-          <div className="space-y-1.5">
-            <Label htmlFor="ev-tags" className="text-xs font-semibold text-gray-700">
-              Tags{' '}
-              <span className="font-normal text-gray-400">(comma-separated)</span>
-            </Label>
-            <Input id="ev-tags" placeholder="fintech, AI, Ukraine"
-              value={form.tags} onChange={e => update('tags', e.target.value)} />
-          </div>
-
-          {/* Private */}
-          <div className="flex items-center gap-2 py-1 border-t border-gray-100">
-            <input
-              type="checkbox" id="ev-private"
-              checked={form.isPrivate}
-              onChange={e => update('isPrivate', e.target.checked)}
-              className="w-4 h-4 rounded border-gray-300"
-              style={{ accentColor: '#e71d36' }}
+            <Textarea
+              id="ev-desc"
+              rows={3}
+              placeholder="Brief descriptionâ¦"
+              value={form.description}
+              onChange={e => update('description', e.target.value)}
+              className="bg-white text-gray-900 placeholder:text-gray-400"
             />
-            <Label htmlFor="ev-private" className="text-sm font-normal text-gray-700 cursor-pointer">
-              Private — visible to VCC members only
-            </Label>
           </div>
 
           {/* Actions */}
@@ -377,7 +363,7 @@ function AddEventModal({
               style={{ backgroundColor: '#e71d36', borderColor: '#e71d36' }}
               className="text-white hover:opacity-90 transition-opacity"
             >
-              {saving ? 'Saving…' : 'Add Event'}
+              {saving ? 'Savingâ¦' : 'Add Event'}
             </Button>
           </div>
         </form>
@@ -386,12 +372,12 @@ function AddEventModal({
   )
 }
 
-// ─── Main Component ───────────────────────────────────────────────────────────
+// âââ Main Component âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 export function AnalyticsView({ onNavigate }: { onNavigate?: (view: string, filter?: DealFilter) => void }) {
   const [news,        setNews]        = useState<NewsItem[]>([])
   const [events,      setEvents]      = useState<VCCEvent[]>([])
   const [yearDeals,   setYearDeals]   = useState(0)
-  const [topVertical, setTopVertical] = useState('—')
+  const [topVertical, setTopVertical] = useState('â')
   const [monthDeals,  setMonthDeals]  = useState(0)
   const [weekDeals,   setWeekDeals]   = useState(0)
   const [activeSource, setActiveSource] = useState('All')
@@ -399,6 +385,7 @@ export function AnalyticsView({ onNavigate }: { onNavigate?: (view: string, filt
   const [loading,     setLoading]     = useState(true)
   const [showAdd,     setShowAdd]     = useState(false)
   const [spinning,    setSpinning]    = useState(false)
+  const [selectedEvent, setSelectedEvent] = useState<VCCEvent | null>(null)
 
   const PAGE_SIZE = 5
 
@@ -432,7 +419,7 @@ export function AnalyticsView({ onNavigate }: { onNavigate?: (view: string, filt
       const counts: Record<string, number> = {}
       yearDeals.forEach(d => { const v = (d.vertical as string) || 'Other'; counts[v] = (counts[v] || 0) + 1 })
       const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]
-      setTopVertical(top ? top[0] : '—')
+      setTopVertical(top ? top[0] : 'â')
     } finally {
       setLoading(false)
     }
@@ -472,7 +459,7 @@ export function AnalyticsView({ onNavigate }: { onNavigate?: (view: string, filt
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
   })
 
-  // ── Loading state ──────────────────────────────────────────────────────────────────
+  // ââ Loading state ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -481,17 +468,17 @@ export function AnalyticsView({ onNavigate }: { onNavigate?: (view: string, filt
             className="w-8 h-8 border-2 border-gray-200 rounded-full animate-spin"
             style={{ borderTopColor: '#e71d36' }}
           />
-          <p className="text-sm text-gray-500">Loading Intelligence Hub…</p>
+          <p className="text-sm text-gray-500">Loading Intelligence Hubâ¦</p>
         </div>
       </div>
     )
   }
 
-  // ── Main render ──────────────────────────────────────────────────────────────────
+  // ââ Main render ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
   return (
     <div className="min-h-screen bg-gray-50/60 p-6 space-y-6">
 
-      {/* ── Header ── */}
+      {/* ââ Header ââ */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div
@@ -517,7 +504,7 @@ export function AnalyticsView({ onNavigate }: { onNavigate?: (view: string, filt
         </button>
       </div>
 
-      {/* ── Stats Strip ── */}
+      {/* ââ Stats Strip ââ */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           icon={<IconBriefcase className="w-5 h-5 text-white" />}
@@ -559,24 +546,23 @@ export function AnalyticsView({ onNavigate }: { onNavigate?: (view: string, filt
             const yr = String(new Date().getFullYear())
             onNavigate?.('deal-room', {
               years: [yr],
-              verticals: topVertical !== '—' ? [topVertical] : undefined,
+              verticals: topVertical !== 'â' ? [topVertical] : undefined,
               viewMode: 'deals',
             })
           }}
         />
       </div>
 
-      {/* ── Main Content Grid ── */}
+      {/* ââ Main Content Grid ââ */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-        {/* ── News Feed (left 2/3) ── */}
+        {/* ââ News Feed (left 2/3) ââ */}
         <div className="lg:col-span-2 space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-gray-900">Market News</h2>
-            <span className="text-xs text-gray-400">{filteredNews.length} articles</span>
+            <h2 className="text-sm font-semibold text-gray-900">Ukrainian Tech News</h2>
           </div>
 
-          {/* Source filter pills — built from actual articles */}
+          {/* Source filter pills â built from actual articles */}
           <div className="flex flex-wrap gap-1.5">
             {newsSources.map(src => (
               <button
@@ -619,7 +605,7 @@ export function AnalyticsView({ onNavigate }: { onNavigate?: (view: string, filt
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                         <SourceBadge source={article.source} />
-                        <span className="text-gray-300 select-none">·</span>
+                        <span className="text-gray-300 select-none">Â·</span>
                         <span className="inline-flex items-center gap-1 text-xs text-gray-400">
                           <IconClock />
                           {timeAgo(article.publishedAt)}
@@ -653,7 +639,7 @@ export function AnalyticsView({ onNavigate }: { onNavigate?: (view: string, filt
           )}
         </div>
 
-        {/* ── Events Sidebar (right 1/3) ── */}
+        {/* ââ Events Sidebar (right 1/3) ââ */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-gray-900">Upcoming Events</h2>
@@ -691,7 +677,8 @@ export function AnalyticsView({ onNavigate }: { onNavigate?: (view: string, filt
                 return (
                   <div
                     key={event.id}
-                    className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-sm transition-shadow"
+                    onClick={() => setSelectedEvent(event)}
+                    className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-sm hover:border-gray-300 transition-all cursor-pointer"
                   >
                     <div className="flex items-stretch">
                       {/* Calendar date block */}
@@ -755,12 +742,87 @@ export function AnalyticsView({ onNavigate }: { onNavigate?: (view: string, filt
         </div>
       </div>
 
-      {/* ── Add Event Modal ── */}
+      {/* ââ Add Event Modal ââ */}
       <AddEventModal
         open={showAdd}
         onClose={() => setShowAdd(false)}
         onAdded={load}
       />
+
+      {/* ââ Event Detail Sheet ââ */}
+      <Sheet open={!!selectedEvent} onOpenChange={open => { if (!open) setSelectedEvent(null) }}>
+        <SheetContent side="right" className="sm:max-w-xl w-full overflow-y-auto p-0">
+          {selectedEvent && (() => {
+            const { month, day, weekday } = formatEventDate(selectedEvent.date)
+            const days = daysUntil(selectedEvent.date)
+            return (
+              <>
+                {/* Header band */}
+                <div className="px-8 pt-8 pb-6 border-b border-gray-100" style={{ background: '#011627' }}>
+                  <SheetHeader>
+                    <SheetTitle className="text-white text-xl font-bold leading-snug">
+                      {selectedEvent.title}
+                    </SheetTitle>
+                  </SheetHeader>
+                  <div className="flex items-center gap-3 mt-4">
+                    <div className="flex items-center gap-2 text-white/80 text-sm">
+                      <IconCalendar className="w-4 h-4" />
+                      <span>
+                        {day} {month} {new Date(selectedEvent.date).getFullYear()}
+                        {selectedEvent.endDate && selectedEvent.endDate !== selectedEvent.date
+                          ? ` â ${new Date(selectedEvent.endDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}`
+                          : ''}
+                      </span>
+                    </div>
+                    <DaysBadge days={days} />
+                  </div>
+                  {selectedEvent.location && (
+                    <div className="flex items-center gap-2 mt-2 text-white/70 text-sm">
+                      <IconMapPin className="w-4 h-4" />
+                      <span>{selectedEvent.location}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="px-8 py-6 space-y-5">
+                  {selectedEvent.type && (
+                    <div>
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Type</p>
+                      <span className="inline-block text-xs font-semibold bg-gray-100 text-gray-700 rounded-full px-3 py-1 uppercase tracking-wide">
+                        {selectedEvent.type}
+                      </span>
+                    </div>
+                  )}
+
+                  {selectedEvent.description && (
+                    <div>
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Description</p>
+                      <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
+                        {selectedEvent.description}
+                      </p>
+                    </div>
+                  )}
+
+                  {selectedEvent.url && (
+                    <div className="pt-2">
+                      <a
+                        href={selectedEvent.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 text-sm font-semibold text-white rounded-lg px-4 py-2.5 hover:opacity-90 transition-opacity"
+                        style={{ backgroundColor: '#e71d36' }}
+                      >
+                        Register / View Event
+                        <IconExternalLink className="w-4 h-4" />
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </>
+            )
+          })()}
+        </SheetContent>
+      </Sheet>
     </div>
   )
 }
