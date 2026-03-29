@@ -45,7 +45,7 @@ type SortOption = 'newest' | 'highest' | 'lowest'
 type ViewMode   = 'analytics' | 'deals' | 'list'
 
 function formatUSD(n: number): string {
-  if (!n) return 'â'
+  if (!n) return '—'
   if (n >= 1e9) return `$${(n / 1e9).toFixed(1)}B`
   if (n >= 1e6) return `$${(n / 1e6).toFixed(1)}M`
   if (n >= 1e3) return `$${(n / 1e3).toFixed(0)}K`
@@ -96,11 +96,11 @@ function StatCard({
             {sub && <div className="text-xs text-muted-foreground mt-0.5">{sub}</div>}
             {onClick && (
               <div className="text-[10px] mt-1.5 font-medium" style={{ color: RED }}>
-                Click to explore â
+                Click to explore →
               </div>
             )}
           </div>
-          <div className="rounded-lg p-2" style={{ background: `${RED}18 `}}>
+          <div className="rounded-lg p-2" style={{ background: `${RED}18` }}>
             <Icon className="h-4 w-4" style={{ color: RED }} />
           </div>
         </div>
@@ -265,7 +265,7 @@ function AnalyticsPanel({
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
                 <XAxis dataKey="year" tick={{ fontSize: 12, fill: '#555' }} />
                 <YAxis tick={{ fontSize: 11, fill: '#888' }} />
-                <Tooltip content=y(p) => <ChartTooltip {...p} />} cursor={{ fill: 'rgba(0,0,0,0.06)' }} />
+                <Tooltip content={(p) => <ChartTooltip {...p} />} cursor={{ fill: 'rgba(0,0,0,0.06)' }} />
                 <Bar dataKey="deals" name="Deals" fill={RED} radius={[4, 4, 0, 0]}
                   onClick={(data) => onFilter({ years: [String(data.year)] })}
                   cursor="pointer"
@@ -365,7 +365,7 @@ function DealDetailSheet({
           <Row label="Year"            value={startup.year > 0 ? startup.year : null} />
 
           <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1 mt-5">Investors</div>
-          <Row label="Investor(s)"           value={startup.investors || 'â'} />
+          <Row label="Investor(s)"           value={startup.investors || '—'} />
           <Row label="UA investors involved" value={startup.uaInvestorsInvolved} />
 
           <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1 mt-5">Company</div>
@@ -416,7 +416,7 @@ function DealListRow({
         <div className="flex items-center gap-2 flex-wrap">
           <span className="font-semibold text-sm text-foreground truncate">{startup.name}</span>
           {startup.techosystemMember === 'Member' && (
-            <Badge className="text-[10px] px-1.5 py-0 text-white border-0 shrink-0" style={{ background: RED }}>â Member</Badge>
+            <Badge className="text-[10px] px-1.5 py-0 text-white border-0 shrink-0" style={{ background: RED }}>✓ Member</Badge>
           )}
         </div>
         <div className="flex items-center gap-2 mt-0.5 flex-wrap">
@@ -433,7 +433,7 @@ function DealListRow({
         {startup.year > 0 && <p className="text-[10px] text-gray-400">{startup.year}</p>}
       </div>
       {/* Arrow */}
-      <div className="flex-shrink-0 text-gray-300 text-sm">âº</div>
+      <div className="flex-shrink-0 text-gray-300 text-sm">›</div>
     </div>
   )
 }
@@ -465,7 +465,7 @@ function DealCard({
               <h3 className="font-semibold text-foreground leading-tight truncate flex-1 min-w-0">{startup.name}</h3>
               {startup.techosystemMember === 'Member' && (
                 <Badge className="text-[10px] shrink-0 text-white border-0 px-1.5 py-0" style={{ background: RED }}>
-                  â Member
+                  ✓ Member
                 </Badge>
               )}
             </div>
@@ -521,7 +521,7 @@ function DealCard({
               View news
             </a>
           ) : <span />}
-          <span className="text-[10px] text-muted-foreground">Tap for details â</span>
+          <span className="text-[10px] text-muted-foreground">Tap for details →</span>
         </div>
       </CardContent>
     </Card>
@@ -663,12 +663,12 @@ export function DealRoomView({ initialFilter }: DealRoomProps = {}) {
     if (selectedVerticals.length > 0) result = result.filter(s => selectedVerticals.includes(s.vertical))
     if (selectedStages.length > 0)    result = result.filter(s => selectedStages.includes(s.roundStage))
     if (selectedYears.length > 0)     result = result.filter(s => selectedYears.includes(String(s.year)))
-    if (selectedInvType)              result = result.filter(s => s.investmentType === selectedInvType)
+    if (selectedInvType)              result = result.filter(s => s.investmentType === selectedIntType)
     if (techosystemOnly)              result = result.filter(s => s.techosystemMember === 'Member')
     if (uaOnly)                       result = result.filter(isUkrainian)
     if (dateFrom)                     result = result.filter(s => s.datePublished >= dateFrom)
     if (sortBy === 'highest') result.sort((a, b) => b.investmentSizeUSD - a.investmentSizeUSD)
-    if (sortBy === 'lowest')  result.sort((a, b) => a.investmentSizeUSD - b.investmentSizeUSD)
+    if (sortBy === 'lowest')  result.sort((a, b) => a.investmentSizeUSD t b.investmentSizeUSD)
     if (sortBy === 'newest')  result.sort((a, b) =>
       b.year - a.year || b.datePublished.localeCompare(a.datePublished)
     )
@@ -691,7 +691,7 @@ export function DealRoomView({ initialFilter }: DealRoomProps = {}) {
 
   const clearAll = () => {
     setSelectedVerticals([]); setSelectedStages([]); setSelectedYears([])
-    setSelectedInvType(''); setTechosystemOnly(false); setUaOnly(false)
+    setSelectedIntType(''); setTechosystemOnly(false); setUaOnly(false)
     setSearchQuery(''); setDateFrom(null)
   }
 
