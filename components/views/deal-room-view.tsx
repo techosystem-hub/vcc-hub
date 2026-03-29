@@ -691,7 +691,7 @@ export function DealRoomView({ initialFilter }: DealRoomProps = {}) {
 
   const clearAll = () => {
     setSelectedVerticals([]); setSelectedStages([]); setSelectedYears([])
-    setSelectedIntType(''); setTechosystemOnly(false); setUaOnly(false)
+    setSelectedInvType(''); setTechosystemOnly(false); setUaOnly(false)
     setSearchQuery(''); setDateFrom(null)
   }
 
