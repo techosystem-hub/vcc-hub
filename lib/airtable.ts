@@ -245,6 +245,22 @@ function parseStartup(r: any): Startup {
   };
 }
 
+export async function createInvestorRecord(email: string, name: string): Promise<Investor> {
+  const res = await fetch(`${ROOT}/${encodeURIComponent('Investor Profile')}`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      fields: {
+        'Fund / Organization Name': name,
+        'Email for Deal Flow':      email,
+      },
+    }),
+  });
+  if (!res.ok) throw new Error('Failed to create investor record');
+  const record = await res.json();
+  return parseInvestor(record);
+}
+
 export async function getActiveStartups(filters: {
   vertical?: string;
   stage?: string;
