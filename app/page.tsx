@@ -140,17 +140,7 @@ export default function Home() {
               {navItems.find((item) => item.id === activeView)?.label}
             </h1>
           </div>
-          <div className="flex items-center gap-2 select-none">
-            <div
-              className="h-7 w-7 rounded-md flex items-center justify-center text-white font-black text-base"
-              style={{ background: '#e71d36', fontFamily: 'Georgia, serif' }}
-            >
-              T
-            </div>
-            <span className="text-sm font-semibold hidden sm:block" style={{ color: '#011627' }}>
-              Techosystem
-            </span>
-          </div>
+          <img src="/logo.svg" alt="Techosystem" className="h-7 object-contain" />
         </header>
         <main className="flex-1 overflow-auto p-6">
           {activeView === 'deal-room' && <DealRoomView initialFilter={dealFilter} />}
