@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 36">
+  <circle cx="9"  cy="9"  r="8" fill="#e71d36"/>
+  <circle cx="27" cy="9"  r="8" fill="#e71d36"/>
+  <circle cx="45" cy="9"  r="8" fill="#e71d36"/>
+  <circle cx="63" cy="9"  r="8" fill="#e71d36"/>
+  <circle cx="18" cy="27" r="8" fill="#e71d36"/>
+  <circle cx="36" cy="27" r="8" fill="#e71d36"/>
+  <circle cx="54" cy="27" r="8" fill="#e71d36"/>
+  <text x="80" y="26" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif" font-size="19" font-weight="800" letter-spacing="-0.3" fill="#011627">techosystem</text>
+</svg>
