@@ -691,6 +691,9 @@ export function SmartMatchesView() {
             <p className="text-sm text-muted-foreground max-w-sm">
               No actively raising startups match your criteria right now. New startups are added regularly — check back soon.
             </p>
+              <p className="text-xs text-muted-foreground mt-3 max-w-xs">
+                Want better matches? Make sure your investment criteria is filled in under <strong>My Criteria</strong>.
+              </p>
             <Button variant="outline" className="mt-5" onClick={load}>
               <RefreshCw className="w-4 h-4 mr-2" />Refresh
             </Button>
