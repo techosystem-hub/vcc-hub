@@ -188,13 +188,13 @@ function MatchCard({
               </div>
             </div>
           </div>
-          {muted ? (
+          <div className="flex-shrink-0">{muted ? (
             <span className="text-xs text-muted-foreground bg-gray-50 border border-gray-200 rounded-full px-2 py-0.5 whitespace-nowrap">
               {match.score}/100
             </span>
           ) : (
             <ScoreBadge label={match.scoreLabel} score={match.score} />
-          )}
+          )}</div>
         </div>
       </CardHeader>
 
