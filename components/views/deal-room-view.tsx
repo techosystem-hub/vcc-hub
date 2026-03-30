@@ -326,7 +326,7 @@ function DealDetailSheet({
 
   return (
     <Sheet open={!!startup} onOpenChange={v => { if (!v) onClose() }}>
-      <SheetContent className="w-full sm:max-w-[600px] overflow-y-auto" side="right">
+      <SheetContent className="w-full sm:max-w-[800px] overflow-y-auto" side="right">
         <SheetHeader className="pb-4 border-b border-gray-100">
           <div className="flex items-start gap-3">
             <div
