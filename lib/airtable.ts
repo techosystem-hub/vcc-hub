@@ -304,9 +304,9 @@ function parseMatchBase(r: any) {
   };
 }
 
-export async function getMatchesForInvestor(investorId: string): Promise<Match[]> {
+export async function getMatchesForInvestor(investorId: string, investorName: string): Promise<Match[]> {
   // Filter matches for this investor using FIND on the linked record array
-  const formula = `FIND("${investorId}", ARRAYJOIN({Investor}, ","))`;
+  const formula = `{Investor} = "${investorName}"`;
   const records = await fetchTable<any>('Matches', {
     filterByFormula: formula,
     sort: '[{"field":"Score","direction":"desc"}]',
