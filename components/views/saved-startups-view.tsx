@@ -196,7 +196,7 @@ function DetailSheet({
 
   return (
     <Sheet open={!!item} onOpenChange={open => { if (!open) onClose() }}>
-      <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
+      <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
         <SheetHeader className="mb-4">
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white font-bold text-base select-none flex-shrink-0">
@@ -277,7 +277,7 @@ function DetailSheet({
               <ul className="space-y-1">
                 {notes.split('\n').filter(Boolean).map((n, i) => (
                   <li key={i} className="text-sm text-foreground flex gap-2">
-                    <span className="text-emerald-500 mt-0.5 flex-shrink-0">â</span>
+                    <span className="text-emerald-500 mt-0.5 flex-shrink-0">✓</span>
                     <span>{n}</span>
                   </li>
                 ))}
