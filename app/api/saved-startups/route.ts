@@ -109,7 +109,18 @@ export async function GET() {
       }
     })
 
-    return NextResponse.json({ savedStartups })
+    // ── 6. Filter out empty startups and deduplicate by startup ID ──────────────
+  const seen = new Set<string>()
+  const dedupedStartups = savedStartups
+    .filter(item => item.startup.id && item.startup.name) // remove empties
+    .sort((a, b) => b.score - a.score)                   // highest score first
+    .filter(item => {
+      if (seen.has(item.startup.id)) return false
+      seen.add(item.startup.id)
+      return true
+    })
+
+  return NextResponse.json({ savedStartups: dedupedStartups })
   } catch (e: any) {
     console.error('saved-startups error:', e)
     return NextResponse.json({ error: e.message }, { status: 500 })
