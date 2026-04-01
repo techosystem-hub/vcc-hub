@@ -151,6 +151,10 @@ function DetailSheet({
   onRemove: (matchId: string) => void
 }) {
   const [removing, setRemoving] = useState(false)
+
+  // Reset removing state whenever a different card is opened
+  useEffect(() => { setRemoving(false) }, [item?.matchId])
+
   if (!item) return null
 
   const { startup, matchStatus, scoreLabel, notes } = item
@@ -160,10 +164,10 @@ function DetailSheet({
   async function handleRemove() {
     setRemoving(true)
     try {
-      await fetch('/api/request-intro', {
+      await fetch('/api/remove-from-saved', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ startupId: startup.id, status: 'Not Interested' }),
+        body: JSON.stringify({ startupId: startup.id }),
       })
       onRemove(item!.matchId)
       onClose()
