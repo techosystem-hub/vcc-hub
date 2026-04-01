@@ -100,7 +100,8 @@ export interface Event {
 
 async function fetchTable<T>(
   table: string,
-  params: Record<string, string> = {}
+  params: Record<string, string> = {},
+  noCache = false
 ): Promise<T[]> {
   const url = new URL(`${ROOT}/${encodeURIComponent(table)}`);
   const { sort, ...otherParams } = params;
@@ -123,7 +124,7 @@ async function fetchTable<T>(
     if (offset) url.searchParams.set('offset', offset);
     // 5-minute cache: avoids hammering Airtable on every page load
     // PATCH/POST calls use no-store, so writes are always fresh
-    const res  = await fetch(url.toString(), { headers, next: { revalidate: 300 } });
+    const res  = await fetch(url.toString(), noCache ? { headers, cache: 'no-store' } : { headers, next: { revalidate: 300 } });
     const data = await res.json();
     if (!res.ok) throw new Error(`Airtable error: ${data.error?.message}`);
     records.push(...(data.records || []));
@@ -309,7 +310,7 @@ export async function getMatchesForInvestor(investorId: string): Promise<Match[]
   const records = await fetchTable<any>('Matches', {
     filterByFormula: formula,
     sort: '[{"field":"Score","direction":"desc"}]',
-  });
+  }, true);
 
   if (records.length === 0) return [];
 
