@@ -29,11 +29,11 @@ export async function GET() {
 
     // ââ 1. Fetch matches for this investor with Interested / Intro Sent status ââ
     const matchFormula = encodeURIComponent(
-      `AND(FIND("${investor.id}",ARRAYJOIN({Investor},",")),OR({Match Status}="Interested",{Match Status}="Intro Sent"))`
+      `AND({Investor} = "${investor.name}",OR({Match Status}="Interested",{Match Status}="Intro Sent"))`
     )
     const matchRes  = await fetch(
       `${ROOT}/${encodeURIComponent('Matches')}?filterByFormula=${matchFormula}&maxRecords=100`,
-      { headers: AT_HEADERS, next: { revalidate: 60 } }
+      { headers: AT_HEADERS, cache: 'no-store' }
     )
     const matchData = await matchRes.json()
     if (!matchRes.ok) {
@@ -58,7 +58,7 @@ export async function GET() {
     )
     const startupRes  = await fetch(
       `${ROOT}/${encodeURIComponent('Startup Pipeline')}?filterByFormula=${idFormula}&maxRecords=100`,
-      { headers: AT_HEADERS, next: { revalidate: 60 } }
+      { headers: AT_HEADERS, cache: 'no-store' }
     )
     const startupData = await startupRes.json()
     if (!startupRes.ok) {
