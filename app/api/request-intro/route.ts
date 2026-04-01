@@ -59,24 +59,27 @@ export async function POST(req: NextRequest) {
     }
 
     if (checkData.records?.length > 0) {
-      // ── Update existing record ─────────────────────────────
-      const existingId = checkData.records[0].id
-      const patchRes = await fetch(
-        `${ROOT}/${encodeURIComponent('Matches')}/${existingId}`,
-        {
+      // ── Update ALL matching records (handles duplicates) ───
+      const allIds: string[] = checkData.records.map((r: any) => r.id)
+      const chunks: string[][] = []
+      for (let i = 0; i < allIds.length; i += 10) chunks.push(allIds.slice(i, i + 10))
+      for (const chunk of chunks) {
+        const patchRes = await fetch(`${ROOT}/${encodeURIComponent('Matches')}`, {
           method: 'PATCH',
           headers: { Authorization: `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ fields: matchFields }),
+          body: JSON.stringify({
+            records: chunk.map(id => ({ id, fields: matchFields })),
+          }),
+        })
+        if (!patchRes.ok) {
+          const err = await patchRes.json()
+          return NextResponse.json(
+            { error: err.error?.message || 'Failed to update match' },
+            { status: 500 }
+          )
         }
-      )
-      if (!patchRes.ok) {
-        const err = await patchRes.json()
-        return NextResponse.json(
-          { error: err.error?.message || 'Failed to update match' },
-          { status: 500 }
-        )
       }
-      return NextResponse.json({ success: true, matchId: existingId })
+      return NextResponse.json({ success: true, matchId: allIds[0] })
     }
 
     // ── Create new record ────────────────────────────────────
