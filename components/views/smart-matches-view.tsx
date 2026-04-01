@@ -487,7 +487,7 @@ function MatchDetailSheet({
                 {status === 'Intro Sent'
                   ? 'VCC is arranging the introduction.'
                   : isInterested
-                    ? 'Contact details are now visible above.'
+                    ? 'Full startup details are now visible above.'
                     : 'You can change your response below.'}
               </span>
             </div>
@@ -500,7 +500,7 @@ function MatchDetailSheet({
               className={`w-full gap-2 ${isInterested ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-[#e71d36] hover:bg-[#c91027]'} text-white`}
             >
               <ThumbsUp className="w-4 h-4" />
-              {isInterested ? 'Interested ✓' : "I'm Interested — Request Intro"}
+              {isInterested ? 'Interested ✓' : "I'm Interested — Show More"}
             </Button>
             <Button
               variant="ghost"
@@ -514,7 +514,7 @@ function MatchDetailSheet({
           </div>
           {!isInterested && (
             <p className="text-xs text-muted-foreground text-center">
-              Contact details are revealed when you express interest.
+              Click to reveal full startup details including contact info.
             </p>
           )}
         </div>
