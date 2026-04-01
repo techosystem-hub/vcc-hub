@@ -185,10 +185,10 @@ function DetailSheet({
 
   return (
     <Sheet open={!!item} onOpenChange={open => { if (!open) onClose() }}>
-      <SheetContent className="w-full sm:max-w-[min(820px,92vw)] p-0 flex flex-col overflow-hidden">
+      <SheetContent className="w-full sm:max-w-[min(820px,92vw)] p-0 flex flex-col h-full overflow-hidden">
 
         {/* ── Header gradient ─────────────────────────────────── */}
-        <div className="relative bg-gradient-to-br from-emerald-600 via-teal-600 to-teal-700 px-8 pt-8 pb-6 text-white flex-shrink-0">
+        <div className="relative bg-gradient-to-br from-emerald-600 via-teal-600 to-teal-700 px-8 pt-8 pb-6 text-white shrink-0 min-h-[120px]">
           {/* Close btn */}
           <button
             onClick={onClose}
