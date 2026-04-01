@@ -41,7 +41,7 @@ export async function GET() {
     // Fetch actively-raising startups and any existing intro request records in parallel
     const [startups, existingMatches] = await Promise.all([
       getActiveStartups(),
-      getMatchesForInvestor(investor.id).catch(() => []), // non-fatal
+      getMatchesForInvestor(investor.id, investor.name).catch(() => []), // non-fatal
     ])
 
     // Build a map: startupId → existing intro status
