@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
     if (!investor) return NextResponse.json({ error: 'Investor not found' }, { status: 404 })
 
     // Check whether a match record for this investor + startup already exists
-    const formula = `AND(FIND("${investor.id}",ARRAYJOIN({Investor},",")),FIND("${startupId}",ARRAYJOIN({Startup},",")))`
+    const formula = `{Match ID} = "${investor.id.slice(-6)}-${startupId.slice(-6)}"`
     const checkRes = await fetch(
       `${ROOT}/${encodeURIComponent('Matches')}?filterByFormula=${encodeURIComponent(formula)}&maxRecords=1`,
       { headers: { Authorization: `Bearer ${TOKEN}` } }
