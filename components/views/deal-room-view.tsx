@@ -309,89 +309,125 @@ function DealDetailSheet({
   onClose: () => void
 }) {
   if (!startup) return null
-
   const initials = startup.name
-    .split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || '??'
+    .split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase() || '??'
 
-  function Row({ label, value }: { label: string; value?: string | number | boolean | null }) {
-    if (value === undefined || value === null || value === '' || value === 0 || value === false) return null
-    const display = typeof value === 'boolean' ? 'Yes' : String(value)
+  function FieldCard({ label, value }: { label: string; value?: string | null }) {
+    if (!value) return null
     return (
-      <div className="flex flex-col gap-0.5 py-2.5 border-b border-gray-100 last:border-0">
-        <span className="text-[11px] text-muted-foreground uppercase tracking-wide">{label}</span>
-        <span className="text-sm font-medium text-foreground">{display}</span>
+      <div className="rounded-xl border p-3.5">
+        <div className="text-[11px] text-muted-foreground uppercase tracking-wide mb-1">{label}</div>
+        <div className="font-semibold text-sm text-foreground break-words">{value}</div>
       </div>
     )
   }
 
   return (
     <Sheet open={!!startup} onOpenChange={v => { if (!v) onClose() }}>
-      <SheetContent className="w-full sm:max-w-[800px] overflow-y-auto" side="right">
-        <SheetHeader className="pb-4 border-b border-gray-100">
-          <div className="flex items-start gap-3">
-            <div
-              className="flex h-12 w-12 items-center justify-center rounded-xl font-bold text-sm flex-shrink-0 text-white"
-              style={{ background: NAVY }}
-            >
-              {initials}
-            </div>
-            <div className="flex-1 min-w-0">
-              <SheetTitle className="text-base font-bold leading-tight text-foreground pr-6">
-                {startup.name}
-              </SheetTitle>
-              <div className="flex flex-wrap gap-1 mt-1.5">
-                {startup.vertical   && <Badge variant="outline" className="text-xs">{startup.vertical}</Badge>}
-                {startup.roundStage && <Badge variant="outline" className="text-xs">{startup.roundStage}</Badge>}
-                {startup.techosystemMember === 'Member' && (
-                  <Badge className="text-xs text-white border-0" style={{ background: RED }}>Techosystem</Badge>
-                )}
+      <SheetContent className="w-full sm:max-w-[min(1000px,95vw)] overflow-y-auto p-0" side="right">
+
+        {/* ── Header ── */}
+        <div className="px-8 pt-8 pb-5 border-b border-gray-100">
+          <SheetHeader className="text-left space-y-0">
+            <div className="flex items-start gap-4">
+              <div
+                className="flex h-16 w-16 items-center justify-center rounded-xl font-bold text-xl flex-shrink-0 text-white"
+                style={{ background: NAVY }}
+              >
+                {initials}
+              </div>
+              <div className="flex-1 min-w-0 pt-0.5">
+                <SheetTitle className="text-2xl font-bold leading-tight text-foreground pr-8">
+                  {startup.name}
+                </SheetTitle>
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {startup.vertical && (
+                    <Badge variant="outline" className="text-xs">{startup.vertical}</Badge>
+                  )}
+                  {startup.roundStage && (
+                    <Badge variant="outline" className="text-xs">{startup.roundStage}</Badge>
+                  )}
+                  {startup.techosystemMember === 'Member' && (
+                    <Badge className="text-xs text-white border-0" style={{ background: RED }}>
+                      ✓ Techosystem Member
+                    </Badge>
+                  )}
+                </div>
               </div>
             </div>
+          </SheetHeader>
+        </div>
+
+        {/* ── Description ── */}
+        {startup.description && (
+          <div className="px-8 py-5 border-b border-gray-100">
+            <p className="text-sm text-muted-foreground leading-relaxed">{startup.description}</p>
           </div>
-        </SheetHeader>
+        )}
 
-        <div className="mt-4 pb-6">
-          {startup.description && (
-            <div className="mb-5 p-3 rounded-lg text-sm text-muted-foreground leading-relaxed" style={{ background: '#f8f8fa' }}>
-              {startup.description}
+        {/* ── Fields ── */}
+        <div className="px-8 py-6 space-y-7">
+
+          {/* Investment */}
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-3">
+              Investment
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <FieldCard label="Amount (USD)" value={startup.investmentSizeUSD > 0 ? formatUSD(startup.investmentSizeUSD) : null} />
+              <FieldCard label="Round Stage" value={startup.roundStage} />
+              <FieldCard label="Investment Type" value={startup.investmentType} />
+              <FieldCard label="Date Published" value={startup.datePublished} />
+              <FieldCard label="Year" value={startup.year > 0 ? String(startup.year) : null} />
             </div>
-          )}
+          </div>
 
-          <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Investment</div>
-          <Row label="Amount (USD)"    value={startup.investmentSizeUSD > 0 ? formatUSD(startup.investmentSizeUSD) : null} />
-          <Row label="Round stage"     value={startup.roundStage} />
-          <Row label="Investment type" value={startup.investmentType} />
-          <Row label="Date published"  value={startup.datePublished} />
-          <Row label="Year"            value={startup.year > 0 ? startup.year : null} />
+          {/* Investors */}
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-3">
+              Investors
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <FieldCard label="Investor(s)" value={startup.investors || '—'} />
+              <FieldCard label="UA Investors Involved" value={startup.uaInvestorsInvolved} />
+            </div>
+          </div>
 
-          <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1 mt-5">Investors</div>
-          <Row label="Investor(s)"           value={startup.investors || '—'} />
-          <Row label="UA investors involved" value={startup.uaInvestorsInvolved} />
+          {/* Company */}
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-3">
+              Company
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <FieldCard label="Founders" value={startup.founders} />
+              <FieldCard label="Legal HQ" value={startup.legalHQ} />
+              <FieldCard label="Startup Origin" value={startup.startupOrigin} />
+              <FieldCard label="Born Year" value={startup.bornYear} />
+              <FieldCard label="Office in Ukraine" value={startup.officeInUkraine ? 'Yes' : 'No'} />
+            </div>
+          </div>
+        </div>
 
-          <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1 mt-5">Company</div>
-          <Row label="Founders"          value={startup.founders} />
-          <Row label="Legal HQ"          value={startup.legalHQ} />
-          <Row label="Startup origin"    value={startup.startupOrigin} />
-          <Row label="Born year"         value={startup.bornYear} />
-          <Row label="Office in Ukraine" value={startup.officeInUkraine} />
-
-          {startup.linkToNews && (
+        {/* ── CTA ── */}
+        {startup.linkToNews && (
+          <div className="px-8 pb-8">
             <a
               href={startup.linkToNews}
-              target="_blank" rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 w-full mt-6 rounded-md py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 w-full rounded-lg py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90"
               style={{ background: RED }}
             >
               <ExternalLink className="h-4 w-4" />
               Read the news article
             </a>
-          )}
-        </div>
+          </div>
+        )}
+
       </SheetContent>
     </Sheet>
   )
 }
-
 function DealListRow({
   startup,
   onClick,
