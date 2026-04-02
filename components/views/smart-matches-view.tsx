@@ -262,6 +262,7 @@ function MatchDetailSheet({
   onOpenChange,
   onAction,
   isActing,
+  investor,
 }: {
   match: ComputedMatch | null
   status: string | undefined
