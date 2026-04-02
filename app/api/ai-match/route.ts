@@ -13,17 +13,21 @@ export async function POST(req: Request) {
 
     const prompt = `You are a VC analyst reviewing publicly available information about a startup.
 
-Write a concise 2-3 sentence company overview based on the startup's public profile (website, LinkedIn, news). Highlight: what the company does, the problem it solves, and why it may be relevant for an investor focused on ${investorCriteria.focusVerticals?.join(', ') || 'these verticals'} at the ${investorCriteria.stagePreference?.join(', ') || 'relevant'} stage with a ${investorCriteria.ticketSize?.join(', ') || 'standard'} ticket size.
+Using the company identifiers below, write a concise 2-3 sentence overview of what this specific company does, the problem it solves, and why it may be relevant for an investor focused on ${investorCriteria.focusVerticals?.join(', ') || 'these verticals'} at ${investorCriteria.stagePreference?.join(', ') || 'early'} stage with a ${investorCriteria.ticketSize?.join(', ') || 'standard'} ticket size.
 
-Company:
+Use ALL identifiers below to ensure you are describing the correct company — not a different company with a similar name. Base your analysis on publicly available sources (website, LinkedIn, news).
+
+Company identifiers:
 - Name: ${startup.startupName}
+- Website / LinkedIn: ${startup.website || 'Not provided'}
+- Jurisdiction: ${startup.jurisdiction || 'Not specified'}
+- Email domain: ${startup.email ? '@' + startup.email.split('@')[1] : 'Not provided'}
 - Sector: ${startup.verticals?.join(', ') || 'Not specified'}
 - Stage: ${startup.roundStage || 'Not specified'}
 - Target raise: ${startup.targetRaise || 'Not specified'}
-- Location: ${startup.jurisdiction || 'Not specified'}
-- Description: ${startup.description || 'No description available'}
+- Description: ${startup.description || 'None'}
 
-Write exactly 2-3 sentences about the company and its market relevance to this investor profile. Plain text only, no headers or bullet points.`
+Write exactly 2-3 sentences. Plain text only, no headers or bullet points.`
 
     const message = await client.messages.create({
       model: 'claude-haiku-4-5-20251001',
