@@ -11,27 +11,19 @@ export async function POST(req: Request) {
   try {
     const { startup, investorCriteria, score, reasons } = await req.json()
 
-    const prompt = `You are a VC analyst for Techosystem's Venture Capital Committee. Write a concise 2-3 sentence investment rationale explaining why this startup is a strong (or weak) match for this investor. Be specific and insightful — focus on strategic fit, not just criteria labels.
+    const prompt = `You are a VC analyst reviewing publicly available information about a startup.
 
-Investor profile:
-- Focus verticals: ${investorCriteria.focusVerticals?.join(', ') || 'Not specified'}
-- Stage preference: ${investorCriteria.stagePreference?.join(', ') || 'Not specified'}
-- Ticket size: ${investorCriteria.ticketSize?.join(', ') || 'Not specified'}
-- Dual-use policy: ${investorCriteria.dualUsePolicy || 'Not specified'}
+Write a concise 2-3 sentence company overview based on the startup's public profile (website, LinkedIn, news). Highlight: what the company does, the problem it solves, and why it may be relevant for an investor focused on ${investorCriteria.focusVerticals?.join(', ') || 'these verticals'} at the ${investorCriteria.stagePreference?.join(', ') || 'relevant'} stage with a ${investorCriteria.ticketSize?.join(', ') || 'standard'} ticket size.
 
-Startup:
+Company:
 - Name: ${startup.startupName}
-- Description: ${startup.description || 'No description provided'}
-- Verticals: ${startup.verticals?.join(', ') || 'Not specified'}
+- Sector: ${startup.verticals?.join(', ') || 'Not specified'}
 - Stage: ${startup.roundStage || 'Not specified'}
 - Target raise: ${startup.targetRaise || 'Not specified'}
-- Jurisdiction: ${startup.jurisdiction || 'Not specified'}
-- Dual-use: ${startup.isDualUse || 'No'}
+- Location: ${startup.jurisdiction || 'Not specified'}
+- Description: ${startup.description || 'No description available'}
 
-Rule-based match score: ${score}/100
-Matching criteria: ${reasons?.join(', ') || 'None matched'}
-
-Write exactly 2-3 sentences of investment rationale. No headers, no bullet points, plain text only.`
+Write exactly 2-3 sentences about the company and its market relevance to this investor profile. Plain text only, no headers or bullet points.`
 
     const message = await client.messages.create({
       model: 'claude-haiku-4-5-20251001',
