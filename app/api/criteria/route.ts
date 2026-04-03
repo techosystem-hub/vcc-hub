@@ -1,4 +1,4 @@
-import { auth, currentUser } from '@clerk/nextjs/server';
+import { currentUser } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import { getInvestorByEmail, updateInvestorCriteria } from '@/lib/airtable';
 
@@ -12,8 +12,8 @@ export async function GET() {
 }
 
 export async function PATCH(req: Request) {
-  const { userId } = auth();
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const user = await currentUser();
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { investorId, verticals, stages, tickets, policy, bio } = await req.json();
   await updateInvestorCriteria(investorId, {
