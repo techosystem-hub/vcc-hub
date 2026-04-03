@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { currentUser } from '@clerk/nextjs/server'
 
 export const revalidate = 0
 
@@ -17,14 +18,14 @@ interface FeedItem {
 const UKRAINE_KW = ['ukraine', 'ukrainian']
 
 const FEEDS: Array<{ name: string; url: string; filter: string[] | null }> = [
-  { name: 'TechUkraine',   url: 'https://techukraine.org/feed/',       filter: null       },
-  { name: 'InVenture',     url: 'https://inventure.com.ua/en/news.rss', filter: null       },
-  { name: 'AIN.UA',        url: 'https://en.ain.ua/feed/',             filter: null       },
-  { name: 'The Recursive', url: 'https://therecursive.com/feed/',      filter: null       },
-  { name: 'TechCrunch',    url: 'https://techcrunch.com/feed/',        filter: UKRAINE_KW },
-  { name: 'Sifted',        url: 'https://sifted.eu/feed',              filter: UKRAINE_KW },
-  { name: 'VentureBeat',   url: 'https://venturebeat.com/feed/',       filter: UKRAINE_KW },
-  { name: 'Wired',         url: 'https://www.wired.com/feed/rss',      filter: UKRAINE_KW },
+  { name: 'TechUkraine', url: 'https://techukraine.org/feed/', filter: null },
+  { name: 'InVenture', url: 'https://inventure.com.ua/en/news.rss', filter: null },
+  { name: 'AIN.UA', url: 'https://en.ain.ua/feed/', filter: null },
+  { name: 'The Recursive', url: 'https://therecursive.com/feed/', filter: null },
+  { name: 'TechCrunch', url: 'https://techcrunch.com/feed/', filter: UKRAINE_KW },
+  { name: 'Sifted', url: 'https://sifted.eu/feed', filter: UKRAINE_KW },
+  { name: 'VentureBeat', url: 'https://venturebeat.com/feed/', filter: UKRAINE_KW },
+  { name: 'Wired', url: 'https://www.wired.com/feed/rss', filter: UKRAINE_KW },
 ]
 
 function getTagText(block: string, tag: string): string {
@@ -52,7 +53,7 @@ function getLinkUrl(block: string): string {
 
 function stripHtml(s: string): string {
   return s
-    .replace(/<!\[CDATA\[|\]\]>/g, '')
+    .replace(/<![\[CDATA[|\]\]>/g, '')
     .replace(/<[^>]+>/g, ' ')
     .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
     .replace(/&#\d+;/g, ' ').replace(/&[a-z]+;/g, ' ')
@@ -107,6 +108,9 @@ function parseFeed(xml: string, source: string, filter: string[] | null): FeedIt
 }
 
 export async function GET() {
+  const user = await currentUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   const settled = await Promise.allSettled(
     FEEDS.map(async ({ name, url, filter }) => {
       const ctrl = new AbortController()
