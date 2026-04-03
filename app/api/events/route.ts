@@ -42,7 +42,7 @@ async function getAirtableEvents(): Promise<VCCEvent[]> {
       type: r.fields.Type ?? 'meetup',
       tags: Array.isArray(r.fields.Tags)
         ? r.fields.Tags
-        : (r.fields.Tags ?? '').split(',').map((t: string) => t.trim()).filter(Boolean),
+        : (r.fields.Tags ?? '').split(',').map((t) => t.trim()).filter(Boolean),
       isPrivate: r.fields['Is Private'] ?? false,
     }))
   } catch {
@@ -61,7 +61,6 @@ export async function GET() {
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
   return NextResponse.json({ events: filtered })
 }
-
 
 export async function POST(req: Request) {
   const user = await currentUser()
@@ -82,7 +81,6 @@ export async function POST(req: Request) {
     if (body.type)        fields['Type']        = body.type
     if (body.tags)        fields['Tags']        = body.tags
     if (body.isPrivate)   fields['Is Private']  = body.isPrivate
-
     const res = await fetch(BASE + '/' + TABLE, {
       method: 'POST',
       headers: { Authorization: 'Bearer ' + TOKEN, 'Content-Type': 'application/json' },
