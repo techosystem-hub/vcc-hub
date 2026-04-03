@@ -6,7 +6,7 @@
 // ─────────────────────────────────────────────────────────────
 
 import { NextRequest, NextResponse } from 'next/server'
-import { auth, currentUser } from '@clerk/nextjs/server'
+import { currentUser } from '@clerk/nextjs/server'
 import { getInvestorByEmail } from '@/lib/airtable'
 
 const BASE_ID = process.env.AIRTABLE_BASE_ID!
@@ -21,12 +21,37 @@ function safeSelect(value: string | undefined, allowed: string[]): string | unde
   return value && allowed.includes(value) ? value : undefined
 }
 
-export async function POST(req: NextRequest) {
-  const { userId } = await auth()
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+async function notifySlack(investorName: string, startupId: string) {
+  const webhookUrl = process.env.NOTIFY_WEBHOOK_URL
+  if (!webhookUrl) return
 
   try {
-    const user  = await currentUser()
+    const startupRes = await fetch(
+      `${ROOT}/${encodeURIComponent('Startup Pipeline')}/${startupId}`,
+      { headers: { Authorization: `Bearer ${TOKEN}` } }
+    )
+    if (!startupRes.ok) return
+    const startup = await startupRes.json()
+    const startupName = startup.fields?.['Startup Name'] || 'Unknown Startup'
+    const sector = (startup.fields?.['Primary Vertical'] || ['Unknown'])[0]
+    const stage = startup.fields?.['Investment Stage'] || 'Unknown'
+
+    await fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text: `*New Intro Request*\nInvestor: ${investorName}\nStartup: ${startupName}\nSector: ${sector} | Stage: ${stage}\nTime: ${new Date().toISOString()}`,
+      }),
+    })
+  } catch {}
+}
+
+export async function POST(req: NextRequest) {
+  const user = await currentUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  try {
     const email = user?.emailAddresses?.[0]?.emailAddress
     if (!email) return NextResponse.json({ error: 'No email' }, { status: 400 })
 
@@ -79,6 +104,9 @@ export async function POST(req: NextRequest) {
           )
         }
       }
+      // ── Slack notification (non-blocking) ────
+      notifySlack(investor.name, startupId).catch(err => console.error('Slack failed:', err.message))
+
       return NextResponse.json({ success: true, matchId: allIds[0] })
     }
 
@@ -108,6 +136,9 @@ export async function POST(req: NextRequest) {
       )
     }
     const created = await createRes.json()
+    // ── Slack notification (non-blocking) ────
+    notifySlack(investor.name, startupId).catch(err => console.error('Slack failed:', err.message))
+
     return NextResponse.json({ success: true, matchId: created.id })
   } catch (e: any) {
     console.error('request-intro error:', e)
