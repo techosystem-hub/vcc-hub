@@ -6,7 +6,7 @@
 // âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 import { NextResponse } from 'next/server'
-import { auth, currentUser } from '@clerk/nextjs/server'
+import { currentUser } from '@clerk/nextjs/server'
 import { getInvestorByEmail } from '@/lib/airtable'
 
 const BASE_ID = process.env.AIRTABLE_BASE_ID!
@@ -16,11 +16,10 @@ const ROOT    = `https://api.airtable.com/v0/${BASE_ID}`
 const AT_HEADERS = { Authorization: `Bearer ${TOKEN}` }
 
 export async function GET() {
-  const { userId } = await auth()
-  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const user = await currentUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   try {
-    const user  = await currentUser()
     const email = user?.emailAddresses?.[0]?.emailAddress
     if (!email) return NextResponse.json({ error: 'No email' }, { status: 400 })
 
