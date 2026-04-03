@@ -4,9 +4,24 @@ import { NextResponse } from 'next/server'
 
 const client = new Anthropic()
 
+// ── Rate limiting: 10 calls/min per user ─────────────────────────────────
+const rateLimitMap = new Map<string, number[]>()
+
+function isRateLimited(userId: string): boolean {
+  const now = Date.now()
+  const calls = rateLimitMap.get(userId) || []
+  const recent = calls.filter((t) => now - t < 60_000)
+  rateLimitMap.set(userId, [...recent, now])
+  return recent.length >= 10
+}
+
 export async function POST(req: Request) {
   const { userId } = await auth()
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  if (isRateLimited(userId)) {
+    return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 })
+  }
 
   try {
     const { startup, investorCriteria, score, reasons } = await req.json()
