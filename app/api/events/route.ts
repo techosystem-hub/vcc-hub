@@ -42,7 +42,7 @@ async function getAirtableEvents(): Promise<VCCEvent[]> {
       type: r.fields.Type ?? 'meetup',
       tags: Array.isArray(r.fields.Tags)
         ? r.fields.Tags
-        : (r.fields.Tags ?? '').split(',').map((t) => t.trim()).filter(Boolean),
+        : (r.fields.Tags ?? '').split(',').map((t: string) => t.trim()).filter(Boolean),
       isPrivate: r.fields['Is Private'] ?? false,
     }))
   } catch {
