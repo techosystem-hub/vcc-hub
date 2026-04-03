@@ -274,6 +274,7 @@ export async function getActiveStartups(filters: {
     filterByFormula: formula,
     // sorted by most recently created first (Airtable default is oldest first)
     sort: '[{"field":"Startup Name","direction":"asc"}]',
+    fields: JSON.stringify(['Startup Name', 'Primary Vertical', 'Investment Stage', 'Target Raise', 'Status', 'Is Dual-use?', 'Jurisdiction']),
   });
   return records.map(parseStartup);
 }
@@ -364,7 +365,8 @@ export async function updateMatchStatus(matchId: string, status: MatchStatus) {
 // ── Deal Flow Database ───────────────────────────────────────
 // Separate Airtable base: appzew2eaB6QOy0RF / "Imported table"
 
-const DEALFLOW_ROOT = `https://api.airtable.com/v0/appzew2eaB6QOy0RF`;
+const DEALFLOW_BASE_ID = process.env.AIRTABLE_DEALFLOW_BASE_ID || 'appzew2eaB6QOy0RF';
+const DEALFLOW_ROOT = `https://api.airtable.com/v0/${DEALFLOW_BASE_ID}`;
 
 export interface DealFlowStartup {
   id: string;
@@ -536,4 +538,29 @@ export async function getUpcomingEvents(): Promise<Event[]> {
     accessLevel:      r.fields['Access Level'] || 'Public',  // add field to Airtable to enable
     registrationLink: r.fields['RSVP Link'] || undefined,
   }));
+}
+
+// ── AI Rationale Caching (Matches table) ─────────────────────
+// Cache Claude-generated rationale to avoid repeat API calls
+
+export async function getMatchRationale(matchId: string): Promise<string | null> {
+  const records = await fetchTable<any>('Matches', {
+    filterByFormula: `{Record ID}="${matchId}"`,
+    fields: JSON.stringify(['AI Rationale']),
+  });
+  return records[0]?.fields['AI Rationale'] as string || null;
+}
+
+export async function saveMatchRationale(matchId: string, rationale: string): Promise<void> {
+  const url = new URL(`${ROOT}/Matches/${matchId}`);
+  const res = await fetch(url.toString(), {
+    method: 'PATCH',
+    headers,
+    body: JSON.stringify({
+      fields: {
+        'AI Rationale': rationale,
+      },
+    }),
+  });
+  if (!res.ok) throw new Error('Failed to save match rationale');
 }
