@@ -53,7 +53,7 @@ function getLinkUrl(block: string): string {
 
 function stripHtml(s: string): string {
   return s
-    .replace(/<![\[CDATA[|\]\]>/g, '')
+    .replace(/<!\[CDATA\[|\]\]>/g, '')
     .replace(/<[^>]+>/g, ' ')
     .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
     .replace(/&#\d+;/g, ' ').replace(/&[a-z]+;/g, ' ')
