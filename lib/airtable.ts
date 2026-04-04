@@ -53,6 +53,7 @@ export interface Startup {
   website?: string;
   valuationCap?: string;
   committedCapital?: string;
+  shortDescription?: string;
 }
 
 export interface Match {
@@ -250,6 +251,7 @@ function parseStartup(r: any): Startup {
     website:           f['Website / LinkedIn'] || undefined,
     valuationCap:      f['Valuation Cap (USD)'] || undefined,
     committedCapital:  f['Committed Capital (USD)'] || undefined,
+  shortDescription:  (f['Short Description'] as string) || undefined,
   };
 }
 
@@ -281,7 +283,7 @@ export async function getActiveStartups(filters: {
     filterByFormula: formula,
     // sorted by most recently created first (Airtable default is oldest first)
     sort: '[{"field":"Startup Name","direction":"asc"}]',
-    fields: JSON.stringify(['Startup Name', 'Primary Vertical', 'Investment Stage', 'Target Raise', 'Status', 'Is Dual-use?', 'Jurisdiction']),
+    fields: JSON.stringify(['Startup Name', 'Primary Vertical', 'Investment Stage', 'Target Raise', 'Status', 'Short Description', 'Is Dual-use?', 'Jurisdiction']),
   });
   return records.map(parseStartup);
 }
