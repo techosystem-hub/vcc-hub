@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Briefcase, Sparkles, BarChart3, Settings, LogOut, Bookmark } from 'lucide-react'
 import { useUser, useClerk } from '@clerk/nextjs'
 import {
@@ -114,15 +114,12 @@ function AppSidebar({ activeView, onViewChange }: { activeView: View; onViewChan
 }
 
 export default function Home() {
-  const [activeView, setActiveView] = useState<View>('analytics')
-  const [dealFilter, setDealFilter] = useState<DealFilter | undefined>()
-
-  useEffect(() => {
+  const [activeView, setActiveView] = useState<View>(() => {
+    if (typeof window === 'undefined') return 'analytics'
     const saved = localStorage.getItem('vcc_active_view') as View | null
-    if (saved && navItems.some((i) => i.id === saved)) {
-      setActiveView(saved)
-    }
-  }, [])
+    return saved && navItems.some(i => i.id === saved) ? saved : 'analytics'
+  })
+  const [dealFilter, setDealFilter] = useState<DealFilter | undefined>()
 
   const handleViewChange = (v: View) => {
     setActiveView(v)
