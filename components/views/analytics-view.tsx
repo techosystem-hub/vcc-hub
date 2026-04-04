@@ -384,6 +384,7 @@ export function AnalyticsView({ onNavigate }: { onNavigate?: (view: string, filt
   const [newsPage,    setNewsPage]    = useState(1)
   const [loading,     setLoading]     = useState(true)
   const [showAdd,     setShowAdd]     = useState(false)
+  const [matchCount, setMatchCount] = useState(0)
   const [spinning,    setSpinning]    = useState(false)
   const [selectedEvent, setSelectedEvent] = useState<VCCEvent | null>(null)
 
@@ -392,10 +393,11 @@ export function AnalyticsView({ onNavigate }: { onNavigate?: (view: string, filt
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const [newsRes, eventsRes, dealsRes] = await Promise.all([
+      const [newsRes, eventsRes, dealsRes, matchRes] = await Promise.all([
         fetch('/api/news'),
         fetch('/api/events'),
         fetch('/api/dealflow'),
+        fetch('/api/matches').catch(() => null),
       ])
       const [newsData, eventsData, dealsData] = await Promise.all([
         newsRes.json(), eventsRes.json(), dealsRes.json(),
@@ -416,6 +418,13 @@ export function AnalyticsView({ onNavigate }: { onNavigate?: (view: string, filt
       setWeekDeals(deals.filter(d =>
         now.getTime() - new Date(d.datePublished as string).getTime() < 7 * 86_400_000
       ).length)
+      if (matchRes?.ok) {
+        try {
+          const matchData = await matchRes.json()
+          const matches = Array.isArray(matchData) ? matchData : (matchData.matches ?? matchData.results ?? [])
+          setMatchCount(matches.length)
+        } catch { /* ignore */ }
+      }
       const counts: Record<string, number> = {}
       yearDeals.forEach(d => { const v = (d.vertical as string) || 'Other'; counts[v] = (counts[v] || 0) + 1 })
       const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]
@@ -479,8 +488,7 @@ export function AnalyticsView({ onNavigate }: { onNavigate?: (view: string, filt
     <div className="min-h-screen bg-gray-50/60 p-6 space-y-6">
 
       {/* ── Header ── */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3">
           <div
             className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
             style={{ backgroundColor: '#011627' }}
@@ -491,17 +499,9 @@ export function AnalyticsView({ onNavigate }: { onNavigate?: (view: string, filt
             </svg>
           </div>
           <div>
-            <h1 className="text-xl font-bold text-gray-900 leading-none">Intelligence Hub</h1>
-            <p className="text-xs text-gray-500 mt-0.5">{today}</p>
+            <p className="text-base font-semibold text-gray-900">{today}</p>
           </div>
         </div>
-        <button
-          onClick={handleRefresh}
-          className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 bg-white border border-gray-200 rounded-lg px-3 py-1.5 hover:shadow-sm transition-all"
-        >
-          <IconRefresh className={`w-3.5 h-3.5 transition-transform ${spinning ? 'animate-spin' : ''}`} />
-          Refresh
-        </button>
       </div>
 
       {/* ── Stats Strip ── */}
@@ -511,14 +511,11 @@ export function AnalyticsView({ onNavigate }: { onNavigate?: (view: string, filt
           label="Deals This Year"
           value={String(yearDeals)}
           accent="bg-[#011627]"
-          onClick={() => {
-            const yr = String(new Date().getFullYear())
-            onNavigate?.('deal-room', { years: [yr], viewMode: 'deals' })
-          }}
+          onClick={() => onNavigate?.('smart-matches')}
         />
         <StatCard
           icon={<IconCalendar className="w-5 h-5 text-white" />}
-          label="This Month"
+          label="Deals This Month"
           value={String(monthDeals)}
           accent="bg-[#e71d36]"
           onClick={() => {
@@ -529,7 +526,7 @@ export function AnalyticsView({ onNavigate }: { onNavigate?: (view: string, filt
         />
         <StatCard
           icon={<IconTrendingUp className="w-5 h-5 text-white" />}
-          label="This Week"
+          label="Deals This Week"
           value={String(weekDeals)}
           accent="bg-teal-600"
           onClick={() => {
@@ -539,8 +536,8 @@ export function AnalyticsView({ onNavigate }: { onNavigate?: (view: string, filt
         />
         <StatCard
           icon={<IconTag className="w-5 h-5 text-white" />}
-          label="Top Vertical"
-          value={topVertical}
+          label="Your Curated Matches"
+          value={matchCount > 0 ? String(matchCount) : '—'}
           accent="bg-violet-600"
           onClick={() => {
             const yr = String(new Date().getFullYear())
