@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import {
-  Building2, Globe, Layers, DollarSign, ShieldCheck, X, Mail, Link2, TrendingUp, Sparkles,
+  Sparkles, ArrowUpRight, CheckCircle, RefreshCw, Target, ThumbsUp, ThumbsDown,
+  Building2, Globe, Layers, DollarSign, ShieldCheck, X, Mail, Link2, TrendingUp,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -212,12 +213,18 @@ function MatchCard({
             style={{ width: `${match.score}%` }}
           />
         </div>
+
         {/* Description preview */}
-        {(match.shortDescription || match.description) && (
-          <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed">
-            {match.shortDescription || match.description}
+        {match.description && (
+          <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+            {match.description}
           </p>
         )}
+          {match.shortDescription && (
+            <p className="text-xs text-gray-500 mt-1 leading-relaxed line-clamp-2">
+              {match.shortDescription}
+            </p>
+          )}
 
         {/* Verticals */}
         <div className="flex flex-wrap gap-1.5">
@@ -773,4 +780,3 @@ export function SmartMatchesView() {
     </>
   )
 }
-
