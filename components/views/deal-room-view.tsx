@@ -13,7 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import {
   BarChart, Bar, PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from 'recharts'
 import type { DealFlowStartup } from '@/lib/airtable'
 
@@ -231,13 +231,10 @@ function AnalyticsPanel({
               <PieChart>
                 <Pie
                   data={stats.stages}
-                  cx="50%" cy="45%"
-                  innerRadius={65} outerRadius={105}
+                  cx="50%" cy="38%"
+                  innerRadius={60} outerRadius={95}
                   dataKey="value" nameKey="name"
                   paddingAngle={2}
-                  label={({ name, percent }) =>
-                    percent > 0.05 ? `${name} ${(percent * 100).toFixed(0)}%` : ''
-                  }
                   labelLine={false}
                   onClick={(data) => onFilter({ stages: [data.name] })}
                   cursor="pointer"
@@ -246,6 +243,12 @@ function AnalyticsPanel({
                     <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
                   ))}
                 </Pie>
+                <Legend
+                  verticalAlign="bottom"
+                  iconType="circle"
+                  iconSize={8}
+                  formatter={(value) => <span style={{ fontSize: 11, color: '#555' }}>{value}</span>}
+                />
                 <Tooltip content={(p) => <ChartTooltip {...p} />} />
               </PieChart>
             </ResponsiveContainer>
