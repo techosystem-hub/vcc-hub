@@ -380,11 +380,11 @@ export function AnalyticsView({ onNavigate }: { onNavigate?: (view: string, filt
   const [topVertical, setTopVertical] = useState('—')
   const [monthDeals,  setMonthDeals]  = useState(0)
   const [weekDeals,   setWeekDeals]   = useState(0)
+  const [matchCount,  setMatchCount]  = useState(0)
   const [activeSource, setActiveSource] = useState('All')
   const [newsPage,    setNewsPage]    = useState(1)
   const [loading,     setLoading]     = useState(true)
   const [showAdd,     setShowAdd]     = useState(false)
-  const [matchCount, setMatchCount] = useState(0)
   const [spinning,    setSpinning]    = useState(false)
   const [selectedEvent, setSelectedEvent] = useState<VCCEvent | null>(null)
 
@@ -425,6 +425,7 @@ export function AnalyticsView({ onNavigate }: { onNavigate?: (view: string, filt
           setMatchCount(matches.length)
         } catch { /* ignore */ }
       }
+
       const counts: Record<string, number> = {}
       yearDeals.forEach(d => { const v = (d.vertical as string) || 'Other'; counts[v] = (counts[v] || 0) + 1 })
       const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]
@@ -489,19 +490,16 @@ export function AnalyticsView({ onNavigate }: { onNavigate?: (view: string, filt
 
       {/* ── Header ── */}
       <div className="flex items-center gap-3">
-          <div
-            className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-            style={{ backgroundColor: '#011627' }}
-          >
-            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-            </svg>
-          </div>
-          <div>
-            <p className="text-base font-semibold text-gray-900">{today}</p>
-          </div>
+        <div
+          className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+          style={{ backgroundColor: '#011627' }}
+        >
+          <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+              d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+          </svg>
         </div>
+        <p className="text-base font-semibold text-gray-900">{today}</p>
       </div>
 
       {/* ── Stats Strip ── */}
@@ -511,7 +509,10 @@ export function AnalyticsView({ onNavigate }: { onNavigate?: (view: string, filt
           label="Deals This Year"
           value={String(yearDeals)}
           accent="bg-[#011627]"
-          onClick={() => onNavigate?.('smart-matches')}
+          onClick={() => {
+            const yr = String(new Date().getFullYear())
+            onNavigate?.('deal-room', { years: [yr], viewMode: 'deals' })
+          }}
         />
         <StatCard
           icon={<IconCalendar className="w-5 h-5 text-white" />}
@@ -539,14 +540,7 @@ export function AnalyticsView({ onNavigate }: { onNavigate?: (view: string, filt
           label="Your Curated Matches"
           value={matchCount > 0 ? String(matchCount) : '—'}
           accent="bg-violet-600"
-          onClick={() => {
-            const yr = String(new Date().getFullYear())
-            onNavigate?.('deal-room', {
-              years: [yr],
-              verticals: topVertical !== '—' ? [topVertical] : undefined,
-              viewMode: 'deals',
-            })
-          }}
+          onClick={() => onNavigate?.('smart-matches')}
         />
       </div>
 
