@@ -284,34 +284,6 @@ function MatchDetailSheet({
   isActing: boolean
   investor: Investor | null
 }) {
-  const [aiRationale, setAiRationale] = useState<string | null>(null)
-  const [aiLoading, setAiLoading] = useState(false)
-
-  useEffect(() => {
-    if (!open || !match || !investor) { setAiRationale(null); return }
-    setAiLoading(true)
-    setAiRationale(null)
-    fetch('/api/ai-match', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        startup: match,
-        investorCriteria: {
-          focusVerticals: investor.focusVerticals,
-          stagePreference: investor.stagePreference,
-          ticketSize: investor.ticketSize,
-          dualUsePolicy: investor.dualUsePolicy,
-        },
-        score: match.score,
-        reasons: match.reasons,
-      }),
-    })
-      .then(r => r.json())
-      .then(d => { if (d.rationale) setAiRationale(d.rationale) })
-      .catch(() => {})
-      .finally(() => setAiLoading(false))
-  }, [open, match?.startupId, investor?.id])
-
     if (!match) return null
 
   const isInterested = status === 'Interested' || status === 'Intro Sent'
@@ -379,25 +351,6 @@ function MatchDetailSheet({
             </div>
           )}
         </div>
-
-      {/* AI Rationale */}
-      {(aiLoading || aiRationale) && (
-        <div className="px-8 pb-4">
-          <div className="rounded-xl bg-purple-50/60 border border-purple-100 px-4 py-4 space-y-2">
-            <p className="text-xs font-semibold text-purple-700 uppercase tracking-wide flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5" /> AI Analysis
-            </p>
-            {aiLoading ? (
-              <div className="space-y-1.5">
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-5/6" />
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground leading-relaxed">{aiRationale}</p>
-            )}
-          </div>
-        </div>
-      )}
 
         <Separator />
 
