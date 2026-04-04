@@ -18,7 +18,7 @@ export type Stage    = 'Angel Investment' | 'Pre-seed' | 'Seed' | 'Late Seed / B
 export type Ticket   = 'Small Tickets (<$50k)' | '$50k - $200k' | '$200k - $500k' | '$500k - $1M' | '>$5M';
 export type DualUse  = 'Yes - we actively look for Defense Tech' | 'Yes - if it is Dual-use (non-lethal / software)' | 'No - our mandate restricts this (ESG / LP restrictions)';
 export type Role     = 'VCC Member' | 'Admin';
-export type StartupStatus = 'New' | 'Actively Raising' | 'Rejected' | 'Closed' | 'Portfolio';
+export type StartupStatus = 'New' | 'Under Review' | 'Actively Raising' | 'Rejected' | 'Closed' | 'Portfolio';
 export type MatchStatus   = 'Pending' | 'Requested' | 'Intro Sent' | 'Passed';
 
 export interface Investor {
@@ -286,6 +286,44 @@ export async function getActiveStartups(filters: {
     fields: JSON.stringify(['Startup Name', 'Primary Vertical', 'Investment Stage', 'Target Raise', 'Status', 'Short Description', 'Is Dual-use?', 'Jurisdiction']),
   });
   return records.map(parseStartup);
+}
+
+
+export async function createStartupSubmission(data: {
+  name: string
+  email?: string
+  website?: string
+  shortDescription?: string
+  primaryVertical?: string
+  investmentStage?: string
+  targetRaise?: string
+  isDualUse?: string
+  pitchDeckUrl?: string
+  founderName?: string
+  founderMobile?: string
+  whatsapp?: string
+}): Promise<Startup> {
+  const fields: Record<string, any> = { 'Startup Name': data.name, 'Status': 'Under Review' }
+  if (data.email) fields['Email'] = data.email
+  if (data.website) fields['Website'] = data.website
+  if (data.shortDescription) fields['Short Description'] = data.shortDescription
+  if (data.primaryVertical) fields['Primary Vertical'] = data.primaryVertical
+  if (data.investmentStage) fields['Investment Stage'] = data.investmentStage
+  if (data.targetRaise) fields['Target Raise'] = data.targetRaise
+  if (data.isDualUse) fields['Is Dual-use?'] = data.isDualUse
+  if (data.pitchDeckUrl) fields['Pitch Deck URL'] = data.pitchDeckUrl
+  if (data.founderName) fields['Name of the Main Contact Person / Founder'] = data.founderName
+  if (data.founderMobile) fields['Founder Mobile Number'] = data.founderMobile
+  if (data.whatsapp) fields['WhatAapp'] = data.whatsapp
+  const res = await fetch(`${ROOT}/${encodeURIComponent('Startup Pipeline')}`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ fields }),
+    cache: 'no-store',
+  })
+  if (!res.ok) throw new Error('Failed to create startup submission')
+  const record = await res.json()
+  return parseStartup(record)
 }
 
 export async function getAllStartups(): Promise<Startup[]> {
