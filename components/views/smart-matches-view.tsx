@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import {
-  Building2, Globe, Layers, DollarSign, ShieldCheck, X, Mail, Link2, TrendingUp,
+  Building2, Globe, Layers, DollarSign, ShieldCheck, X, Mail, Link2, TrendingUp, Sparkles,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -276,7 +276,7 @@ function MatchDetailSheet({
   onAction: (s: 'Interested' | 'Not Interested') => void
   isActing: boolean
   investor: Investor | null
-
+}) {
     if (!match) return null
 
   const isInterested = status === 'Interested' || status === 'Intro Sent'
