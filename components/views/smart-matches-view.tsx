@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import {
   Sparkles, ArrowUpRight, CheckCircle, RefreshCw, Target, ThumbsUp, ThumbsDown,
-  Building2, Globe, Layers, DollarSign, ShieldCheck, X, Mail, Link2, TrendingUp,
+  Building2, Globe, Layers, DollarSign, ShieldCheck, X, Mail, Link2, TrendingUp, Users, Phone,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -289,7 +289,7 @@ function MatchDetailSheet({
   const isInterested = status === 'Interested' || status === 'Intro Sent'
   const isPassed     = status === 'Not Interested'
 
-  const hasContactInfo = match.email || match.website || match.valuationCap || match.committedCapital
+  const hasContactInfo = match.email || match.website || match.valuationCap || match.committedCapital || match.founderName || match.founderWhatsapp
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -420,7 +420,73 @@ function MatchDetailSheet({
           </>
         )}
 
-        {/* ── Contact & Deal Info (shown immediately when investor is interested) ── */}
+
+        {/* Business Model */}
+        {match.businessModel && match.businessModel.length > 0 && (
+          <>
+            <Separator />
+            <div className="px-8 py-6">
+              <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                <Layers className="w-4 h-4 text-muted-foreground" />
+                Business Model
+              </h3>
+              <div className="flex flex-wrap gap-1.5">
+                {match.businessModel.map((bm) => (
+                  <Badge key={bm} variant="secondary" className="text-xs">{bm}</Badge>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Traction */}
+        {(match.mrrRevenue || match.cmgr || match.runway || match.activeUsers) && (
+          <>
+            <Separator />
+            <div className="px-8 py-6">
+              <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-muted-foreground" />
+                Traction
+              </h3>
+              <div className="grid grid-cols-2 gap-3">
+                {match.mrrRevenue && (
+                  <div className="rounded-xl border bg-card px-4 py-3">
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+                      <DollarSign className="w-3.5 h-3.5" /> MRR / Revenue
+                    </div>
+                    <div className="font-semibold text-sm">{match.mrrRevenue}</div>
+                  </div>
+                )}
+                {match.cmgr && (
+                  <div className="rounded-xl border bg-card px-4 py-3">
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+                      <TrendingUp className="w-3.5 h-3.5" /> CMGR Growth
+                    </div>
+                    <div className="font-semibold text-sm">{match.cmgr}</div>
+                  </div>
+                )}
+                {match.runway && (
+                  <div className="rounded-xl border bg-card px-4 py-3">
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+                      <Target className="w-3.5 h-3.5" /> Runway
+                    </div>
+                    <div className="font-semibold text-sm">{match.runway}</div>
+                  </div>
+                )}
+                {match.activeUsers && (
+                  <div className="rounded-xl border bg-card px-4 py-3">
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+                      <Users className="w-3.5 h-3.5" /> Active Users / Clients
+                    </div>
+                    <div className="font-semibold text-sm">{match.activeUsers}</div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
+        )}
+
+                {/* ── Contact & Deal Info (shown immediately when investor is interested) ── */}
         {isInterested && hasContactInfo && (
           <>
             <Separator />
@@ -481,6 +547,34 @@ function MatchDetailSheet({
                     )}
                   </div>
                 )}
+
+                {(match.founderName || match.founderWhatsapp) && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground uppercase tracking-wide mb-2">
+                      <Users className="w-3.5 h-3.5" /> Founder
+                    </div>
+                    {match.founderName && (
+                      <div className="flex items-center gap-2">
+                        <Users className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                        <span className="text-sm">{match.founderName}</span>
+                      </div>
+                    )}
+                    {match.founderWhatsapp && (
+                      <div className="flex items-center gap-2">
+                        <Phone className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                        <a
+                          href={`https://wa.me/${match.founderWhatsapp.replace(/\D/g, '')}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-[#25d366] hover:underline"
+                        >
+                          {match.founderWhatsapp}
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                )}
+
               </div>
             </div>
           </>
