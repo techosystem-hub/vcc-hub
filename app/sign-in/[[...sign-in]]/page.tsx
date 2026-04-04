@@ -21,6 +21,17 @@ export default function SignInPage() {
             },
           }}
         />
+        <p className="text-center text-gray-500 text-xs mt-6">
+          Interested in Ukrainian startups?{' '}
+          <a
+            href="https://techosystem.org/en/vcc"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-400 hover:text-blue-300 underline"
+          >
+            Learn more about VCC Hub
+          </a>
+        </p>
       </div>
     </div>
   );
