@@ -82,6 +82,11 @@ function initials(name: string) {
 }
 
 function ScoreBadge({ label, score }: { label: string; score: number }) {
+  const statusClass = status === 'Actively Raising'
+    ? 'bg-green-100 text-green-700'
+    : status === 'Under Review'
+    ? 'bg-yellow-100 text-yellow-700'
+    : 'bg-gray-100 text-gray-600'
   return (
     <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap ${SCORE_BADGE[label] ?? 'bg-gray-100 text-gray-600 border-gray-200'}`}>
       {label} · {score}/100
@@ -176,6 +181,11 @@ function MatchCard({
               <h3 className="font-semibold text-foreground leading-tight truncate">
                 {match.startupName}
               </h3>
+              {status && (
+                <span className={`inline-block text-xs font-medium px-2 py-0.5 rounded-full ${statusClass}`}>
+                  {status}
+                </span>
+              )}
               <div className="flex flex-wrap gap-1 mt-1">
                 {match.roundStage && (
                   <Badge variant="outline" className="text-xs px-1.5 py-0 h-5">
@@ -215,6 +225,11 @@ function MatchCard({
             {match.description}
           </p>
         )}
+          {match.shortDescription && (
+            <p className="text-xs text-gray-500 mt-1 leading-relaxed line-clamp-2">
+              {match.shortDescription}
+            </p>
+          )}
 
         {/* Verticals */}
         <div className="flex flex-wrap gap-1.5">
