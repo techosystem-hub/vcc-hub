@@ -227,8 +227,8 @@ function AnalyticsPanel({
             <p className="text-[11px] text-muted-foreground -mt-1">Click a slice to explore deals</p>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
+            <ResponsiveContainer width="100%" height={360}>
+              <PieChart margin={{ bottom: 20 }}>
                 <Pie
                   data={stats.stages}
                   cx="50%" cy="38%"
