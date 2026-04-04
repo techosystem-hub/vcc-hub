@@ -1,5 +1,4 @@
 'use client'
-// v2
 
 import { useState, useEffect, useCallback } from 'react'
 import {
@@ -146,13 +145,6 @@ function MatchCardSkeleton() {
   )
 }
 
-interface MatchCardProps {
-  match: ComputedMatch
-  status: string | undefined
-  onClick: () => void
-  muted?: boolean
-}
-
 // ── Match card (summary, fully clickable) ────────────────────────────────
 
 function MatchCard({
@@ -160,7 +152,12 @@ function MatchCard({
   status,
   onClick,
   muted = false,
-}: MatchCardProps) {
+}: {
+  match: ComputedMatch
+  status: string | undefined
+  onClick: () => void
+  muted?: boolean
+}) {
   return (
     <Card
       role="button"
@@ -179,13 +176,6 @@ function MatchCard({
               <h3 className="font-semibold text-foreground leading-tight truncate">
                 {match.startupName}
               </h3>
-              {match.status && (
-                <span className={`inline-block text-xs font-medium px-2 py-0.5 rounded-full ${
-                  match.status === 'Actively Raising' ? 'bg-green-100 text-green-700'
-                  : match.status === 'Under Review' ? 'bg-yellow-100 text-yellow-700'
-                  : 'bg-gray-100 text-gray-600'
-                }`}>{match.status}</span>
-              )}
               <div className="flex flex-wrap gap-1 mt-1">
                 {match.roundStage && (
                   <Badge variant="outline" className="text-xs px-1.5 py-0 h-5">
@@ -224,11 +214,6 @@ function MatchCard({
           <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
             {match.description}
           </p>
-          {match.shortDescription && (
-            <p className="text-xs text-gray-500 mt-1 leading-relaxed line-clamp-2">
-              {match.shortDescription}
-            </p>
-          )}
         )}
 
         {/* Verticals */}
