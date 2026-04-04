@@ -146,6 +146,13 @@ function MatchCardSkeleton() {
   )
 }
 
+interface MatchCardProps {
+  match: ComputedMatch
+  status: string | undefined
+  onClick: () => void
+  muted?: boolean
+}
+
 // ── Match card (summary, fully clickable) ────────────────────────────────
 
 function MatchCard({
@@ -153,12 +160,7 @@ function MatchCard({
   status,
   onClick,
   muted = false,
-}: {
-  match: ComputedMatch
-  status: string | undefined
-  onClick: () => void
-  muted?: boolean
-}) {
+}: MatchCardProps) {
   return (
     <Card
       role="button"
