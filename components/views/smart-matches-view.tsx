@@ -347,7 +347,6 @@ function MatchDetailSheet({
 
           </div>
         </div>
-      )}
 
         <Separator />
 
