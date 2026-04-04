@@ -37,6 +37,13 @@ interface ComputedMatch {
   committedCapital?: string
   status?: string
   shortDescription?: string
+  businessModel?:    string[]
+  mrrRevenue?:       string
+  cmgr?:             string
+  runway?:           string
+  activeUsers?:      string
+  founderName?:      string
+  founderWhatsapp?:  string
 }
 
 // ── Color palettes ──────────────────────────────────────────────────────
