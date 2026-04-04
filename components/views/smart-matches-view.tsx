@@ -216,12 +216,12 @@ function MatchCard({
 
         {/* Description preview */}
         {match.description && (
-          <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+          <p className="text-sm text-muted-foreground leading-relaxed">
             {match.description}
           </p>
         )}
           {match.shortDescription && (
-            <p className="text-xs text-gray-500 mt-1 leading-relaxed line-clamp-2">
+            <p className="text-xs text-gray-500 mt-1 leading-relaxed">
               {match.shortDescription}
             </p>
           )}
@@ -391,12 +391,12 @@ function MatchDetailSheet({
         </div>
 
         {/* About */}
-        {match.description && (
+        {(match.description || match.shortDescription) && (
           <>
             <Separator />
             <div className="px-8 py-6">
               <h3 className="text-sm font-semibold mb-3">About</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">{match.description}</p>
+              <p className="text-sm text-muted-foreground leading-relaxed">{match.description || match.shortDescription}</p>
             </div>
           </>
         )}
