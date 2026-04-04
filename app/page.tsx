@@ -66,7 +66,7 @@ function AppSidebar({ activeView, onViewChange }: { activeView: View; onViewChan
           </div>
           <div className="flex flex-col group-data-[collapsible=icon]:hidden">
             <span className="font-bold text-sm tracking-wide" style={{ color: '#011627' }}>Techosystem</span>
-            <span className="text-xs text-muted-foreground">VCC Intelligence Hub</span>
+            <span className="text-xs text-muted-foreground">VCC Hub</span>
           </div>
         </div>
       </SidebarHeader>
