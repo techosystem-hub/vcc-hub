@@ -373,7 +373,7 @@ function MatchDetailSheet({
         <div className="px-8 pb-4">
           <div className="rounded-xl bg-purple-50/60 border border-purple-100 px-4 py-4 space-y-2">
             <p className="text-xs font-semibold text-purple-700 uppercase tracking-wide flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5" /> Claude AI Analysis
+              <Sparkles className="w-3.5 h-3.5" /> AI Analysis
             </p>
             {aiLoading ? (
               <div className="space-y-1.5">
