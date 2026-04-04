@@ -248,10 +248,17 @@ function parseStartup(r: any): Startup {
     addedDate:         r.createdTime || undefined,
     // Contact & deal details
     email:             f['Email'] || undefined,
-    website:           f['Website / LinkedIn'] || undefined,
+    website:           f['Website'] || undefined,
     valuationCap:      f['Valuation Cap (USD)'] || undefined,
     committedCapital:  f['Committed Capital (USD)'] || undefined,
   shortDescription:  (f['Short Description'] as string) || undefined,
+    businessModel:     Array.isArray(f['Business Model']) ? f['Business Model'] : (f['Business Model'] ? [f['Business Model']] : []),
+    mrrRevenue:        f['MRR / Revenue'] || undefined,
+    cmgr:              f['CMGR Growth Rate'] || undefined,
+    runway:            f['Runway'] || undefined,
+    activeUsers:       f['Active Users / Clients'] || undefined,
+    founderName:       f['Name of the Main Contact Person / Founder'] || undefined,
+    founderWhatsapp:   f['WhatAapp'] || undefined,
   };
 }
 
@@ -283,7 +290,7 @@ export async function getActiveStartups(filters: {
     filterByFormula: formula,
     // sorted by most recently created first (Airtable default is oldest first)
     sort: '[{"field":"Startup Name","direction":"asc"}]',
-    fields: JSON.stringify(['Startup Name', 'Primary Vertical', 'Investment Stage', 'Target Raise', 'Status', 'Short Description', 'Is Dual-use?', 'Jurisdiction']),
+    fields: JSON.stringify(['Startup Name', 'Primary Vertical', 'Investment Stage', 'Target Raise', 'Status', 'Short Description', 'Is Dual-use?', 'Jurisdiction', 'Email', 'Website', 'Pitch Deck URL', 'Valuation Cap (USD)', 'Committed Capital (USD)', 'Business Model', 'MRR / Revenue', 'CMGR Growth Rate', 'Runway', 'Active Users / Clients', 'Name of the Main Contact Person / Founder', 'WhatAapp']),
   });
   return records.map(parseStartup);
 }
