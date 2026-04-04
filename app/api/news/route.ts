@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { currentUser } from '@clerk/nextjs/server'
 
-export const revalidate = 0
+export const revalidate = 1800
 
 const UA = 'Mozilla/5.0 (compatible; VCC-HubBot/1.0)'
 
@@ -122,7 +122,7 @@ export async function GET() {
             'User-Agent': UA,
             'Accept': 'application/rss+xml, application/atom+xml, application/xml, text/xml, */*',
           },
-          cache: 'no-store',
+          next: { revalidate: 1800 },
         })
         clearTimeout(t)
         if (!res.ok) return []
