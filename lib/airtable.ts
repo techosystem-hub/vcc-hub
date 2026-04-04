@@ -11,7 +11,7 @@ const headers = {
   'Content-Type': 'application/json',
 };
 
-// ── Types ────────────────────────────────────────────────────
+// ── Types ───────────────────────────────────────────────────
 
 export type Vertical = 'Defense / MilTech' | 'AI / ML' | 'Cybersecurity' | 'Fintech' | 'HealthTech' | 'AgriTech' | 'SaaS (General)' | 'Hardware / IoT' | 'EdTech' | 'Marketing & Media' | 'Energy & Environment' | 'Consumer products' | 'HRTech' | 'Business Productivity' | 'E-commerce & Retail' | 'Logistics & Transportation';
 export type Stage    = 'Angel Investment' | 'Pre-seed' | 'Seed' | 'Late Seed / Bridge' | 'Series A' | 'Series B+';
@@ -104,7 +104,7 @@ async function fetchTable<T>(
   noCache = false
 ): Promise<T[]> {
   const url = new URL(`${ROOT}/${encodeURIComponent(table)}`);
-  const { sort, ...otherParams } = params;
+  const { sort, fields, ...otherParams } = params;
   Object.entries(otherParams).forEach(([k, v]) => url.searchParams.set(k, v));
   // Airtable requires array-style sort params: sort[0][field]=X&sort[0][direction]=asc
   if (sort) {
@@ -116,6 +116,13 @@ async function fetchTable<T>(
       });
     } catch { /* invalid sort — ignore */ }
   }
+    // Airtable requires array-style fields params: fields[]=Field1&fields[]=Field2
+    if (fields) {
+          try {
+                  const fieldsArr = JSON.parse(fields) as string[];
+                  fieldsArr.forEach(f => url.searchParams.append('fields[]', f));
+          } catch { /* invalid fields — ignore */ }
+    }
 
   const records: T[] = [];
   let offset: string | undefined;
