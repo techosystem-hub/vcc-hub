@@ -51,6 +51,13 @@ export interface ComputedMatch {
   committedCapital?: string
   status?: string
   shortDescription?: string
+  businessModel?:    string[]
+  mrrRevenue?:       string
+  cmgr?:             string
+  runway?:           string
+  activeUsers?:      string
+  founderName?:      string
+  founderWhatsapp?:  string
 }
 
 function toScoreLabel(score: number): ScoreLabel {
@@ -123,6 +130,13 @@ export function scoreStartup(investor: Investor, startup: Startup): ComputedMatc
     committedCapital: startup.committedCapital,
   status: startup.status,
   shortDescription: startup.shortDescription,
+  businessModel:    startup.businessModel,
+  mrrRevenue:       startup.mrrRevenue,
+  cmgr:             startup.cmgr,
+  runway:           startup.runway,
+  activeUsers:      startup.activeUsers,
+  founderName:      startup.founderName,
+  founderWhatsapp:  startup.founderWhatsapp,
   }
 }
 
