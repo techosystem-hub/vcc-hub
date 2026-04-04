@@ -54,6 +54,15 @@ export interface Startup {
   valuationCap?: string;
   committedCapital?: string;
   shortDescription?: string;
+  // Traction & business details
+  businessModel?:    string[];
+  mrrRevenue?:       string;
+  cmgr?:             string;
+  runway?:           string;
+  activeUsers?:      string;
+  // Founder contact
+  founderName?:      string;
+  founderWhatsapp?:  string;
 }
 
 export interface Match {
