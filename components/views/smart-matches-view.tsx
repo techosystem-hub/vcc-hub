@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import {
-  Sparkles, ArrowUpRight, CheckCircle, RefreshCw, Target, ThumbsUp, ThumbsDown,
   Building2, Globe, Layers, DollarSign, ShieldCheck, X, Mail, Link2, TrendingUp,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
@@ -213,18 +212,12 @@ function MatchCard({
             style={{ width: `${match.score}%` }}
           />
         </div>
-
         {/* Description preview */}
-        {match.description && (
-          <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
-            {match.description}
+        {(match.shortDescription || match.description) && (
+          <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed">
+            {match.shortDescription || match.description}
           </p>
         )}
-          {match.shortDescription && (
-            <p className="text-xs text-gray-500 mt-1 leading-relaxed line-clamp-2">
-              {match.shortDescription}
-            </p>
-          )}
 
         {/* Verticals */}
         <div className="flex flex-wrap gap-1.5">
@@ -283,34 +276,6 @@ function MatchDetailSheet({
   onAction: (s: 'Interested' | 'Not Interested') => void
   isActing: boolean
   investor: Investor | null
-}) {
-  const [aiRationale, setAiRationale] = useState<string | null>(null)
-  const [aiLoading, setAiLoading] = useState(false)
-
-  useEffect(() => {
-    if (!open || !match || !investor) { setAiRationale(null); return }
-    setAiLoading(true)
-    setAiRationale(null)
-    fetch('/api/ai-match', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        startup: match,
-        investorCriteria: {
-          focusVerticals: investor.focusVerticals,
-          stagePreference: investor.stagePreference,
-          ticketSize: investor.ticketSize,
-          dualUsePolicy: investor.dualUsePolicy,
-        },
-        score: match.score,
-        reasons: match.reasons,
-      }),
-    })
-      .then(r => r.json())
-      .then(d => { if (d.rationale) setAiRationale(d.rationale) })
-      .catch(() => {})
-      .finally(() => setAiLoading(false))
-  }, [open, match?.startupId, investor?.id])
 
     if (!match) return null
 
@@ -380,21 +345,6 @@ function MatchDetailSheet({
           )}
         </div>
 
-      {/* AI Rationale */}
-      {(aiLoading || aiRationale) && (
-        <div className="px-8 pb-4">
-          <div className="rounded-xl bg-purple-50/60 border border-purple-100 px-4 py-4 space-y-2">
-            <p className="text-xs font-semibold text-purple-700 uppercase tracking-wide flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5" /> AI Analysis
-            </p>
-            {aiLoading ? (
-              <div className="space-y-1.5">
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-5/6" />
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground leading-relaxed">{aiRationale}</p>
-            )}
           </div>
         </div>
       )}
@@ -437,16 +387,26 @@ function MatchDetailSheet({
           )}
         </div>
 
-        {/* About */}
-        {match.description && (
-          <>
-            <Separator />
-            <div className="px-8 py-6">
-              <h3 className="text-sm font-semibold mb-3">About</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">{match.description}</p>
-            </div>
-          </>
-        )}
+      {/* About */}
+      {(match.shortDescription || match.description) && (
+        <>
+          <Separator />
+          <div className="px-8 py-6 space-y-5">
+            {match.shortDescription && (
+              <div>
+                <h3 className="text-sm font-semibold mb-2">About the Startup</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{match.shortDescription}</p>
+              </div>
+            )}
+            {match.description && (
+              <div>
+                <h3 className="text-sm font-semibold mb-2">{match.shortDescription ? 'Investment Notes' : 'About'}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{match.description}</p>
+              </div>
+            )}
+          </div>
+        </>
+      )}
 
         {/* Pitch deck link */}
         {match.pitchDeckUrl && (
