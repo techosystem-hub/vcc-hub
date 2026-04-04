@@ -7,7 +7,7 @@ import './globals.css';
 // font disabled;
 
 export const metadata: Metadata = {
-  title: 'VCC Intelligence Hub | Techosystem',
+  title: 'VCC Hub | Techosystem',
   description: 'Private portal for Techosystem VC Committee members',
 };
 
