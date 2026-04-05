@@ -402,11 +402,12 @@ export function AnalyticsView({ onNavigate }: { onNavigate?: (view: string, filt
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const [newsRes, eventsRes, dealsRes, matchRes] = await Promise.all([
+      const [newsRes, eventsRes, dealsRes, matchRes, savedRes] = await Promise.all([
         fetch('/api/news'),
         fetch('/api/events'),
         fetch('/api/dealflow'),
         fetch('/api/matches').catch(() => null),
+        fetch('/api/saved-startups').catch(() => null),
       ])
       const [newsData, eventsData, dealsData] = await Promise.all([
         newsRes.json(), eventsRes.json(), dealsRes.json(),
@@ -432,6 +433,13 @@ export function AnalyticsView({ onNavigate }: { onNavigate?: (view: string, filt
           const matchData = await matchRes.json()
           const matches = Array.isArray(matchData) ? matchData : (matchData.matches ?? matchData.results ?? [])
           setMatchCount(matches.length)
+        } catch { /* ignore */ }
+      }
+      if (savedRes?.ok) {
+        try {
+          const savedData = await savedRes.json()
+          const saved = Array.isArray(savedData) ? savedData : (savedData.startups ?? savedData.results ?? [])
+          setSavedCount(saved.length)
         } catch { /* ignore */ }
       }
 
