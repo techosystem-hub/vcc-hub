@@ -1,10 +1,23 @@
 'use client'
-
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
-  Bookmark, Building2, Globe, Layers, DollarSign,
-  ShieldCheck, Mail, Link2, TrendingUp, ArrowUpRight,
-  X, RefreshCw,
+  Bookmark,
+  Building2,
+  Globe,
+  Layers,
+  DollarSign,
+  ShieldCheck,
+  Mail,
+  Link2,
+  TrendingUp,
+  ArrowUpRight,
+  X,
+  RefreshCw,
+  FileText,
+  Sparkles,
+  ChevronDown,
+  ChevronUp,
+  AlertCircle,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -13,7 +26,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
 import { Separator } from '@/components/ui/separator'
 
-// ── Types ───────────────────────────────────────────────────────────────
+// ── Types ──────────────────────────────────────────────────────────────────
 interface SavedStartup {
   matchId: string
   matchStatus: string
@@ -24,6 +37,7 @@ interface SavedStartup {
     id: string
     name: string
     description: string
+    shortDescription: string
     primaryVertical: string[]
     roundStage: string
     targetRaise: string
@@ -38,44 +52,47 @@ interface SavedStartup {
   }
 }
 
-// ── Palettes ─────────────────────────────────────────────────────────────
+// ── Palettes ───────────────────────────────────────────────────────────────
 const SCORE_BADGE: Record<string, string> = {
-  '🔥 Hot':     'bg-orange-100 text-orange-700 border-orange-200',
-  '💪 Strong':  'bg-blue-100 text-blue-700 border-blue-200',
-  '👍 Good':    'bg-emerald-100 text-emerald-700 border-emerald-200',
-  '👎 Weak':    'bg-gray-100 text-gray-600 border-gray-200',
+  '🔥 Hot': 'bg-orange-100 text-orange-700 border-orange-200',
+  '💪 Strong': 'bg-blue-100 text-blue-700 border-blue-200',
+  '👍 Good': 'bg-emerald-100 text-emerald-700 border-emerald-200',
+  '👎 Weak': 'bg-gray-100 text-gray-600 border-gray-200',
 }
-
 const STATUS_BADGE: Record<string, string> = {
-  'Interested': 'bg-emerald-100 text-emerald-700 border-emerald-200',
+  Interested: 'bg-emerald-100 text-emerald-700 border-emerald-200',
   'Intro Sent': 'bg-blue-100 text-blue-700 border-blue-200',
 }
-
 const VERTICAL_BADGE: Record<string, string> = {
-  'Defense / MilTech':        'bg-slate-800 text-white',
-  'AI / ML':                  'bg-purple-600 text-white',
-  'Cybersecurity':            'bg-red-700 text-white',
-  'Fintech':                  'bg-emerald-700 text-white',
-  'HealthTech':               'bg-pink-600 text-white',
-  'AgriTech':                 'bg-green-700 text-white',
-  'SaaS (General)':           'bg-blue-600 text-white',
-  'Hardware / IoT':           'bg-orange-600 text-white',
-  'EdTech':                   'bg-indigo-600 text-white',
-  'Marketing & Media':        'bg-rose-600 text-white',
-  'Energy & Environment':     'bg-teal-600 text-white',
-  'Consumer Products':        'bg-yellow-600 text-white',
-  'Consumer products':        'bg-yellow-600 text-white',
-  'HRTech':                   'bg-violet-600 text-white',
-  'Business Productivity':    'bg-cyan-700 text-white',
-  'E-commerce & Retail':      'bg-orange-700 text-white',
+  'Defense / MilTech': 'bg-slate-800 text-white',
+  'AI / ML': 'bg-purple-600 text-white',
+  Cybersecurity: 'bg-red-700 text-white',
+  Fintech: 'bg-emerald-700 text-white',
+  HealthTech: 'bg-pink-600 text-white',
+  AgriTech: 'bg-green-700 text-white',
+  'SaaS (General)': 'bg-blue-600 text-white',
+  'Hardware / IoT': 'bg-orange-600 text-white',
+  EdTech: 'bg-indigo-600 text-white',
+  'Marketing & Media': 'bg-rose-600 text-white',
+  'Energy & Environment': 'bg-teal-600 text-white',
+  'Consumer Products': 'bg-yellow-600 text-white',
+  'Consumer products': 'bg-yellow-600 text-white',
+  HRTech: 'bg-violet-600 text-white',
+  'Business Productivity': 'bg-cyan-700 text-white',
+  'E-commerce & Retail': 'bg-orange-700 text-white',
   'Logistics & Transportation': 'bg-slate-600 text-white',
 }
 
 function initials(name: string) {
-  return name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+  return name
+    .split(' ')
+    .map(w => w[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase()
 }
 
-// ── Metric tile ───────────────────────────────────────────────────────────
+// ── Metric tile ────────────────────────────────────────────────────────────
 function MetricTile({ icon: Icon, label, value }: { icon: any; label: string; value: string }) {
   return (
     <div className="flex flex-col gap-1 rounded-xl bg-muted/50 border border-border/60 px-4 py-3">
@@ -88,78 +105,276 @@ function MetricTile({ icon: Icon, label, value }: { icon: any; label: string; va
   )
 }
 
-// ── Card ──────────────────────────────────────────────────────────────────
-function SavedCard({ item, onClick }: { item: SavedStartup; onClick: () => void }) {
+// ── Executive Summary Section ──────────────────────────────────────────────
+function ExecutiveSummarySection({
+  startup,
+  autoGenerate,
+}: {
+  startup: SavedStartup['startup']
+  autoGenerate: boolean
+}) {
+  const [state, setState] = useState<'idle' | 'loading' | 'loaded' | 'error'>('idle')
+  const [summary, setSummary] = useState<string | null>(null)
+  const [expanded, setExpanded] = useState(false)
+  const hasFetched = useRef(false)
+
+  async function fetchSummary() {
+    setState('loading')
+    setExpanded(true)
+    try {
+      const res = await fetch('/api/executive-summary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          startupId: startup.id,
+          startupName: startup.name,
+          websiteUrl: startup.website || null,
+          pitchDeckUrl: startup.pitchDeckUrl || null,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to generate summary')
+      setSummary(data.summary)
+      setState('loaded')
+    } catch (e: any) {
+      setState('error')
+    }
+  }
+
+  useEffect(() => {
+    if (autoGenerate && !hasFetched.current) {
+      hasFetched.current = true
+      fetchSummary()
+    }
+  }, [autoGenerate])
+
+  // Format markdown-style bold headings into readable HTML
+  function renderSummary(text: string) {
+    const lines = text.split('\n')
+    return lines.map((line, i) => {
+      // Bold headers like **1. What They Do**
+      if (line.startsWith('**') && line.endsWith('**')) {
+        return (
+          <p key={i} className="text-xs font-bold text-foreground uppercase tracking-wide mt-4 mb-1">
+            {line.replace(/\*\*/g, '')}
+          </p>
+        )
+      }
+      // Bullet points
+      if (line.startsWith('- ')) {
+        return (
+          <li key={i} className="text-sm text-gray-700 ml-4 list-disc">
+            {line.slice(2)}
+          </li>
+        )
+      }
+      // Empty lines
+      if (line.trim() === '') return <br key={i} />
+      return (
+        <p key={i} className="text-sm text-gray-700 leading-relaxed">
+          {line}
+        </p>
+      )
+    })
+  }
+
+  return (
+    <div className="rounded-xl border border-[#011627]/20 overflow-hidden">
+      <button
+        onClick={() => {
+          if (state === 'idle') {
+            fetchSummary()
+          } else {
+            setExpanded(prev => !prev)
+          }
+        }}
+        className="w-full flex items-center justify-between px-5 py-4 bg-[#011627]/5 hover:bg-[#011627]/10 transition-colors text-left"
+      >
+        <span className="flex items-center gap-2 text-sm font-semibold text-[#011627]">
+          <Sparkles className="w-4 h-4 text-[#e71d36]" />
+          AI Executive Summary
+          {state === 'loaded' && (
+            <span className="text-xs font-normal text-emerald-600 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5">
+              Ready
+            </span>
+          )}
+        </span>
+        {state === 'idle' ? (
+          <span className="text-xs text-muted-foreground">Click to generate</span>
+        ) : state === 'loading' ? (
+          <span className="text-xs text-muted-foreground animate-pulse">Analyzing…</span>
+        ) : (
+          expanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />
+        )}
+      </button>
+
+      {expanded && (
+        <div className="px-5 py-4 border-t border-[#011627]/10">
+          {state === 'loading' && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground mb-4">
+                <Sparkles className="w-3.5 h-3.5 animate-spin text-[#e71d36]" />
+                Generating McKinsey-level analysis…
+              </div>
+              {[1, 2, 3, 4].map(i => (
+                <div key={i} className="space-y-1.5">
+                  <Skeleton className="h-3 w-32" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-5/6" />
+                </div>
+              ))}
+            </div>
+          )}
+          {state === 'error' && (
+            <div className="flex items-center gap-2 text-sm text-red-600">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <span>Failed to generate summary.</span>
+              <Button variant="ghost" size="sm" onClick={fetchSummary} className="ml-auto text-xs">
+                Retry
+              </Button>
+            </div>
+          )}
+          {state === 'loaded' && summary && (
+            <div className="space-y-0.5 text-sm">
+              {renderSummary(summary)}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Card ───────────────────────────────────────────────────────────────────
+function SavedCard({
+  item,
+  onClick,
+  onOpenSummary,
+}: {
+  item: SavedStartup
+  onClick: () => void
+  onOpenSummary: () => void
+}) {
   const { startup, matchStatus, scoreLabel } = item
-  const scoreCls  = SCORE_BADGE[scoreLabel]  || 'bg-gray-100 text-gray-600 border-gray-200'
+  const scoreCls = SCORE_BADGE[scoreLabel] || 'bg-gray-100 text-gray-600 border-gray-200'
   const statusCls = STATUS_BADGE[matchStatus] || 'bg-gray-100 text-gray-600 border-gray-200'
 
   return (
-    <Card
-      className="cursor-pointer hover:shadow-md transition-shadow border hover:border-emerald-200"
-      onClick={onClick}
-    >
+    <Card className="border hover:border-emerald-200 hover:shadow-md transition-shadow">
       <CardHeader className="pb-2">
         <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 text-white font-bold text-sm select-none">
+          <div
+            className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 text-white font-bold text-sm select-none cursor-pointer"
+            onClick={onClick}
+          >
             {initials(startup.name)}
           </div>
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0 cursor-pointer" onClick={onClick}>
             <div className="flex items-center gap-2 flex-wrap">
               <span className="font-semibold text-foreground truncate">{startup.name}</span>
               {scoreLabel && (
-                <Badge variant="outline" className={`text-xs ${scoreCls}`}>{scoreLabel}</Badge>
+                <Badge variant="outline" className={`text-xs ${scoreCls}`}>
+                  {scoreLabel}
+                </Badge>
               )}
-              <Badge variant="outline" className={`text-xs ${statusCls}`}>{matchStatus}</Badge>
+              <Badge variant="outline" className={`text-xs ${statusCls}`}>
+                {matchStatus}
+              </Badge>
             </div>
-            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{startup.description}</p>
+            {startup.description && (
+              <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+                {startup.description}
+              </p>
+            )}
+            {startup.shortDescription && !startup.description && (
+              <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+                {startup.shortDescription}
+              </p>
+            )}
           </div>
-          <ArrowUpRight className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
+          <ArrowUpRight
+            className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5 cursor-pointer"
+            onClick={onClick}
+          />
         </div>
       </CardHeader>
       <CardContent className="pt-0">
         <div className="flex flex-wrap gap-1.5 mb-3">
           {startup.primaryVertical.slice(0, 3).map(v => (
-            <Badge key={v} className={`text-xs ${VERTICAL_BADGE[v] || 'bg-gray-200 text-gray-700'}`}>{v}</Badge>
+            <Badge
+              key={v}
+              className={`text-xs ${VERTICAL_BADGE[v] || 'bg-gray-200 text-gray-700'}`}
+            >
+              {v}
+            </Badge>
           ))}
         </div>
-        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground mb-3">
           {startup.roundStage && (
-            <span className="flex items-center gap-1"><Layers className="h-3 w-3" />{startup.roundStage}</span>
+            <span className="flex items-center gap-1">
+              <Layers className="h-3 w-3" />
+              {startup.roundStage}
+            </span>
           )}
           {startup.targetRaise && (
-            <span className="flex items-center gap-1"><DollarSign className="h-3 w-3" />{startup.targetRaise}</span>
+            <span className="flex items-center gap-1">
+              <DollarSign className="h-3 w-3" />
+              {startup.targetRaise}
+            </span>
           )}
           {startup.entityType && (
-            <span className="flex items-center gap-1"><Building2 className="h-3 w-3" />{startup.entityType}</span>
+            <span className="flex items-center gap-1">
+              <Building2 className="h-3 w-3" />
+              {startup.entityType}
+            </span>
           )}
           {startup.isDualUse && startup.isDualUse !== 'No' && (
-            <span className="flex items-center gap-1"><ShieldCheck className="h-3 w-3" />Dual-Use</span>
+            <span className="flex items-center gap-1">
+              <ShieldCheck className="h-3 w-3" />
+              Dual-Use
+            </span>
           )}
         </div>
+        {/* Executive Summary button on card */}
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full gap-2 text-[#011627] border-[#011627]/20 hover:bg-[#011627]/5 text-xs"
+          onClick={e => {
+            e.stopPropagation()
+            onOpenSummary()
+          }}
+        >
+          <Sparkles className="w-3 h-3 text-[#e71d36]" />
+          Open Executive Summary
+        </Button>
       </CardContent>
     </Card>
   )
 }
 
-// ── Detail sheet ──────────────────────────────────────────────────────────
+// ── Detail sheet ───────────────────────────────────────────────────────────
 function DetailSheet({
-  item, onClose, onRemove,
+  item,
+  onClose,
+  onRemove,
+  autoGenerateSummary,
 }: {
   item: SavedStartup | null
   onClose: () => void
   onRemove: (matchId: string) => void
+  autoGenerateSummary?: boolean
 }) {
   const [removing, setRemoving] = useState(false)
 
-  // Reset removing state whenever a different card is opened
-  useEffect(() => { setRemoving(false) }, [item?.matchId])
+  useEffect(() => {
+    setRemoving(false)
+  }, [item?.matchId])
 
   if (!item) return null
 
   const { startup, matchStatus, scoreLabel, notes } = item
-  const scoreCls  = SCORE_BADGE[scoreLabel]  || 'bg-gray-100 text-gray-600 border-gray-200'
-  const statusCls = STATUS_BADGE[matchStatus] || 'bg-gray-100 text-gray-600 border-gray-200'
+  const scoreCls = SCORE_BADGE[scoreLabel] || 'bg-gray-100 text-gray-600 border-gray-200'
 
   async function handleRemove() {
     setRemoving(true)
@@ -177,23 +392,36 @@ function DetailSheet({
   }
 
   const metrics: { icon: any; label: string; value: string }[] = [
-    startup.roundStage                                          && { icon: Layers,      label: 'Stage',       value: startup.roundStage },
-    startup.targetRaise                                         && { icon: DollarSign,  label: 'Raise Target', value: startup.targetRaise },
-    startup.valuationCap                                        && { icon: TrendingUp,  label: 'Val. Cap',    value: startup.valuationCap },
-    (startup.committedCapital && startup.committedCapital !== '0') && { icon: DollarSign, label: 'Committed',  value: startup.committedCapital },
-    startup.entityType                                          && { icon: Building2,   label: 'Entity',      value: startup.entityType },
-    (startup.isDualUse && startup.isDualUse !== 'No')           && { icon: ShieldCheck, label: 'Dual-Use',   value: startup.isDualUse },
+    startup.roundStage && { icon: Layers, label: 'Stage', value: startup.roundStage },
+    startup.targetRaise && { icon: DollarSign, label: 'Raise Target', value: startup.targetRaise },
+    startup.valuationCap && { icon: TrendingUp, label: 'Val. Cap', value: startup.valuationCap },
+    startup.committedCapital &&
+      startup.committedCapital !== '0' && {
+        icon: DollarSign,
+        label: 'Committed',
+        value: startup.committedCapital,
+      },
+    startup.entityType && { icon: Building2, label: 'Entity', value: startup.entityType },
+    startup.isDualUse &&
+      startup.isDualUse !== 'No' && {
+        icon: ShieldCheck,
+        label: 'Dual-Use',
+        value: startup.isDualUse,
+      },
   ].filter(Boolean) as { icon: any; label: string; value: string }[]
 
   const matchPoints = notes ? notes.split('\n').filter(Boolean) : []
 
   return (
-    <Sheet open={!!item} onOpenChange={open => { if (!open) onClose() }}>
+    <Sheet
+      open={!!item}
+      onOpenChange={open => {
+        if (!open) onClose()
+      }}
+    >
       <SheetContent className="w-full sm:max-w-[min(820px,92vw)] p-0 flex flex-col h-full overflow-hidden">
-
         {/* ── Header gradient ─────────────────────────────────── */}
         <div className="relative bg-gradient-to-br from-emerald-600 via-teal-600 to-teal-700 px-8 pt-8 pb-6 text-white shrink-0 min-h-[120px]">
-          {/* Close btn */}
           <button
             onClick={onClose}
             className="absolute top-4 right-4 rounded-full p-1.5 hover:bg-white/20 transition-colors"
@@ -201,13 +429,10 @@ function DetailSheet({
           >
             <X className="h-5 w-5" />
           </button>
-
           <div className="flex items-start gap-5">
-            {/* Avatar */}
             <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm text-white font-bold text-xl select-none border border-white/30">
               {initials(startup.name)}
             </div>
-
             <div className="flex-1 min-w-0 pt-1">
               <h2 className="text-2xl font-bold leading-tight truncate">{startup.name}</h2>
               <div className="flex flex-wrap gap-2 mt-2">
@@ -220,24 +445,25 @@ function DetailSheet({
                   {matchStatus}
                 </span>
                 {startup.primaryVertical.slice(0, 2).map(v => (
-                  <span key={v} className="inline-flex items-center rounded-full bg-white/15 border border-white/20 px-3 py-0.5 text-sm">
+                  <span
+                    key={v}
+                    className="inline-flex items-center rounded-full bg-white/15 border border-white/20 px-3 py-0.5 text-sm"
+                  >
                     {v}
                   </span>
                 ))}
               </div>
             </div>
           </div>
-
-          {startup.description && (
+          {(startup.description || startup.shortDescription) && (
             <p className="mt-4 text-white/80 text-sm leading-relaxed max-w-xl">
-              {startup.description}
+              {startup.description || startup.shortDescription}
             </p>
           )}
         </div>
 
         {/* ── Scrollable body ─────────────────────────────────── */}
         <div className="flex-1 overflow-y-auto px-8 py-6 space-y-6">
-
           {/* Metric tiles */}
           {metrics.length > 0 && (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -246,6 +472,12 @@ function DetailSheet({
               ))}
             </div>
           )}
+
+          {/* AI Executive Summary */}
+          <ExecutiveSummarySection
+            startup={startup}
+            autoGenerate={!!autoGenerateSummary}
+          />
 
           {/* Why it matched */}
           {matchPoints.length > 0 && (
@@ -311,30 +543,37 @@ function DetailSheet({
               className="w-full gap-2 text-red-600 hover:bg-red-50 hover:text-red-700 border-red-200"
               onClick={handleRemove}
               disabled={removing}
-            >
+             >
               <X className="h-4 w-4" />
               {removing ? 'Removing…' : 'Remove from Saved'}
             </Button>
           </div>
-
         </div>
       </SheetContent>
     </Sheet>
   )
 }
 
-// ── Main view ─────────────────────────────────────────────────────────────
-export function SavedStartupsView() {
-  const [saved, setSaved]     = useState<SavedStartup[]>([])
+// ── Main view ──────────────────────────────────────────────────────────────
+export function SavedStartupsView({
+  selectedStartupId,
+  onClearSelected,
+}: {
+  selectedStartupId?: string | null
+  onClearSelected?: () => void
+}) {
+  const [saved, setSaved] = useState<SavedStartup[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError]     = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
   const [selected, setSelected] = useState<SavedStartup | null>(null)
+  const [autoGenerateSummary, setAutoGenerateSummary] = useState(false)
+  const handledSelectedRef = useRef<string | null>(null)
 
   async function load() {
     setLoading(true)
     setError(null)
     try {
-      const res  = await fetch('/api/saved-startups')
+      const res = await fetch('/api/saved-startups')
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed to load saved startups')
       setSaved(data.savedStartups || [])
@@ -345,10 +584,40 @@ export function SavedStartupsView() {
     }
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    load()
+  }, [])
+
+  // Auto-open startup when navigated from Smart Matches
+  useEffect(() => {
+    if (
+      !loading &&
+      selectedStartupId &&
+      saved.length > 0 &&
+      handledSelectedRef.current !== selectedStartupId
+    ) {
+      handledSelectedRef.current = selectedStartupId
+      const match = saved.find(s => s.startup.id === selectedStartupId)
+      if (match) {
+        setAutoGenerateSummary(true)
+        setSelected(match)
+        onClearSelected?.()
+      }
+    }
+  }, [loading, selectedStartupId, saved, onClearSelected])
 
   function handleRemove(matchId: string) {
     setSaved(prev => prev.filter(s => s.matchId !== matchId))
+  }
+
+  function openWithSummary(item: SavedStartup) {
+    setAutoGenerateSummary(true)
+    setSelected(item)
+  }
+
+  function openCard(item: SavedStartup) {
+    setAutoGenerateSummary(false)
+    setSelected(item)
   }
 
   // Loading
@@ -381,7 +650,8 @@ export function SavedStartupsView() {
       <div className="max-w-2xl mx-auto text-center py-16">
         <p className="text-red-500 mb-4">{error}</p>
         <Button variant="outline" onClick={load} className="gap-2">
-          <RefreshCw className="h-4 w-4" />Retry
+          <RefreshCw className="h-4 w-4" />
+          Retry
         </Button>
       </div>
     )
@@ -407,20 +677,39 @@ export function SavedStartupsView() {
         <div className="flex items-center gap-2">
           <Bookmark className="h-5 w-5 text-emerald-600" />
           <h2 className="text-xl font-semibold">Saved Startups</h2>
-          <Badge variant="secondary" className="ml-1">{saved.length}</Badge>
+          <Badge variant="secondary" className="ml-1">
+            {saved.length}
+          </Badge>
         </div>
-        <Button variant="ghost" size="sm" onClick={load} className="gap-2 text-muted-foreground">
-          <RefreshCw className="h-3.5 w-3.5" />Refresh
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={load}
+          className="gap-2 text-muted-foreground"
+        >
+          <RefreshCw className="h-3.5 w-3.5" />
+          Refresh
         </Button>
       </div>
-
       <div className="space-y-3">
         {saved.map(item => (
-          <SavedCard key={item.matchId} item={item} onClick={() => setSelected(item)} />
+          <SavedCard
+            key={item.matchId}
+            item={item}
+            onClick={() => openCard(item)}
+            onOpenSummary={() => openWithSummary(item)}
+          />
         ))}
       </div>
-
-      <DetailSheet item={selected} onClose={() => setSelected(null)} onRemove={handleRemove} />
+      <DetailSheet
+        item={selected}
+        onClose={() => {
+          setSelected(null)
+          setAutoGenerateSummary(false)
+        }}
+        onRemove={handleRemove}
+        autoGenerateSummary={autoGenerateSummary}
+      />
     </div>
   )
 }
