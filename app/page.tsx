@@ -1,5 +1,4 @@
 'use client'
-
 import { useState } from 'react'
 import { Briefcase, Sparkles, BarChart3, Settings, LogOut, Bookmark } from 'lucide-react'
 import { useUser, useClerk } from '@clerk/nextjs'
@@ -24,7 +23,6 @@ import { MyCriteriaView } from '@/components/views/my-criteria-view'
 import { SavedStartupsView } from '@/components/views/saved-startups-view'
 
 type View = 'deal-room' | 'smart-matches' | 'analytics' | 'my-criteria' | 'saved-startups'
-
 type DealFilter = {
   years?: string[]
   verticals?: string[]
@@ -50,7 +48,9 @@ function AppSidebar({ activeView, onViewChange }: { activeView: View; onViewChan
       : user?.emailAddresses?.[0]?.emailAddress?.slice(0, 2).toUpperCase() || 'TV'
 
   const displayName =
-    user?.firstName || user?.emailAddresses?.[0]?.emailAddress?.split('@')[0] || 'Member'
+    user?.firstName ||
+    user?.emailAddresses?.[0]?.emailAddress?.split('@')[0] ||
+    'Member'
 
   const fundName = (user?.publicMetadata?.fund as string) || 'VCC Member'
 
@@ -110,10 +110,16 @@ export default function Home() {
     return saved && navItems.some(i => i.id === saved) ? saved : 'analytics'
   })
   const [dealFilter, setDealFilter] = useState<DealFilter | undefined>()
+  const [selectedStartupId, setSelectedStartupId] = useState<string | null>(null)
 
   const handleViewChange = (v: View) => {
     setActiveView(v)
     localStorage.setItem('vcc_active_view', v)
+  }
+
+  const handleNavigateToSaved = (startupId: string) => {
+    setSelectedStartupId(startupId)
+    handleViewChange('saved-startups')
   }
 
   return (
@@ -131,7 +137,9 @@ export default function Home() {
         </header>
         <main className="flex-1 overflow-auto p-6">
           {activeView === 'deal-room' && <DealRoomView initialFilter={dealFilter} />}
-          {activeView === 'smart-matches' && <SmartMatchesView />}
+          {activeView === 'smart-matches' && (
+            <SmartMatchesView onNavigateToSaved={handleNavigateToSaved} />
+          )}
           {activeView === 'analytics' && (
             <AnalyticsView
               onNavigate={(v, filter) => {
@@ -141,7 +149,12 @@ export default function Home() {
             />
           )}
           {activeView === 'my-criteria' && <MyCriteriaView />}
-          {activeView === 'saved-startups' && <SavedStartupsView />}
+          {activeView === 'saved-startups' && (
+            <SavedStartupsView
+              selectedStartupId={selectedStartupId}
+              onClearSelected={() => setSelectedStartupId(null)}
+            />
+          )}
         </main>
       </SidebarInset>
     </SidebarProvider>
