@@ -1,109 +1,130 @@
 'use client'
-
 import { useState, useEffect, useCallback } from 'react'
 import {
-  Sparkles, ArrowUpRight, CheckCircle, RefreshCw, Target, ThumbsUp, ThumbsDown,
-  Building2, Globe, Layers, DollarSign, ShieldCheck, X, Mail, Link2, TrendingUp, Users, Phone,
+  Sparkles,
+  ArrowUpRight,
+  CheckCircle,
+  RefreshCw,
+  Target,
+  ThumbsUp,
+  ThumbsDown,
+  Building2,
+  Globe,
+  Layers,
+  DollarSign,
+  ShieldCheck,
+  X,
+  Mail,
+  Link2,
+  TrendingUp,
+  Users,
+  Phone,
+  FileText,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
-  Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
 } from '@/components/ui/sheet'
 import { Separator } from '@/components/ui/separator'
 import type { Investor } from '@/lib/airtable'
 
-// ── Types ───────────────────────────────────────────────────────────────
-
+// ââ Types ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 interface ComputedMatch {
-  startupId:        string
-  startupName:      string
-  description:      string
-  verticals:        string[]
-  roundStage:       string
-  targetRaise:      string
-  isDualUse:        string
-  pitchDeckUrl?:    string
-  jurisdiction?:    string
-  score:            number
-  scoreLabel:       '🔥 Hot' | '💪 Strong' | '👍 Good' | '😐 Weak'
-  reasons:          string[]
-  introStatus?:     string | null
-  email?:           string
-  website?:         string
-  valuationCap?:    string
+  startupId: string
+  startupName: string
+  description: string
+  verticals: string[]
+  roundStage: string
+  targetRaise: string
+  isDualUse: string
+  pitchDeckUrl?: string
+  jurisdiction?: string
+  score: number
+  scoreLabel: 'ð¥ Hot' | 'ðª Strong' | 'ð Good' | 'ð Weak'
+  reasons: string[]
+  introStatus?: string | null
+  email?: string
+  website?: string
+  valuationCap?: string
   committedCapital?: string
   status?: string
   shortDescription?: string
-  businessModel?:    string[]
-  mrrRevenue?:       string
-  cmgr?:             string
-  runway?:           string
-  activeUsers?:      string
-  founderName?:      string
-  founderWhatsapp?:  string
+  businessModel?: string[]
+  mrrRevenue?: string
+  cmgr?: string
+  runway?: string
+  activeUsers?: string
+  founderName?: string
+  founderWhatsapp?: string
 }
 
-// ── Color palettes ──────────────────────────────────────────────────────
-
+// ââ Color palettes âââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 const SCORE_BADGE: Record<string, string> = {
-  '🔥 Hot':    'bg-orange-100 text-orange-700 border-orange-200',
-  '💪 Strong': 'bg-blue-100 text-blue-700 border-blue-200',
-  '👍 Good':   'bg-emerald-100 text-emerald-700 border-emerald-200',
-  '😐 Weak':   'bg-gray-100 text-gray-600 border-gray-200',
+  'ð¥ Hot': 'bg-orange-100 text-orange-700 border-orange-200',
+  'ðª Strong': 'bg-blue-100 text-blue-700 border-blue-200',
+  'ð Good': 'bg-emerald-100 text-emerald-700 border-emerald-200',
+  'ð Weak': 'bg-gray-100 text-gray-600 border-gray-200',
 }
-
 const SCORE_BAR: Record<string, string> = {
-  '🔥 Hot':    'bg-orange-500',
-  '💪 Strong': 'bg-blue-500',
-  '👍 Good':   'bg-emerald-500',
-  '😐 Weak':   'bg-gray-300',
+  'ð¥ Hot': 'bg-orange-500',
+  'ðª Strong': 'bg-blue-500',
+  'ð Good': 'bg-emerald-500',
+  'ð Weak': 'bg-gray-300',
 }
-
 const VERTICAL_BADGE: Record<string, string> = {
-  'Defense / MilTech':          'bg-slate-800 text-white',
-  'AI / ML':                    'bg-purple-600 text-white',
-  'Cybersecurity':               'bg-red-700 text-white',
-  'Fintech':                     'bg-emerald-700 text-white',
-  'HealthTech':                  'bg-pink-600 text-white',
-  'AgriTech':                    'bg-green-700 text-white',
-  'SaaS (General)':              'bg-blue-600 text-white',
-  'Hardware / IoT':              'bg-orange-600 text-white',
-  'EdTech':                      'bg-indigo-600 text-white',
-  'Marketing & Media':           'bg-rose-600 text-white',
-  'Energy & Environment':        'bg-teal-600 text-white',
-  'Consumer Products':           'bg-yellow-600 text-white',
-  'Consumer products':           'bg-yellow-600 text-white',
-  'HRTech':                      'bg-violet-600 text-white',
-  'Business Productivity':       'bg-cyan-700 text-white',
-  'E-commerce & Retail':         'bg-orange-700 text-white',
-  'Logistics & Transportation':  'bg-slate-600 text-white',
+  'Defense / MilTech': 'bg-slate-800 text-white',
+  'AI / ML': 'bg-purple-600 text-white',
+  'Cybersecurity': 'bg-red-700 text-white',
+  'Fintech': 'bg-emerald-700 text-white',
+  'HealthTech': 'bg-pink-600 text-white',
+  'AgriTech': 'bg-green-700 text-white',
+  'SaaS (General)': 'bg-blue-600 text-white',
+  'Hardware / IoT': 'bg-orange-600 text-white',
+  'EdTech': 'bg-indigo-600 text-white',
+  'Marketing & Media': 'bg-rose-600 text-white',
+  'Energy & Environment': 'bg-teal-600 text-white',
+  'Consumer Products': 'bg-yellow-600 text-white',
+  'Consumer products': 'bg-yellow-600 text-white',
+  'HRTech': 'bg-violet-600 text-white',
+  'Business Productivity': 'bg-cyan-700 text-white',
+  'E-commerce & Retail': 'bg-orange-700 text-white',
+  'Logistics & Transportation': 'bg-slate-600 text-white',
 }
 
-// ── Helpers ─────────────────────────────────────────────────────────────
-
+// ââ Helpers ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function initials(name: string) {
-  return name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+  return name
+    .split(' ')
+    .map(w => w[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase()
 }
-
 function ScoreBadge({ label, score }: { label: string; score: number }) {
   return (
-    <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap ${SCORE_BADGE[label] ?? 'bg-gray-100 text-gray-600 border-gray-200'}`}>
-      {label} · {score}/100
+    <span
+      className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap ${SCORE_BADGE[label] ?? 'bg-gray-100 text-gray-600 border-gray-200'}`}
+    >
+      {label} Â· {score}/100
     </span>
   )
 }
-
 function VerticalPill({ v }: { v: string }) {
   return (
-    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${VERTICAL_BADGE[v] ?? 'bg-gray-200 text-gray-700'}`}>
+    <span
+      className={`text-xs px-2 py-0.5 rounded-full font-medium ${VERTICAL_BADGE[v] ?? 'bg-gray-200 text-gray-700'}`}
+    >
       {v}
     </span>
   )
 }
-
 function StatusChip({ status }: { status: string }) {
   if (status === 'Interested' || status === 'Intro Sent') {
     return (
@@ -124,8 +145,7 @@ function StatusChip({ status }: { status: string }) {
   return null
 }
 
-// ── Loading skeleton ─────────────────────────────────────────────────────
-
+// ââ Loading skeleton ââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function MatchCardSkeleton() {
   return (
     <Card className="border border-gray-100">
@@ -152,8 +172,7 @@ function MatchCardSkeleton() {
   )
 }
 
-// ── Match card (summary, fully clickable) ────────────────────────────────
-
+// ââ Match card âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function MatchCard({
   match,
   status,
@@ -176,7 +195,9 @@ function MatchCard({
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3 flex-1 min-w-0">
-            <div className={`flex h-11 w-11 items-center justify-center rounded-lg text-sm font-bold text-white flex-shrink-0 ${muted ? 'bg-gray-500' : 'bg-[#011627]'}`}>
+            <div
+              className={`flex h-11 w-11 items-center justify-center rounded-lg text-sm font-bold text-white flex-shrink-0 ${muted ? 'bg-gray-500' : 'bg-[#011627]'}`}
+            >
               {initials(match.startupName)}
             </div>
             <div className="min-w-0">
@@ -184,7 +205,9 @@ function MatchCard({
                 {match.startupName}
               </h3>
               {status && (
-                <span className={`inline-block text-xs font-medium px-2 py-0.5 rounded-full ${status === 'Actively Raising' ? 'bg-green-100 text-green-700' : status === 'Under Review' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-600'}`}>
+                <span
+                  className={`inline-block text-xs font-medium px-2 py-0.5 rounded-full ${status === 'Actively Raising' ? 'bg-green-100 text-green-700' : status === 'Under Review' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-600'}`}
+                >
                   {status}
                 </span>
               )}
@@ -202,61 +225,51 @@ function MatchCard({
               </div>
             </div>
           </div>
-          <div className="flex-shrink-0">{muted ? (
-            <span className="text-xs text-muted-foreground bg-gray-50 border border-gray-200 rounded-full px-2 py-0.5 whitespace-nowrap">
-              {match.score}/100
-            </span>
-          ) : (
-            <ScoreBadge label={match.scoreLabel} score={match.score} />
-          )}</div>
+          <div className="flex-shrink-0">
+            {muted ? (
+              <span className="text-xs text-muted-foreground bg-gray-50 border border-gray-200 rounded-full px-2 py-0.5 whitespace-nowrap">
+                {match.score}/100
+              </span>
+            ) : (
+              <ScoreBadge label={match.scoreLabel} score={match.score} />
+            )}
+          </div>
         </div>
       </CardHeader>
-
       <CardContent className="space-y-3 flex-1 flex flex-col pt-0">
-        {/* Score bar */}
         <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
           <div
             className={`h-full rounded-full ${muted ? 'bg-gray-300' : (SCORE_BAR[match.scoreLabel] ?? 'bg-gray-300')}`}
             style={{ width: `${match.score}%` }}
           />
         </div>
-
-        {/* Description preview */}
         {match.description && (
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            {match.description}
-          </p>
+          <p className="text-sm text-muted-foreground leading-relaxed">{match.description}</p>
         )}
-          {match.shortDescription && (
-            <p className="text-xs text-gray-500 mt-1 leading-relaxed">
-              {match.shortDescription}
-            </p>
-          )}
-
-        {/* Verticals */}
+        {match.shortDescription && (
+          <p className="text-xs text-gray-500 mt-1 leading-relaxed">{match.shortDescription}</p>
+        )}
         <div className="flex flex-wrap gap-1.5">
-          {match.verticals.slice(0, 2).map(v => <VerticalPill key={v} v={v} />)}
+          {match.verticals.slice(0, 2).map(v => (
+            <VerticalPill key={v} v={v} />
+          ))}
           {match.isDualUse === 'Yes' && (
             <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium">
               Dual-use
             </span>
           )}
         </div>
-
-        {/* Why it matches (top 2 reasons) */}
         {!muted && match.reasons.length > 0 && (
           <div className="flex flex-col gap-0.5">
             {match.reasons.slice(0, 2).map((r, i) => (
               <span key={i} className="text-xs text-muted-foreground flex items-center gap-1">
-                <span className="text-[#e71d36] flex-shrink-0">✓</span>{r}
+                <span className="text-[#e71d36] flex-shrink-0">â</span>
+                {r}
               </span>
             ))}
           </div>
         )}
-
         <div className="flex-1" />
-
-        {/* Status chip or "View details" hint */}
         <div className="flex items-center justify-between pt-2 border-t border-gray-50">
           {status ? (
             <StatusChip status={status} />
@@ -272,8 +285,7 @@ function MatchCard({
   )
 }
 
-// ── Detail Sheet ─────────────────────────────────────────────────────────
-
+// ââ Detail Sheet ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function MatchDetailSheet({
   match,
   status,
@@ -282,6 +294,7 @@ function MatchDetailSheet({
   onAction,
   isActing,
   investor,
+  onNavigateToSaved,
 }: {
   match: ComputedMatch | null
   status: string | undefined
@@ -290,13 +303,18 @@ function MatchDetailSheet({
   onAction: (s: 'Interested' | 'Not Interested') => void
   isActing: boolean
   investor: Investor | null
+  onNavigateToSaved?: (startupId: string) => void
 }) {
-    if (!match) return null
-
+  if (!match) return null
   const isInterested = status === 'Interested' || status === 'Intro Sent'
-  const isPassed     = status === 'Not Interested'
-
-  const hasContactInfo = match.email || match.website || match.valuationCap || match.committedCapital || match.founderName || match.founderWhatsapp
+  const isPassed = status === 'Not Interested'
+  const hasContactInfo =
+    match.email ||
+    match.website ||
+    match.valuationCap ||
+    match.committedCapital ||
+    match.founderName ||
+    match.founderWhatsapp
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -314,7 +332,9 @@ function MatchDetailSheet({
               <div className="flex-1 min-w-0 pt-0.5">
                 <SheetTitle className="text-2xl leading-tight">{match.startupName}</SheetTitle>
                 <div className="flex flex-wrap gap-1.5 mt-2">
-                  {match.verticals.map(v => <VerticalPill key={v} v={v} />)}
+                  {match.verticals.map(v => (
+                    <VerticalPill key={v} v={v} />
+                  ))}
                   {match.isDualUse === 'Yes' && (
                     <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium">
                       Dual-use
@@ -324,10 +344,11 @@ function MatchDetailSheet({
               </div>
               <ScoreBadge label={match.scoreLabel} score={match.score} />
             </div>
-            <SheetDescription className="sr-only">Match details for {match.startupName}</SheetDescription>
+            <SheetDescription className="sr-only">
+              Match details for {match.startupName}
+            </SheetDescription>
           </SheetHeader>
         </div>
-
         <Separator />
 
         {/* Score breakdown */}
@@ -350,15 +371,31 @@ function MatchDetailSheet({
               <ul className="space-y-1.5">
                 {match.reasons.map((r, i) => (
                   <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
-                    <span className="text-[#e71d36] mt-0.5 flex-shrink-0">✓</span>
+                    <span className="text-[#e71d36] mt-0.5 flex-shrink-0">â</span>
                     {r}
                   </li>
                 ))}
               </ul>
+              {/* Executive Summary button â only visible once investor is interested */}
+              {isInterested && onNavigateToSaved && (
+                <div className="pt-2 border-t border-border/60 mt-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full gap-2 text-[#011627] border-[#011627]/30 hover:bg-[#011627]/5"
+                    onClick={() => {
+                      onOpenChange(false)
+                      onNavigateToSaved(match.startupId)
+                    }}
+                  >
+                    <FileText className="w-3.5 h-3.5" />
+                    Open Executive Summary
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </div>
-
         <Separator />
 
         {/* Key metrics */}
@@ -403,12 +440,14 @@ function MatchDetailSheet({
             <Separator />
             <div className="px-8 py-6">
               <h3 className="text-sm font-semibold mb-3">About</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">{match.description || match.shortDescription}</p>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                {match.description || match.shortDescription}
+              </p>
             </div>
           </>
         )}
 
-        {/* Pitch deck link */}
+        {/* Pitch deck */}
         {match.pitchDeckUrl && (
           <>
             <Separator />
@@ -419,14 +458,12 @@ function MatchDetailSheet({
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 text-sm text-[#e71d36] hover:underline font-medium"
               >
-                <Building2 className="w-4 h-4" />
-                View Pitch Deck
+                <Building2 className="w-4 h-4" /> View Pitch Deck{' '}
                 <ArrowUpRight className="w-3.5 h-3.5" />
               </a>
             </div>
           </>
         )}
-
 
         {/* Business Model */}
         {match.businessModel && match.businessModel.length > 0 && (
@@ -434,12 +471,13 @@ function MatchDetailSheet({
             <Separator />
             <div className="px-8 py-6">
               <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-                <Layers className="w-4 h-4 text-muted-foreground" />
-                Business Model
+                <Layers className="w-4 h-4 text-muted-foreground" /> Business Model
               </h3>
               <div className="flex flex-wrap gap-1.5">
-                {match.businessModel.map((bm) => (
-                  <Badge key={bm} variant="secondary" className="text-xs">{bm}</Badge>
+                {match.businessModel.map(bm => (
+                  <Badge key={bm} variant="secondary" className="text-xs">
+                    {bm}
+                  </Badge>
                 ))}
               </div>
             </div>
@@ -452,8 +490,7 @@ function MatchDetailSheet({
             <Separator />
             <div className="px-8 py-6">
               <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-muted-foreground" />
-                Traction
+                <TrendingUp className="w-4 h-4 text-muted-foreground" /> Traction
               </h3>
               <div className="grid grid-cols-2 gap-3">
                 {match.mrrRevenue && (
@@ -493,14 +530,13 @@ function MatchDetailSheet({
           </>
         )}
 
-                {/* ── Contact & Deal Info (shown immediately when investor is interested) ── */}
+        {/* Contact & Deal Info */}
         {isInterested && hasContactInfo && (
           <>
             <Separator />
             <div className="px-8 py-6 space-y-4">
               <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-emerald-600" />
-                Contact & Deal Details
+                <CheckCircle className="w-4 h-4 text-emerald-600" /> Contact & Deal Details
               </h3>
               <div className="grid grid-cols-1 gap-3">
                 {match.email && (
@@ -523,13 +559,16 @@ function MatchDetailSheet({
                     <div className="min-w-0">
                       <div className="text-xs text-muted-foreground mb-0.5">Website / LinkedIn</div>
                       <a
-                        href={match.website.startsWith('http') ? match.website : `https://${match.website}`}
+                        href={
+                          match.website.startsWith('http')
+                            ? match.website
+                            : `https://${match.website}`
+                        }
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-sm font-medium text-[#e71d36] hover:underline truncate block"
                       >
-                        {match.website}
-                        <ArrowUpRight className="w-3 h-3 inline ml-1" />
+                        {match.website} <ArrowUpRight className="w-3 h-3 inline ml-1" />
                       </a>
                     </div>
                   </div>
@@ -554,7 +593,6 @@ function MatchDetailSheet({
                     )}
                   </div>
                 )}
-
                 {(match.founderName || match.founderWhatsapp) && (
                   <div className="space-y-2">
                     <div className="flex items-center gap-1.5 text-xs text-muted-foreground uppercase tracking-wide mb-2">
@@ -581,20 +619,16 @@ function MatchDetailSheet({
                     )}
                   </div>
                 )}
-
               </div>
             </div>
           </>
         )}
 
-        {/* Spacer */}
         <div className="flex-1" />
-
         <Separator />
 
         {/* Action buttons */}
         <div className="px-8 py-7 space-y-3">
-          {/* Current status */}
           {status && (
             <div className="flex items-center gap-2 mb-1">
               <StatusChip status={status} />
@@ -602,12 +636,11 @@ function MatchDetailSheet({
                 {status === 'Intro Sent'
                   ? 'VCC is arranging the introduction.'
                   : isInterested
-                    ? 'Full startup details are now visible above.'
-                    : 'You can change your response below.'}
+                  ? 'Full startup details are now visible above.'
+                  : 'You can change your response below.'}
               </span>
             </div>
           )}
-
           <div className="flex flex-col gap-2">
             <Button
               onClick={() => onAction('Interested')}
@@ -615,7 +648,7 @@ function MatchDetailSheet({
               className={`w-full gap-2 ${isInterested ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-[#e71d36] hover:bg-[#c91027]'} text-white`}
             >
               <ThumbsUp className="w-4 h-4" />
-              {isInterested ? 'Interested ✓' : "I'm Interested — Show More"}
+              {isInterested ? 'Interested â' : "I'm Interested â Show More"}
             </Button>
             <Button
               variant="ghost"
@@ -638,33 +671,42 @@ function MatchDetailSheet({
   )
 }
 
-// ── Main view ────────────────────────────────────────────────────────────
-
-export function SmartMatchesView() {
-  const [matches,  setMatches]  = useState<ComputedMatch[]>([])
-  const [others,   setOthers]   = useState<ComputedMatch[]>([])
+// ââ Main view ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+export function SmartMatchesView({
+  onNavigateToSaved,
+}: {
+  onNavigateToSaved?: (startupId: string) => void
+}) {
+  const [matches, setMatches] = useState<ComputedMatch[]>([])
+  const [others, setOthers] = useState<ComputedMatch[]>([])
   const [investor, setInvestor] = useState<Investor | null>(null)
-  const [loading,  setLoading]  = useState(true)
-  const [error,    setError]    = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [noCriteria, setNoCriteria] = useState(false)
 
-  // Sheet state
   const [selectedMatch, setSelectedMatch] = useState<ComputedMatch | null>(null)
-  const [sheetOpen,     setSheetOpen]     = useState(false)
+  const [sheetOpen, setSheetOpen] = useState(false)
 
-  // Per-startup intro statuses (optimistic updates)
-  const [introStatuses, setIntroStatuses]   = useState<Record<string, string>>({})
-  const [introActing,   setIntroActing]     = useState<string | null>(null)
+  const [introStatuses, setIntroStatuses] = useState<Record<string, string>>({})
+  const [introActing, setIntroActing] = useState<string | null>(null)
 
-  // ── Data loading ─────────────────────────────────────────
+  // ââ Data loading ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
   const load = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
-      const res  = await fetch('/api/matches')
+      const res = await fetch('/api/matches')
       const data = await res.json()
-      if (!res.ok) { setError(data.error || 'Failed to load matches'); return }
-      if (data.noCriteria) { setNoCriteria(true); setMatches([]); setOthers([]); return }
+      if (!res.ok) {
+        setError(data.error || 'Failed to load matches')
+        return
+      }
+      if (data.noCriteria) {
+        setNoCriteria(true)
+        setMatches([])
+        setOthers([])
+        return
+      }
       setNoCriteria(false)
       setInvestor(data.investor ?? null)
       setMatches(data.matches ?? [])
@@ -681,35 +723,38 @@ export function SmartMatchesView() {
     }
   }, [])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => {
+    load()
+  }, [load])
 
-  // ── Express interest / pass ──────────────────────────────
+  // ââ Express interest / pass âââââââââââââââââââââââââââââââââââââââââââââââ
   async function handleAction(match: ComputedMatch, status: 'Interested' | 'Not Interested') {
     setIntroActing(match.startupId)
-    // Optimistic update
     setIntroStatuses(prev => ({ ...prev, [match.startupId]: status }))
     try {
       const res = await fetch('/api/request-intro', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          startupId:  match.startupId,
-          score:      match.score,
+          startupId: match.startupId,
+          score: match.score,
           scoreLabel: match.scoreLabel,
-          reasons:    match.reasons,
+          reasons: match.reasons,
           status,
         }),
       })
       if (!res.ok) {
-        // Revert on failure
         setIntroStatuses(prev => {
           const next = { ...prev }
           delete next[match.startupId]
           return next
         })
+      } else if (status === 'Interested') {
+        // Navigate to Saved Startups and auto-open this startup's card + trigger summary
+        setSheetOpen(false)
+        onNavigateToSaved?.(match.startupId)
       }
     } catch {
-      // Revert on failure
       setIntroStatuses(prev => {
         const next = { ...prev }
         delete next[match.startupId]
@@ -720,13 +765,13 @@ export function SmartMatchesView() {
     }
   }
 
-  // ── Stats ────────────────────────────────────────────────
-  const hotCount    = matches.filter(m => m.scoreLabel === '🔥 Hot').length
-  const strongCount = matches.filter(m => m.scoreLabel === '💪 Strong').length
-  const focusLabel  = investor?.focusVerticals?.slice(0, 2).join(', ') ?? '—'
-  const ticketLabel = investor?.ticketSize?.[0] ?? '—'
+  // ââ Stats âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+  const hotCount = matches.filter(m => m.scoreLabel === 'ð¥ Hot').length
+  const strongCount = matches.filter(m => m.scoreLabel === 'ðª Strong').length
+  const focusLabel = investor?.focusVerticals?.slice(0, 2).join(', ') ?? 'â'
+  const ticketLabel = investor?.ticketSize?.[0] ?? 'â'
 
-  // ── No criteria ──────────────────────────────────────────
+  // ââ No criteria âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
   if (!loading && noCriteria) {
     return (
       <div className="flex flex-col items-center justify-center py-24 px-4 text-center">
@@ -738,7 +783,9 @@ export function SmartMatchesView() {
           Define your focus verticals, stage preference, and ticket size in{' '}
           <strong>My Criteria</strong> to unlock personalised smart matches.
         </p>
-        <p className="text-xs text-muted-foreground">Use the <strong>My Criteria</strong> tab in the sidebar.</p>
+        <p className="text-xs text-muted-foreground">
+          Use the <strong>My Criteria</strong> tab in the sidebar.
+        </p>
       </div>
     )
   }
@@ -753,8 +800,11 @@ export function SmartMatchesView() {
             <p className="text-sm text-muted-foreground">
               Based on your focus in{' '}
               <span className="font-medium text-foreground">{focusLabel}</span>
-              {ticketLabel !== '—' && (
-                <>, ticket size <span className="font-medium text-foreground">{ticketLabel}</span></>
+              {ticketLabel !== 'â' && (
+                <>
+                  , ticket size{' '}
+                  <span className="font-medium text-foreground">{ticketLabel}</span>
+                </>
               )}
             </p>
           )}
@@ -769,14 +819,20 @@ export function SmartMatchesView() {
             </div>
             <div className="rounded-lg border bg-card px-4 py-3 min-w-[90px]">
               <div className="text-2xl font-bold text-orange-600">{hotCount}</div>
-              <div className="text-xs text-muted-foreground">🔥 Hot</div>
+              <div className="text-xs text-muted-foreground">ð¥ Hot</div>
             </div>
             <div className="rounded-lg border bg-card px-4 py-3 min-w-[90px]">
               <div className="text-2xl font-bold text-blue-600">{strongCount}</div>
-              <div className="text-xs text-muted-foreground">💪 Strong</div>
+              <div className="text-xs text-muted-foreground">ðª Strong</div>
             </div>
-            <Button variant="ghost" size="sm" onClick={load} className="self-center text-muted-foreground ml-auto">
-              <RefreshCw className="w-3.5 h-3.5 mr-1.5" />Refresh
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={load}
+              className="self-center text-muted-foreground ml-auto"
+            >
+              <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
+              Refresh
             </Button>
           </div>
         )}
@@ -784,7 +840,9 @@ export function SmartMatchesView() {
         {/* Loading */}
         {loading && (
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {[1, 2, 3].map(i => <MatchCardSkeleton key={i} />)}
+            {[1, 2, 3].map(i => (
+              <MatchCardSkeleton key={i} />
+            ))}
           </div>
         )}
 
@@ -792,11 +850,14 @@ export function SmartMatchesView() {
         {!loading && error && (
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <p className="text-red-500 mb-4">{error}</p>
-            <Button variant="outline" onClick={load}><RefreshCw className="w-4 h-4 mr-2" />Retry</Button>
+            <Button variant="outline" onClick={load}>
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Retry
+            </Button>
           </div>
         )}
 
-        {/* Empty state for matches (but others might still exist) */}
+        {/* Empty */}
         {!loading && !error && matches.length === 0 && others.length === 0 && (
           <div className="flex flex-col items-center justify-center py-24 text-center">
             <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-6">
@@ -804,18 +865,21 @@ export function SmartMatchesView() {
             </div>
             <h2 className="text-xl font-semibold text-foreground mb-2">No matches yet</h2>
             <p className="text-sm text-muted-foreground max-w-sm">
-              No actively raising startups match your criteria right now. New startups are added regularly — check back soon.
+              No actively raising startups match your criteria right now. New startups are added
+              regularly â check back soon.
             </p>
-              <p className="text-xs text-muted-foreground mt-3 max-w-xs">
-                Want better matches? Make sure your investment criteria is filled in under <strong>My Criteria</strong>.
-              </p>
+            <p className="text-xs text-muted-foreground mt-3 max-w-xs">
+              Want better matches? Make sure your investment criteria is filled in under{' '}
+              <strong>My Criteria</strong>.
+            </p>
             <Button variant="outline" className="mt-5" onClick={load}>
-              <RefreshCw className="w-4 h-4 mr-2" />Refresh
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Refresh
             </Button>
           </div>
         )}
 
-        {/* Curated matches grid */}
+        {/* Curated matches */}
         {!loading && !error && matches.length > 0 && (
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {matches.map(match => (
@@ -823,20 +887,24 @@ export function SmartMatchesView() {
                 key={match.startupId}
                 match={match}
                 status={introStatuses[match.startupId]}
-                onClick={() => { setSelectedMatch(match); setSheetOpen(true) }}
+                onClick={() => {
+                  setSelectedMatch(match)
+                  setSheetOpen(true)
+                }}
               />
             ))}
           </div>
         )}
 
-        {/* ── Other startups raising (score < 30) ── */}
+        {/* Other startups */}
         {!loading && !error && others.length > 0 && (
           <div className="mt-4 space-y-4">
             <div className="flex items-center gap-3">
               <div>
                 <h2 className="text-lg font-semibold text-foreground">Other Startups Raising</h2>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  These {others.length} startup{others.length !== 1 ? 's' : ''} are actively raising but didn&apos;t fully match your current criteria — worth a look.
+                  These {others.length} startup{others.length !== 1 ? 's' : ''} are actively
+                  raising but didn&apos;t fully match your current criteria â worth a look.
                 </p>
               </div>
             </div>
@@ -846,7 +914,10 @@ export function SmartMatchesView() {
                   key={match.startupId}
                   match={match}
                   status={introStatuses[match.startupId]}
-                  onClick={() => { setSelectedMatch(match); setSheetOpen(true) }}
+                  onClick={() => {
+                    setSelectedMatch(match)
+                    setSheetOpen(true)
+                  }}
                   muted
                 />
               ))}
@@ -863,7 +934,8 @@ export function SmartMatchesView() {
         onOpenChange={setSheetOpen}
         onAction={status => selectedMatch && handleAction(selectedMatch, status)}
         isActing={selectedMatch ? introActing === selectedMatch.startupId : false}
-          investor={investor}
+        investor={investor}
+        onNavigateToSaved={onNavigateToSaved}
       />
     </>
   )
