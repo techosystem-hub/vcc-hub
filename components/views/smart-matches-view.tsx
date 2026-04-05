@@ -767,7 +767,9 @@ export function SmartMatchesView({
     .sort((a, b) => {
       if (sortBy === 'az') return (a.startupName || '').localeCompare(b.startupName || '')
       if (sortBy === 'za') return (b.startupName || '').localeCompare(a.startupName || '')
-      return 0
+      const demoteA = (introStatuses[a.startupId] === 'Not Interested' || a.scoreLabel === '😐 Weak') ? 1 : 0
+      const demoteB = (introStatuses[b.startupId] === 'Not Interested' || b.scoreLabel === '😐 Weak') ? 1 : 0
+      return demoteA - demoteB
     })
   const focusLabel = investor?.focusVerticals?.slice(0, 2).join(', ') ?? '—'
   const ticketLabel = investor?.ticketSize?.[0] ?? '—'
@@ -814,26 +816,22 @@ export function SmartMatchesView({
         {/* Stats */}
         {!loading && !error && (
           <div className="flex flex-wrap items-center gap-3">
-            <div className="rounded-lg border bg-card px-4 py-3 min-w-[90px]">
-              <div className="text-2xl font-bold text-foreground">{matches.length}</div>
-              <div className="text-xs text-muted-foreground">Matches</div>
-            </div>
-            <div className="rounded-lg border bg-card px-4 py-3 min-w-[90px]">
-              <div className="text-2xl font-bold text-orange-600">{hotCount}</div>
-              <div className="text-xs text-muted-foreground">🔥 Hot</div>
-            </div>
-            <div className="rounded-lg border bg-card px-4 py-3 min-w-[90px]">
-              <div className="text-2xl font-bold text-blue-600">{strongCount}</div>
-              <div className="text-xs text-muted-foreground">💪 Strong</div>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={load}
-              className="self-center text-muted-foreground ml-auto"
-            >
-              <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
-              Refresh
+            {[
+              { id: 'all', label: 'Matches', count: matches.length, colorClass: 'text-foreground' },
+              { id: 'hot', label: '🔥 Hot', count: hotCount, colorClass: 'text-orange-600' },
+              { id: 'strong', label: '💪 Strong', count: strongCount, colorClass: 'text-blue-600' },
+              { id: 'good', label: '👍 Good', count: goodCount, colorClass: 'text-emerald-600' },
+              { id: 'interested', label: 'Interested', count: interestedCount, colorClass: 'text-teal-600' },
+              { id: 'passed', label: 'Passed', count: passedCount, colorClass: 'text-gray-500' },
+            ].map(f => (
+              <button key={f.id} onClick={() => setActiveFilter(f.id)}
+                className={`rounded-lg border bg-card px-4 py-3 min-w-[90px] text-left transition-all hover:shadow-md ${activeFilter === f.id ? 'ring-2 ring-blue-500 border-blue-300' : 'hover:border-gray-300'}`}>
+                <div className={`text-2xl font-bold ${f.colorClass}`}>{f.count}</div>
+                <div className="text-xs text-muted-foreground">{f.label}</div>
+              </button>
+            ))}
+            <Button variant="ghost" size="sm" onClick={load} className="self-center text-muted-foreground ml-auto">
+              <RefreshCw className="w-3.5 h-3.5 mr-1.5" /> Refresh
             </Button>
           </div>
         )}
@@ -881,41 +879,18 @@ export function SmartMatchesView({
         )}
 
         {!loading && !error && matches.length > 0 && (
-          <div className="mb-4 space-y-2">
-            <div className="flex flex-wrap gap-2">
-              {[
-                { id: 'all', label: 'All Matches', count: matches.length },
-                { id: 'hot', label: '🔥 Hot', count: hotCount },
-                { id: 'strong', label: '💪 Strong', count: strongCount },
-                { id: 'good', label: '👍 Good', count: goodCount },
-                { id: 'interested', label: 'Interested', count: interestedCount },
-                { id: 'passed', label: 'Passed', count: passedCount },
-              ].map(f => (
-                <button
-                  key={f.id}
-                  onClick={() => setActiveFilter(f.id)}
-                  className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${activeFilter === f.id ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-                >
-                  {f.label} <span className="opacity-60 text-xs">({f.count})</span>
-                </button>
-              ))}
-            </div>
-            <div className="flex items-center gap-1 text-sm">
-              <span className="text-gray-400 mr-1">Sort:</span>
-              {[
-                { id: 'relevancy', label: 'Relevancy' },
-                { id: 'az', label: 'A–Z' },
-                { id: 'za', label: 'Z–A' },
-              ].map(s => (
-                <button
-                  key={s.id}
-                  onClick={() => setSortBy(s.id)}
-                  className={`px-2 py-0.5 rounded text-sm transition-colors ${sortBy === s.id ? 'text-blue-600 font-semibold underline' : 'text-gray-400 hover:text-gray-600'}`}
-                >
-                  {s.label}
-                </button>
-              ))}
-            </div>
+          <div className="flex items-center gap-1 text-sm">
+            <span className="text-gray-400 mr-1">Sort:</span>
+            {[
+              { id: 'relevancy', label: 'Relevancy' },
+              { id: 'az', label: 'A–Z' },
+              { id: 'za', label: 'Z–A' },
+            ].map(s => (
+              <button key={s.id} onClick={() => setSortBy(s.id)}
+                className={`px-2 py-0.5 rounded text-sm transition-colors ${sortBy === s.id ? 'text-blue-600 font-semibold underline' : 'text-gray-400 hover:text-gray-600'}`}>
+                {s.label}
+              </button>
+            ))}
           </div>
         )}
         {/* Curated matches */}
