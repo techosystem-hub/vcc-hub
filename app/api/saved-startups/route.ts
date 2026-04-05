@@ -109,6 +109,12 @@ export async function GET() {
           website: sf['Website / LinkedIn'] || null,
           valuationCap: sf['Valuation Cap (USD)'] || null,
           committedCapital: sf['Committed Capital (USD)'] || null,
+        businessModel: Array.isArray(sf['Business Model']) ? sf['Business Model'] : sf['Business Model'] ? [sf['Business Model']] : [],
+        mrr: sf['MRR / Revenue'] || null,
+        runway: sf['Runway'] || null,
+        activeUsers: sf['Active Users / Clients'] || null,
+        appliedDate: sf['Applied Date'] || null,
+        aiExecutiveSummary: sf['AI Executive Summary'] || null,
         },
       }
     })
