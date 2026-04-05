@@ -1,15 +1,37 @@
-// ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─────────────────────────────────────────────────────────────────────────────
 // POST /api/executive-summary
-// Generates (or returns cached) a McKinsey-level AI executive summary.
+// Generates (or returns cached) an AI executive summary based on verified facts.
 // Inputs: { startupId, startupName, websiteUrl?, pitchDeckUrl? }
-// Stores result in VCC Matches table per (MemberClerkID Ã StartupID).
-// ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// Stores result in VCC Matches table per (MemberClerkID x StartupID).
+// ─────────────────────────────────────────────────────────────────────────────
 import { NextRequest, NextResponse } from 'next/server'
 import { currentUser } from '@clerk/nextjs/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { getVccMatch, saveExecutiveSummary, upsertVccMatch } from '@/lib/matches'
 
 const client = new Anthropic()
+
+async function fetchWebsiteText(url: string): Promise<string> {
+  try {
+    const ctrl = new AbortController()
+    const tid = setTimeout(() => ctrl.abort(), 6000)
+    const res = await fetch(url, {
+      signal: ctrl.signal,
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; VCCBot/1.0)' },
+    })
+    clearTimeout(tid)
+    const html = await res.text()
+    return html
+      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 5000)
+  } catch {
+    return ''
+  }
+}
 
 export async function POST(req: NextRequest) {
   const user = await currentUser()
@@ -21,71 +43,80 @@ export async function POST(req: NextRequest) {
 
     const memberClerkId = user.id
 
-    // ââ 1. Return cached summary if it exists ââââââââââââââââââââââââââââââ
+    // ── 1. Return cached summary if it exists ────────────────────────────────
     const existing = await getVccMatch(memberClerkId, startupId)
     if (existing?.fields?.ExecutiveSummary) {
       return NextResponse.json({ summary: existing.fields.ExecutiveSummary, cached: true })
     }
 
-    // ââ 2. Ensure VCC match record exists ââââââââââââââââââââââââââââââââââ
+    // ── 2. Ensure VCC match record exists ───────────────────────────────────
     const currentStatus = existing?.fields?.Status || 'Interested'
     await upsertVccMatch(memberClerkId, startupId, startupName || 'Unknown', currentStatus)
 
-    // ââ 3. Build analyst prompt ââââââââââââââââââââââââââââââââââââââââââââ
-    const sources: string[] = []
-    if (websiteUrl) sources.push(`Website: ${websiteUrl}`)
-    if (pitchDeckUrl) sources.push(`Pitch Deck: ${pitchDeckUrl}`)
-    const sourcesText =
-      sources.length > 0
-        ? `Available sources:\n${sources.join('\n')}`
-        : 'No direct URL sources available. Reason from the startup name and context.'
+    // ── 3. Fetch public source material ─────────────────────────────────────
+    let websiteContent = ''
+    if (websiteUrl) {
+      websiteContent = await fetchWebsiteText(websiteUrl)
+    }
 
-    const prompt = `You are a senior investment analyst at a top-tier VC firm with McKinsey-level rigor. Produce a concise executive summary for the startup below that a Venture Capital Committee (VCC) member can read in under 2 minutes.
+    const sourceBlock = [
+      websiteUrl ? `Website URL: ${websiteUrl}` : null,
+      pitchDeckUrl ? `Pitch Deck URL: ${pitchDeckUrl}` : null,
+      websiteContent ? `\nExtracted website content:\n${websiteContent}` : null,
+    ]
+      .filter(Boolean)
+      .join('\n')
 
-Startup: ${startupName}
-${sourcesText}
+    // ── 4. Build analyst prompt ─────────────────────────────────────────────
+    const sectionNames = [
+      '1. What They Do',
+      '2. Market & Problem',
+      '3. Traction & Validation',
+      '4. Business Model',
+      '5. Competitive Position',
+      '6. Team',
+      '7. Key Risks',
+      '8. Investment Considerations',
+    ].join('\n')
 
-Structure your response with these exact headers:
+    const noSource = 'No source material could be retrieved. State this clearly in each section.'
 
-**1. What They Do**
-2-3 sentences: product, customer segment, core value proposition.
+    const prompt = [
+      'You are a senior investment analyst. Produce a factual executive summary for the startup below, intended for a Venture Capital Committee.',
+      '',
+      'STRICT RULES:',
+      '- Include ONLY facts directly supported by the source material provided.',
+      '- If information for a section is not available, write: "Not confirmed from available sources."',
+      '- Do NOT speculate, assume, or infer beyond what the data explicitly states.',
+      '- Do NOT mention any consulting firms, industry analysts, or third-party research firms by name.',
+      '- Cross-reference every claim across available sources.',
+      '- Format your entire response as clean HTML:',
+      '  Use <h3> for section headings, <p> for paragraphs, <strong> for key terms, <ul>/<li> for lists.',
+      '- Do NOT use markdown syntax (no #, no *, no **).',
+      '',
+      'Startup name: ' + startupName,
+      '',
+      sourceBlock || noSource,
+      '',
+      'Write the following 8 sections in order. Start each with an <h3> tag:',
+      sectionNames,
+      '',
+      'Be concise. Be direct. Cite the source when stating a fact.',
+    ].join('\n')
 
-**2. Market Opportunity**
-TAM sizing, market dynamics, timing thesis.
-
-**3. Traction & Validation**
-Key metrics, customer evidence, revenue signals if available.
-
-**4. Business Model**
-How they make money, unit economics logic.
-
-**5. Competitive Moat**
-Defensibility, unfair advantages, key differentiators vs. alternatives.
-
-**6. Team Signal**
-Founding team strengths, relevant background, execution indicators.
-
-**7. Key Risks**
-- Risk 1
-- Risk 2
-- Risk 3
-
-**8. Investment Thesis**
-One paragraph: why this could be a compelling VCC investment opportunity, or the key questions that must be resolved before conviction.
-
-Be direct and analytical. Use specific language. If information is unavailable for a section, note it briefly and reason from available signals. Do not pad with generic statements.`
-
-    // ââ 4. Generate via Claude API âââââââââââââââââââââââââââââââââââââââââ
+    // ── 5. Generate via Claude API ──────────────────────────────────────────
     const message = await client.messages.create({
       model: 'claude-opus-4-6',
-      max_tokens: 1500,
+      max_tokens: 2000,
       messages: [{ role: 'user', content: prompt }],
     })
 
     const summary =
-      message.content[0].type === 'text' ? message.content[0].text : 'Summary unavailable.'
+      message.content[0].type === 'text'
+        ? message.content[0].text
+        : 'Summary unavailable.'
 
-    // ââ 5. Cache in Airtable âââââââââââââââââââââââââââââââââââââââââââââââ
+    // ── 6. Cache in Airtable ─────────────────────────────────────────────────
     await saveExecutiveSummary(memberClerkId, startupId, summary)
 
     return NextResponse.json({ summary, cached: false })
