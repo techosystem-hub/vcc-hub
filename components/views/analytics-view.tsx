@@ -438,7 +438,7 @@ export function AnalyticsView({ onNavigate }: { onNavigate?: (view: string, filt
       if (savedRes?.ok) {
         try {
           const savedData = await savedRes.json()
-          const saved = Array.isArray(savedData) ? savedData : (savedData.startups ?? savedData.results ?? [])
+          const saved = Array.isArray(savedData) ? savedData : (savedData.savedStartups ?? savedData.startups ?? savedData.results ?? [])
           setSavedCount(saved.length)
         } catch { /* ignore */ }
       }
