@@ -19,7 +19,6 @@ import {
   TrendingUp,
   Users,
   Phone,
-  FileText,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -376,23 +375,6 @@ function MatchDetailSheet({
                   </li>
                 ))}
               </ul>
-              {/* Executive Summary button — only visible once investor is interested */}
-              {isInterested && onNavigateToSaved && (
-                <div className="pt-2 border-t border-border/60 mt-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full gap-2 text-[#011627] border-[#011627]/30 hover:bg-[#011627]/5"
-                    onClick={() => {
-                      onOpenChange(false)
-                      onNavigateToSaved(match.startupId)
-                    }}
-                  >
-                    <FileText className="w-3.5 h-3.5" />
-                    Open Executive Summary
-                  </Button>
-                </div>
-              )}
             </div>
           )}
         </div>
