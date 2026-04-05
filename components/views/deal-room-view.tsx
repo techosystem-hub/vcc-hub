@@ -298,8 +298,8 @@ function AnalyticsPanel({
               <BarChart data={stats.invByVertical} margin={{ left: 8, right: 32, top: 4, bottom: 70 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
                 <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#555' }} angle={-45} textAnchor="end" height={80} interval={0} />
-                <YAxis tick={{ fontSize: 11, fill: '#888' }} tickFormatter={(v) => '$' + v + 'M'} />
-                <Tooltip content={(p) => <ChartTooltip {...p} fmt={(v) => '$' + v + 'M'} />} cursor={{ fill: 'rgba(0,0,0,0.06)' }} />
+                <YAxis tick={{ fontSize: 11, fill: '#888' }} tickFormatter={(v: number) => '$' + v + 'M'} />
+                <Tooltip content={(p) => <ChartTooltip {...p} fmt={(v: number) => '$' + v + 'M'} />} cursor={{ fill: 'rgba(0,0,0,0.06)' }} />
                 <Bar dataKey="value" name="Investment" fill={NAVY} radius={[4, 4, 0, 0]}
                   onClick={(data) => onFilter({ verticals: [data.name] })}
                   cursor="pointer"
