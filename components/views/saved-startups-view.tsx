@@ -13,11 +13,6 @@ import {
   ArrowUpRight,
   X,
   RefreshCw,
-  FileText,
-  Sparkles,
-  ChevronDown,
-  ChevronUp,
-  AlertCircle,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -105,131 +100,13 @@ function MetricTile({ icon: Icon, label, value }: { icon: any; label: string; va
   )
 }
 
-// ── Executive Summary Section ──────────────────────────────────────────────
-function ExecutiveSummarySection({
-  startup,
-  autoGenerate,
-}: {
-  startup: SavedStartup['startup']
-  autoGenerate: boolean
-}) {
-  const [state, setState] = useState<'idle' | 'loading' | 'loaded' | 'error'>('idle')
-  const [summary, setSummary] = useState<string | null>(null)
-  const [expanded, setExpanded] = useState(false)
-  const hasFetched = useRef(false)
-
-  async function fetchSummary() {
-    setState('loading')
-    setExpanded(true)
-    try {
-      const res = await fetch('/api/executive-summary', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          startupId: startup.id,
-          startupName: startup.name,
-          websiteUrl: startup.website || null,
-          pitchDeckUrl: startup.pitchDeckUrl || null,
-        }),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Failed to generate summary')
-      setSummary(data.summary)
-      setState('loaded')
-    } catch (e: any) {
-      setState('error')
-    }
-  }
-
-  useEffect(() => {
-    if (autoGenerate && !hasFetched.current) {
-      hasFetched.current = true
-      fetchSummary()
-    }
-  }, [autoGenerate])
-
-  // Format markdown-style bold headings into readable HTML
-  function renderSummary(html: string) {
-    return (
-      <div
-        className="text-sm text-gray-700 [&>h3]:text-xs [&>h3]:font-bold [&>h3]:uppercase [&>h3]:tracking-wide [&>h3]:text-[#011627] [&>h3]:mt-4 [&>h3]:mb-1.5 [&>p]:leading-relaxed [&>p]:mb-2 [&>ul]:ml-4 [&>ul]:list-disc [&>li]:mb-1"
-        dangerouslySetInnerHTML={{ __html: html }}
-      />
-    )
-  }
-
-  return (
-    <div className="rounded-xl border border-[#011627]/20 overflow-hidden">
-      <button
-        onClick={() => {
-          if (state === 'idle') {
-            fetchSummary()
-          } else {
-            setExpanded(prev => !prev)
-          }
-        }}
-        className="w-full flex items-center justify-between px-5 py-4 bg-[#011627]/5 hover:bg-[#011627]/10 transition-colors text-left"
-      >
-        <span className="flex items-center gap-2 text-sm font-semibold text-[#011627]">
-          <Sparkles className="w-4 h-4 text-[#e71d36]" />
-          AI Executive Summary
-          {state === 'loaded' && (
-            <span className="text-xs font-normal text-emerald-600 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5">
-              Ready
-            </span>
-          )}
-        </span>
-        {state === 'idle' ? (
-          <span className="text-xs text-muted-foreground">Click to generate</span>
-        ) : state === 'loading' ? (
-          <span className="text-xs text-muted-foreground animate-pulse">Analyzing…</span>
-        ) : (
-          expanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />
-        )}
-      </button>
-
-      {expanded && (
-        <div className="px-5 py-4 border-t border-[#011627]/10">
-          {state === 'loading' && (
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 text-sm font-semibold text-[#011627] mb-4">
-                <Sparkles className="w-4 h-4 animate-spin text-[#e71d36]" />
-                Our AI Analyst is working. Please wait a few seconds.
-              </div>
-              {[1, 2, 3, 4].map(i => (
-                <div key={i} className="space-y-1.5">
-                  <Skeleton className="h-3 w-32" />
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-5/6" />
-                </div>
-              ))}
-            </div>
-          )}
-          {state === 'error' && (
-            <div className="flex items-center gap-2 text-sm text-red-600">
-              <AlertCircle className="w-4 h-4 flex-shrink-0" />
-              <span>Failed to generate summary.</span>
-              <Button variant="ghost" size="sm" onClick={fetchSummary} className="ml-auto text-xs">
-                Retry
-              </Button>
-            </div>
-          )}
-          {state === 'loaded' && summary && renderSummary(summary)}
-        </div>
-      )}
-    </div>
-  )
-}
-
 // ── Card ───────────────────────────────────────────────────────────────────
 function SavedCard({
   item,
   onClick,
-  onOpenSummary,
 }: {
   item: SavedStartup
   onClick: () => void
-  onOpenSummary: () => void
 }) {
   const { startup, matchStatus, scoreLabel } = item
   const scoreCls = SCORE_BADGE[scoreLabel] || 'bg-gray-100 text-gray-600 border-gray-200'
@@ -311,20 +188,7 @@ function SavedCard({
             </span>
           )}
         </div>
-        {/* Executive Summary button on card */}
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-full gap-2 text-[#011627] border-[#011627]/20 hover:bg-[#011627]/5 text-xs"
-          onClick={e => {
-            e.stopPropagation()
-            onOpenSummary()
-          }}
-        >
-          <Sparkles className="w-3 h-3 text-[#e71d36]" />
-          Open Executive Summary
-        </Button>
-      </CardContent>
+              </CardContent>
     </Card>
   )
 }
@@ -334,12 +198,10 @@ function DetailSheet({
   item,
   onClose,
   onRemove,
-  autoGenerateSummary,
 }: {
   item: SavedStartup | null
   onClose: () => void
   onRemove: (matchId: string) => void
-  autoGenerateSummary?: boolean
 }) {
   const [removing, setRemoving] = useState(false)
 
@@ -449,13 +311,7 @@ function DetailSheet({
             </div>
           )}
 
-          {/* AI Executive Summary */}
-          <ExecutiveSummarySection
-            startup={startup}
-            autoGenerate={!!autoGenerateSummary}
-          />
-
-          {/* Why it matched */}
+                    {/* Why it matched */}
           {matchPoints.length > 0 && (
             <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4">
               <p className="text-xs font-semibold text-emerald-700 uppercase tracking-widest mb-3">
@@ -542,7 +398,6 @@ export function SavedStartupsView({
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selected, setSelected] = useState<SavedStartup | null>(null)
-  const [autoGenerateSummary, setAutoGenerateSummary] = useState(false)
   const handledSelectedRef = useRef<string | null>(null)
 
   async function load() {
@@ -575,8 +430,7 @@ export function SavedStartupsView({
       handledSelectedRef.current = selectedStartupId
       const match = saved.find(s => s.startup.id === selectedStartupId)
       if (match) {
-        setAutoGenerateSummary(true)
-        setSelected(match)
+          setSelected(match)
         onClearSelected?.()
       }
     }
@@ -586,10 +440,6 @@ export function SavedStartupsView({
     setSaved(prev => prev.filter(s => s.matchId !== matchId))
   }
 
-  function openWithSummary(item: SavedStartup) {
-    setAutoGenerateSummary(true)
-    setSelected(item)
-  }
 
   function openCard(item: SavedStartup) {
     setAutoGenerateSummary(false)
@@ -673,8 +523,7 @@ export function SavedStartupsView({
             key={item.matchId}
             item={item}
             onClick={() => openCard(item)}
-            onOpenSummary={() => openWithSummary(item)}
-          />
+            />
         ))}
       </div>
       <DetailSheet
@@ -684,8 +533,7 @@ export function SavedStartupsView({
           setAutoGenerateSummary(false)
         }}
         onRemove={handleRemove}
-        autoGenerateSummary={autoGenerateSummary}
-      />
+        />
     </div>
   )
 }
