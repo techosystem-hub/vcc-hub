@@ -671,6 +671,8 @@ export function SmartMatchesView({
 
   const [introStatuses, setIntroStatuses] = useState<Record<string, string>>({})
   const [introActing, setIntroActing] = useState<string | null>(null)
+  const [activeFilter, setActiveFilter] = useState<string>('all')
+  const [sortBy, setSortBy] = useState<string>('relevancy')
 
   // ── Data loading ──────────────────────────────────────────────────────────
   const load = useCallback(async () => {
@@ -750,6 +752,23 @@ export function SmartMatchesView({
   // ── Stats ─────────────────────────────────────────────────────────────────
   const hotCount = matches.filter(m => m.scoreLabel === '🔥 Hot').length
   const strongCount = matches.filter(m => m.scoreLabel === '💪 Strong').length
+  const goodCount = matches.filter(m => m.scoreLabel === '👍 Good').length
+  const interestedCount = matches.filter(m => introStatuses[m.startupId] === 'Interested' || introStatuses[m.startupId] === 'Intro Sent').length
+  const passedCount = matches.filter(m => introStatuses[m.startupId] === 'Not Interested').length
+  const filteredMatches = matches
+    .filter(m => {
+      if (activeFilter === 'hot') return m.scoreLabel === '🔥 Hot'
+      if (activeFilter === 'strong') return m.scoreLabel === '💪 Strong'
+      if (activeFilter === 'good') return m.scoreLabel === '👍 Good'
+      if (activeFilter === 'interested') return introStatuses[m.startupId] === 'Interested' || introStatuses[m.startupId] === 'Intro Sent'
+      if (activeFilter === 'passed') return introStatuses[m.startupId] === 'Not Interested'
+      return true
+    })
+    .sort((a, b) => {
+      if (sortBy === 'az') return (a.startupName || '').localeCompare(b.startupName || '')
+      if (sortBy === 'za') return (b.startupName || '').localeCompare(a.startupName || '')
+      return 0
+    })
   const focusLabel = investor?.focusVerticals?.slice(0, 2).join(', ') ?? '—'
   const ticketLabel = investor?.ticketSize?.[0] ?? '—'
 
@@ -861,10 +880,48 @@ export function SmartMatchesView({
           </div>
         )}
 
+        {!loading && !error && matches.length > 0 && (
+          <div className="mb-4 space-y-2">
+            <div className="flex flex-wrap gap-2">
+              {[
+                { id: 'all', label: 'All Matches', count: matches.length },
+                { id: 'hot', label: '🔥 Hot', count: hotCount },
+                { id: 'strong', label: '💪 Strong', count: strongCount },
+                { id: 'good', label: '👍 Good', count: goodCount },
+                { id: 'interested', label: 'Interested', count: interestedCount },
+                { id: 'passed', label: 'Passed', count: passedCount },
+              ].map(f => (
+                <button
+                  key={f.id}
+                  onClick={() => setActiveFilter(f.id)}
+                  className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${activeFilter === f.id ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                >
+                  {f.label} <span className="opacity-60 text-xs">({f.count})</span>
+                </button>
+              ))}
+            </div>
+            <div className="flex items-center gap-1 text-sm">
+              <span className="text-gray-400 mr-1">Sort:</span>
+              {[
+                { id: 'relevancy', label: 'Relevancy' },
+                { id: 'az', label: 'A–Z' },
+                { id: 'za', label: 'Z–A' },
+              ].map(s => (
+                <button
+                  key={s.id}
+                  onClick={() => setSortBy(s.id)}
+                  className={`px-2 py-0.5 rounded text-sm transition-colors ${sortBy === s.id ? 'text-blue-600 font-semibold underline' : 'text-gray-400 hover:text-gray-600'}`}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
         {/* Curated matches */}
         {!loading && !error && matches.length > 0 && (
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {matches.map(match => (
+            {filteredMatches.map(match => (
               <MatchCard
                 key={match.startupId}
                 match={match}
