@@ -56,21 +56,11 @@ function AppSidebar({ activeView, onViewChange }: { activeView: View; onViewChan
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader className="p-4">
-        <div className="flex items-center gap-3">
-          <div
-            className="flex h-9 w-9 items-center justify-center rounded-lg flex-shrink-0 font-black text-white text-lg select-none"
-            style={{ background: '#e71d36', fontFamily: 'Georgia, serif', letterSpacing: '-1px' }}
-          >
-            T
-          </div>
-          <div className="flex flex-col group-data-[collapsible=icon]:hidden">
-            <span className="font-bold text-sm tracking-wide" style={{ color: '#011627' }}>Techosystem</span>
-            <span className="text-xs text-muted-foreground">VCC Hub</span>
-          </div>
+      <SidebarHeader className="p-6">
+        <div className="group-data-[collapsible=icon]:hidden">
+          <span className="font-extrabold text-xl" style={{ color: '#011627' }}>VCC Hub</span>
         </div>
       </SidebarHeader>
-      <Separator className="mx-4 w-auto" />
       <SidebarContent className="p-2">
         <SidebarMenu>
           {navItems.map((item) => (
