@@ -35,7 +35,7 @@ import {
 import { Separator } from '@/components/ui/separator'
 import type { Investor } from '@/lib/airtable'
 
-// ââ Types ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ── Types ──────────────────────────────────────────────────────────────────
 interface ComputedMatch {
   startupId: string
   startupName: string
@@ -47,7 +47,7 @@ interface ComputedMatch {
   pitchDeckUrl?: string
   jurisdiction?: string
   score: number
-  scoreLabel: 'ð¥ Hot' | 'ðª Strong' | 'ð Good' | 'ð Weak'
+  scoreLabel: '🔥 Hot' | '💪 Strong' | '👍 Good' | '😐 Weak'
   reasons: string[]
   introStatus?: string | null
   email?: string
@@ -65,18 +65,18 @@ interface ComputedMatch {
   founderWhatsapp?: string
 }
 
-// ââ Color palettes âââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ── Color palettes ─────────────────────────────────────────────────────────
 const SCORE_BADGE: Record<string, string> = {
-  'ð¥ Hot': 'bg-orange-100 text-orange-700 border-orange-200',
-  'ðª Strong': 'bg-blue-100 text-blue-700 border-blue-200',
-  'ð Good': 'bg-emerald-100 text-emerald-700 border-emerald-200',
-  'ð Weak': 'bg-gray-100 text-gray-600 border-gray-200',
+  '🔥 Hot': 'bg-orange-100 text-orange-700 border-orange-200',
+  '💪 Strong': 'bg-blue-100 text-blue-700 border-blue-200',
+  '👍 Good': 'bg-emerald-100 text-emerald-700 border-emerald-200',
+  '😐 Weak': 'bg-gray-100 text-gray-600 border-gray-200',
 }
 const SCORE_BAR: Record<string, string> = {
-  'ð¥ Hot': 'bg-orange-500',
-  'ðª Strong': 'bg-blue-500',
-  'ð Good': 'bg-emerald-500',
-  'ð Weak': 'bg-gray-300',
+  '🔥 Hot': 'bg-orange-500',
+  '💪 Strong': 'bg-blue-500',
+  '👍 Good': 'bg-emerald-500',
+  '😐 Weak': 'bg-gray-300',
 }
 const VERTICAL_BADGE: Record<string, string> = {
   'Defense / MilTech': 'bg-slate-800 text-white',
@@ -98,7 +98,7 @@ const VERTICAL_BADGE: Record<string, string> = {
   'Logistics & Transportation': 'bg-slate-600 text-white',
 }
 
-// ââ Helpers ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ── Helpers ────────────────────────────────────────────────────────────────
 function initials(name: string) {
   return name
     .split(' ')
@@ -112,7 +112,7 @@ function ScoreBadge({ label, score }: { label: string; score: number }) {
     <span
       className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap ${SCORE_BADGE[label] ?? 'bg-gray-100 text-gray-600 border-gray-200'}`}
     >
-      {label} Â· {score}/100
+      {label} · {score}/100
     </span>
   )
 }
@@ -145,7 +145,7 @@ function StatusChip({ status }: { status: string }) {
   return null
 }
 
-// ââ Loading skeleton ââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ── Loading skeleton ────────────────────────────────────────────────────────
 function MatchCardSkeleton() {
   return (
     <Card className="border border-gray-100">
@@ -172,7 +172,7 @@ function MatchCardSkeleton() {
   )
 }
 
-// ââ Match card âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ── Match card ─────────────────────────────────────────────────────────────
 function MatchCard({
   match,
   status,
@@ -263,7 +263,7 @@ function MatchCard({
           <div className="flex flex-col gap-0.5">
             {match.reasons.slice(0, 2).map((r, i) => (
               <span key={i} className="text-xs text-muted-foreground flex items-center gap-1">
-                <span className="text-[#e71d36] flex-shrink-0">â</span>
+                <span className="text-[#e71d36] flex-shrink-0">✓</span>
                 {r}
               </span>
             ))}
@@ -285,7 +285,7 @@ function MatchCard({
   )
 }
 
-// ââ Detail Sheet ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ── Detail Sheet ────────────────────────────────────────────────────────────
 function MatchDetailSheet({
   match,
   status,
@@ -371,12 +371,12 @@ function MatchDetailSheet({
               <ul className="space-y-1.5">
                 {match.reasons.map((r, i) => (
                   <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
-                    <span className="text-[#e71d36] mt-0.5 flex-shrink-0">â</span>
+                    <span className="text-[#e71d36] mt-0.5 flex-shrink-0">✓</span>
                     {r}
                   </li>
                 ))}
               </ul>
-              {/* Executive Summary button â only visible once investor is interested */}
+              {/* Executive Summary button — only visible once investor is interested */}
               {isInterested && onNavigateToSaved && (
                 <div className="pt-2 border-t border-border/60 mt-2">
                   <Button
@@ -648,7 +648,7 @@ function MatchDetailSheet({
               className={`w-full gap-2 ${isInterested ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-[#e71d36] hover:bg-[#c91027]'} text-white`}
             >
               <ThumbsUp className="w-4 h-4" />
-              {isInterested ? 'Interested â' : "I'm Interested â Show More"}
+              {isInterested ? 'Interested ✓' : "I'm Interested — Show More"}
             </Button>
             <Button
               variant="ghost"
@@ -671,7 +671,7 @@ function MatchDetailSheet({
   )
 }
 
-// ââ Main view ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ── Main view ──────────────────────────────────────────────────────────────
 export function SmartMatchesView({
   onNavigateToSaved,
 }: {
@@ -690,7 +690,7 @@ export function SmartMatchesView({
   const [introStatuses, setIntroStatuses] = useState<Record<string, string>>({})
   const [introActing, setIntroActing] = useState<string | null>(null)
 
-  // ââ Data loading ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+  // ── Data loading ──────────────────────────────────────────────────────────
   const load = useCallback(async () => {
     setLoading(true)
     setError(null)
@@ -727,7 +727,7 @@ export function SmartMatchesView({
     load()
   }, [load])
 
-  // ââ Express interest / pass âââââââââââââââââââââââââââââââââââââââââââââââ
+  // ── Express interest / pass ───────────────────────────────────────────────
   async function handleAction(match: ComputedMatch, status: 'Interested' | 'Not Interested') {
     setIntroActing(match.startupId)
     setIntroStatuses(prev => ({ ...prev, [match.startupId]: status }))
@@ -765,13 +765,13 @@ export function SmartMatchesView({
     }
   }
 
-  // ââ Stats âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
-  const hotCount = matches.filter(m => m.scoreLabel === 'ð¥ Hot').length
-  const strongCount = matches.filter(m => m.scoreLabel === 'ðª Strong').length
-  const focusLabel = investor?.focusVerticals?.slice(0, 2).join(', ') ?? 'â'
-  const ticketLabel = investor?.ticketSize?.[0] ?? 'â'
+  // ── Stats ─────────────────────────────────────────────────────────────────
+  const hotCount = matches.filter(m => m.scoreLabel === '🔥 Hot').length
+  const strongCount = matches.filter(m => m.scoreLabel === '💪 Strong').length
+  const focusLabel = investor?.focusVerticals?.slice(0, 2).join(', ') ?? '—'
+  const ticketLabel = investor?.ticketSize?.[0] ?? '—'
 
-  // ââ No criteria âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+  // ── No criteria ───────────────────────────────────────────────────────────
   if (!loading && noCriteria) {
     return (
       <div className="flex flex-col items-center justify-center py-24 px-4 text-center">
@@ -800,7 +800,7 @@ export function SmartMatchesView({
             <p className="text-sm text-muted-foreground">
               Based on your focus in{' '}
               <span className="font-medium text-foreground">{focusLabel}</span>
-              {ticketLabel !== 'â' && (
+              {ticketLabel !== '—' && (
                 <>
                   , ticket size{' '}
                   <span className="font-medium text-foreground">{ticketLabel}</span>
@@ -819,11 +819,11 @@ export function SmartMatchesView({
             </div>
             <div className="rounded-lg border bg-card px-4 py-3 min-w-[90px]">
               <div className="text-2xl font-bold text-orange-600">{hotCount}</div>
-              <div className="text-xs text-muted-foreground">ð¥ Hot</div>
+              <div className="text-xs text-muted-foreground">🔥 Hot</div>
             </div>
             <div className="rounded-lg border bg-card px-4 py-3 min-w-[90px]">
               <div className="text-2xl font-bold text-blue-600">{strongCount}</div>
-              <div className="text-xs text-muted-foreground">ðª Strong</div>
+              <div className="text-xs text-muted-foreground">💪 Strong</div>
             </div>
             <Button
               variant="ghost"
@@ -866,7 +866,7 @@ export function SmartMatchesView({
             <h2 className="text-xl font-semibold text-foreground mb-2">No matches yet</h2>
             <p className="text-sm text-muted-foreground max-w-sm">
               No actively raising startups match your criteria right now. New startups are added
-              regularly â check back soon.
+              regularly — check back soon.
             </p>
             <p className="text-xs text-muted-foreground mt-3 max-w-xs">
               Want better matches? Make sure your investment criteria is filled in under{' '}
@@ -904,7 +904,7 @@ export function SmartMatchesView({
                 <h2 className="text-lg font-semibold text-foreground">Other Startups Raising</h2>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   These {others.length} startup{others.length !== 1 ? 's' : ''} are actively
-                  raising but didn&apos;t fully match your current criteria â worth a look.
+                  raising but didn&apos;t fully match your current criteria — worth a look.
                 </p>
               </div>
             </div>
