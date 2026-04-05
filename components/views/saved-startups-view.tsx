@@ -442,7 +442,6 @@ export function SavedStartupsView({
 
 
   function openCard(item: SavedStartup) {
-    setAutoGenerateSummary(false)
     setSelected(item)
   }
 
