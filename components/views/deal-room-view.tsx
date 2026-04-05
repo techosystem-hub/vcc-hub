@@ -139,9 +139,14 @@ function AnalyticsPanel({
 
     const sMap: Record<string, number> = {}
     startups.forEach(d => { if (d.roundStage) sMap[d.roundStage] = (sMap[d.roundStage] || 0) + 1 })
-    const stages = Object.entries(sMap)
+    const stagesAll = Object.entries(sMap)
       .sort((a, b) => b[1] - a[1])
       .map(([name, value]) => ({ name, value }))
+    const _stTotal = stagesAll.reduce((s, d) => s + d.value, 0)
+    const _stMin = Math.max(2, Math.round(_stTotal * 0.03))
+    const stagesMajor = stagesAll.filter(d => d.value >= _stMin)
+    const stagesOther = stagesAll.filter(d => d.value < _stMin).reduce((s, d) => s + d.value, 0)
+    const stages = stagesOther > 0 ? [...stagesMajor, { name: 'Other', value: stagesOther }] : stagesMajor
 
     const yMap: Record<string, number> = {}
     startups.forEach(d => { if (d.year) yMap[String(d.year)] = (yMap[String(d.year)] || 0) + 1 })
@@ -169,7 +174,7 @@ function AnalyticsPanel({
     })
     const invByVertical = Object.entries(invMap)
       .sort((a, b) => b[1] - a[1])
-      .map(([name, value]) => ({ name, value: +(value / 1e6).toFixed(1) }))
+      .map(([name, value]) => ({ name, value: +(value / 1e6).toFixed(1) })).filter(d => d.value > 0)
 
     return { total, totalInv, uaCount, memberCount, verticals, stages, byMonth, invByVertical }
   }, [startups])
@@ -266,7 +271,7 @@ function AnalyticsPanel({
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold">Deal Flow by Year</CardTitle>
+            <CardTitle className="text-sm font-semibold">Deal Flow by Month</CardTitle>
             <p className="text-[11px] text-muted-foreground -mt-1">Click a bar to explore deals</p>
           </CardHeader>
           <CardContent>
