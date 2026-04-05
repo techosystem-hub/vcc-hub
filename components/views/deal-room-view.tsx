@@ -165,6 +165,7 @@ function AnalyticsPanel({
       month,
       '2024': mMap[month]['2024'] || 0,
       '2025': mMap[month]['2025'] || 0,
+      '2026': mMap[month]['2026'] || 0,
     }))
     const invMap: Record<string, number> = {}
     startups.forEach(d => {
@@ -216,6 +217,7 @@ function AnalyticsPanel({
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold">Deals by Vertical</CardTitle>
             <p className="text-[11px] text-muted-foreground -mt-1">Click a bar to explore deals</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Data reflects 2024–2026 deals</p>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={480}>
@@ -272,6 +274,7 @@ function AnalyticsPanel({
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold">Deal Flow by Month</CardTitle>
             <p className="text-[11px] text-muted-foreground -mt-1">Click a bar to explore deals</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Data reflects 2024–2026 deals</p>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={260}>
@@ -283,6 +286,7 @@ function AnalyticsPanel({
                 <Legend iconType="circle" iconSize={8} formatter={(value: any) => <span style={{ fontSize: 11, color: '#555' }}>{value}</span>} />
                 <Bar dataKey="2024" name="2024" fill={CHART_COLORS[2]} radius={[2, 2, 0, 0]} />
                 <Bar dataKey="2025" name="2025" fill={CHART_COLORS[0]} radius={[2, 2, 0, 0]} />
+                <Bar dataKey="2026" name="2026" fill={CHART_COLORS[1]} radius={[2, 2, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -292,6 +296,7 @@ function AnalyticsPanel({
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold">Investment Volume by Vertical ($M)</CardTitle>
             <p className="text-[11px] text-muted-foreground -mt-1">Click a bar to explore deals</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Data reflects 2024–2026 deals</p>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={320}>
