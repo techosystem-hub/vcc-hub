@@ -110,10 +110,13 @@ function MetricTile({ icon: Icon, label, value }: { icon: any; label: string; va
 // ── Card ───────────────────────────────────────────────────────────────────
 // ─── Markdown Renderer ───────────────────────────────────────────────────────
 function renderInline(text: string): React.ReactNode {
-  const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g)
+  const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*|\[[^\]]+\]\([^)]+\)|https?:\/\/[^\s,)]+)/g)
   return parts.map((part, idx) => {
     if (part.startsWith('**') && part.endsWith('**')) return <strong key={idx}>{part.slice(2, -2)}</strong>
     if (part.startsWith('*') && part.endsWith('*')) return <em key={idx}>{part.slice(1, -1)}</em>
+    const mdLink = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/)
+    if (mdLink) return <a key={idx} href={mdLink[2]} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{mdLink[1]}</a>
+    if (/^https?:\/\//.test(part)) return <a key={idx} href={part} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline break-all">{part}</a>
     return part
   })
 }
