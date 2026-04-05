@@ -176,6 +176,14 @@ function IconClock({ className = 'w-3 h-3' }: { className?: string }) {
   )
 }
 
+function IconBookmark({ className = 'w-5 h-5' }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+    </svg>
+  )
+}
+
 // ─── Stat Card ────────────────────────────────────────────────────────────────
 function StatCard({
   icon, label, value, accent, onClick,
@@ -187,7 +195,7 @@ function StatCard({
     >
       <div className={`rounded-xl p-3 flex-shrink-0 ${accent}`}>{icon}</div>
       <div className="min-w-0">
-        <p className="text-xs font-semibold tracking-widest uppercase text-gray-500 mb-0.5 truncate">
+        <p className="text-[10px] font-semibold tracking-wide uppercase text-gray-500 mb-1 leading-tight">
           {label}
         </p>
         <p className={`font-bold text-gray-900 leading-tight ${value.length > 14 ? 'text-xs' : value.length > 9 ? 'text-base' : 'text-2xl'}`}>{value}</p>
@@ -381,6 +389,7 @@ export function AnalyticsView({ onNavigate }: { onNavigate?: (view: string, filt
   const [monthDeals,  setMonthDeals]  = useState(0)
   const [weekDeals,   setWeekDeals]   = useState(0)
   const [matchCount,  setMatchCount]  = useState(0)
+  const [savedCount,  setSavedCount]  = useState(0)
   const [activeSource, setActiveSource] = useState('All')
   const [newsPage,    setNewsPage]    = useState(1)
   const [loading,     setLoading]     = useState(true)
@@ -504,6 +513,21 @@ export function AnalyticsView({ onNavigate }: { onNavigate?: (view: string, filt
 
       {/* ── Stats Strip ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+
+        <StatCard
+          icon={<IconBookmark className="w-5 h-5 text-white" />}
+          label="Your Saved Startups"
+          value={savedCount > 0 ? String(savedCount) : '—'}
+          accent="bg-teal-600"
+          onClick={() => onNavigate?.('saved-startups')}
+        />
+        <StatCard
+          icon={<IconTag className="w-5 h-5 text-white" />}
+          label="Your Curated Matches"
+          value={matchCount > 0 ? String(matchCount) : '—'}
+          accent="bg-violet-600"
+          onClick={() => onNavigate?.('smart-matches')}
+        />
         <StatCard
           icon={<IconBriefcase className="w-5 h-5 text-white" />}
           label="Deals This Year"
@@ -524,23 +548,6 @@ export function AnalyticsView({ onNavigate }: { onNavigate?: (view: string, filt
             const d = new Date(now.getFullYear(), now.getMonth(), 1)
             onNavigate?.('deal-room', { dateFrom: d.toISOString().slice(0, 10), viewMode: 'deals' })
           }}
-        />
-        <StatCard
-          icon={<IconTrendingUp className="w-5 h-5 text-white" />}
-          label="Deals This Week"
-          value={String(weekDeals)}
-          accent="bg-teal-600"
-          onClick={() => {
-            const d = new Date(Date.now() - 7 * 86_400_000)
-            onNavigate?.('deal-room', { dateFrom: d.toISOString().slice(0, 10), viewMode: 'deals' })
-          }}
-        />
-        <StatCard
-          icon={<IconTag className="w-5 h-5 text-white" />}
-          label="Your Curated Matches"
-          value={matchCount > 0 ? String(matchCount) : '—'}
-          accent="bg-violet-600"
-          onClick={() => onNavigate?.('smart-matches')}
         />
       </div>
 
