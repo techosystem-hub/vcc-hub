@@ -13,6 +13,7 @@ import {
   ArrowUpRight,
   X,
   RefreshCw,
+  FileText,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -44,6 +45,12 @@ interface SavedStartup {
     website?: string | null
     valuationCap?: string | null
     committedCapital?: string | null
+    businessModel?: string[]
+    mrr?: string | null
+    runway?: string | null
+    activeUsers?: string | null
+    appliedDate?: string | null
+    aiExecutiveSummary?: string | null
   }
 }
 
@@ -152,43 +159,72 @@ function SavedCard({
         </div>
       </CardHeader>
       <CardContent className="pt-0">
-        <div className="flex flex-wrap gap-1.5 mb-3">
-          {startup.primaryVertical.slice(0, 3).map(v => (
-            <Badge
-              key={v}
-              className={`text-xs ${VERTICAL_BADGE[v] || 'bg-gray-200 text-gray-700'}`}
-            >
-              {v}
-            </Badge>
+        {/* Vertical badges */}
+        <div className="flex flex-wrap gap-1 mb-3">
+          {startup.primaryVertical.slice(0, 2).map(v => (
+            <Badge key={v} className={`text-xs ${VERTICAL_BADGE[v] || 'bg-gray-200 text-gray-700'}`}>{v}</Badge>
           ))}
-        </div>
-        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground mb-3">
-          {startup.roundStage && (
-            <span className="flex items-center gap-1">
-              <Layers className="h-3 w-3" />
-              {startup.roundStage}
-            </span>
-          )}
-          {startup.targetRaise && (
-            <span className="flex items-center gap-1">
-              <DollarSign className="h-3 w-3" />
-              {startup.targetRaise}
-            </span>
-          )}
-          {startup.entityType && (
-            <span className="flex items-center gap-1">
-              <Building2 className="h-3 w-3" />
-              {startup.entityType}
-            </span>
-          )}
-          {startup.isDualUse && startup.isDualUse !== 'No' && (
-            <span className="flex items-center gap-1">
-              <ShieldCheck className="h-3 w-3" />
-              Dual-Use
-            </span>
+          {startup.status && (
+            <Badge variant="outline" className="text-xs border-[#011627]/20 text-[#011627]">{startup.status}</Badge>
           )}
         </div>
-              </CardContent>
+
+        {/* Key metrics grid */}
+        <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs mb-3">
+          {startup.shortDescription && (
+            <div className="col-span-2 text-muted-foreground line-clamp-2 mb-1">{startup.shortDescription}</div>
+          )}
+          {startup.email && (
+            <div className="flex items-center gap-1 text-muted-foreground">
+              <Mail className="w-3 h-3 shrink-0" />
+              <span className="truncate">{startup.email}</span>
+            </div>
+          )}
+          {startup.businessModel && startup.businessModel.length > 0 && (
+            <div className="flex items-center gap-1 text-muted-foreground">
+              <Layers className="w-3 h-3 shrink-0" />
+              <span className="truncate">{startup.businessModel.slice(0, 2).join(', ')}</span>
+            </div>
+          )}
+          {startup.mrr && (
+            <div className="flex items-center gap-1 text-muted-foreground">
+              <DollarSign className="w-3 h-3 shrink-0" />
+              <span>{startup.mrr}</span>
+            </div>
+          )}
+          {startup.runway && (
+            <div className="flex items-center gap-1 text-muted-foreground">
+              <TrendingUp className="w-3 h-3 shrink-0" />
+              <span>{startup.runway}</span>
+            </div>
+          )}
+          {startup.activeUsers && (
+            <div className="flex items-center gap-1 text-muted-foreground">
+              <Globe className="w-3 h-3 shrink-0" />
+              <span>{startup.activeUsers}</span>
+            </div>
+          )}
+          {startup.appliedDate && (
+            <div className="flex items-center gap-1 text-muted-foreground">
+              <Building2 className="w-3 h-3 shrink-0" />
+              <span>{new Date(startup.appliedDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Open Executive Summary button */}
+        {startup.aiExecutiveSummary && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full gap-2 text-xs text-[#011627] border-[#011627]/20 hover:bg-[#011627]/5"
+            onClick={e => { e.stopPropagation(); onClick() }}
+          >
+            <FileText className="w-3 h-3" />
+            Open Executive Summary
+          </Button>
+        )}
+      </CardContent>
     </Card>
   )
 }
@@ -360,6 +396,19 @@ function DetailSheet({
           </div>
 
           {/* Actions */}
+          {/* AI Executive Summary */}
+          {startup.aiExecutiveSummary && (
+            <div className="px-6 py-4">
+              <div className="flex items-center gap-2 mb-3">
+                <FileText className="h-4 w-4 text-[#011627]" />
+                <h3 className="text-sm font-semibold text-[#011627]">AI Executive Summary</h3>
+                <span className="text-xs text-muted-foreground ml-auto">From Startup Pipeline</span>
+              </div>
+              <div className="prose prose-sm max-w-none text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap rounded-lg bg-muted/30 border border-border/40 p-4">
+                {startup.aiExecutiveSummary}
+              </div>
+            </div>
+          )}
           <div className="flex flex-col gap-3 pt-2 pb-4">
             {startup.pitchDeckUrl && (
               <Button asChild size="lg" className="w-full gap-2 bg-emerald-600 hover:bg-emerald-700">
