@@ -256,9 +256,7 @@ function AnalyticsPanel({
                     <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
                   ))}
                 </Pie>
-                <Legend
-                  
-                <Tooltip content={(p) => <ChartTooltip {...p} />} />
+                                <Tooltip content={(p) => <ChartTooltip {...p} />} />
               </PieChart>
             </ResponsiveContainer>
           </CardContent>
