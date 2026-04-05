@@ -242,13 +242,14 @@ function AnalyticsPanel({
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold">Round Stage Breakdown</CardTitle>
             <p className="text-[11px] text-muted-foreground -mt-1">Click a slice to explore deals</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Data reflects 2024–2025 deals</p>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={360}>
+            <ResponsiveContainer width="100%" height={480}>
               <PieChart margin={{ top: 10, bottom: 10 }}>
                 <Pie
                   data={stats.stages}
-                  cx="50%" cy="48%"                  innerRadius={60} outerRadius={95}
+                  cx="50%" cy="48%"                  innerRadius={80} outerRadius={130}
                   dataKey="value" nameKey="name"
                   paddingAngle={2}
                   label={({ cx, cy: pcy, midAngle, outerRadius, name, percent }: any) => { if (percent < 0.05) return null; const R = Math.PI / 180; const r = outerRadius + 28; const x = cx + r * Math.cos(-midAngle * R); const y = pcy + r * Math.sin(-midAngle * R); return <text x={x} y={y} fill="#555" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" fontSize={10}>{name}</text>; }}
@@ -267,8 +268,7 @@ function AnalyticsPanel({
         </Card>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
+      <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold">Deal Flow by Month</CardTitle>
             <p className="text-[11px] text-muted-foreground -mt-1">Click a bar to explore deals</p>
@@ -294,14 +294,13 @@ function AnalyticsPanel({
             <p className="text-[11px] text-muted-foreground -mt-1">Click a bar to explore deals</p>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={Math.max(320, stats.invByVertical.length * 34)}>
-              <BarChart data={stats.invByVertical} layout="vertical"
-                margin={{ left: 8, right: 32, top: 4, bottom: 4 }}>
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f0f0f0" />
-                <XAxis type="number" tick={{ fontSize: 11, fill: '#888' }} />
-                <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: '#444' }} width={148} />
-                <Tooltip content={(p) => <ChartTooltip {...p} fmt={(v: number) => `$${v}M`} />} cursor={{ fill: 'rgba(0,0,0,0.06)' }} />
-                <Bar dataKey="value" name="Investment" fill={NAVY} radius={[0, 4, 4, 0]}
+            <ResponsiveContainer width="100%" height={320}>
+              <BarChart data={stats.invByVertical} margin={{ left: 8, right: 32, top: 4, bottom: 70 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#555' }} angle={-45} textAnchor="end" height={80} interval={0} />
+                <YAxis tick={{ fontSize: 11, fill: '#888' }} tickFormatter={(v) => '$' + v + 'M'} />
+                <Tooltip content={(p) => <ChartTooltip {...p} fmt={(v) => '$' + v + 'M'} />} cursor={{ fill: 'rgba(0,0,0,0.06)' }} />
+                <Bar dataKey="value" name="Investment" fill={NAVY} radius={[4, 4, 0, 0]}
                   onClick={(data) => onFilter({ verticals: [data.name] })}
                   cursor="pointer"
                 />
@@ -309,7 +308,6 @@ function AnalyticsPanel({
             </ResponsiveContainer>
           </CardContent>
         </Card>
-      </div>
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold">Recent Deals</CardTitle>
