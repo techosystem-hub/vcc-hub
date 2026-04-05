@@ -108,6 +108,37 @@ function MetricTile({ icon: Icon, label, value }: { icon: any; label: string; va
 }
 
 // ── Card ───────────────────────────────────────────────────────────────────
+// ─── Markdown Renderer ───────────────────────────────────────────────────────
+function renderInline(text: string): React.ReactNode {
+  const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g)
+  return parts.map((part, idx) => {
+    if (part.startsWith('**') && part.endsWith('**')) return <strong key={idx}>{part.slice(2, -2)}</strong>
+    if (part.startsWith('*') && part.endsWith('*')) return <em key={idx}>{part.slice(1, -1)}</em>
+    return part
+  })
+}
+
+function MarkdownRenderer({ content }: { content: string }) {
+  const lines = content.split('\n')
+  const elements: React.ReactNode[] = []
+  lines.forEach((line, i) => {
+    if (line.startsWith('### ')) {
+      elements.push(<h3 key={i} className="text-sm font-bold text-[#011627] mt-3 mb-1">{renderInline(line.slice(4))}</h3>)
+    } else if (line.startsWith('## ')) {
+      elements.push(<h2 key={i} className="text-base font-semibold text-[#011627] mt-4 mb-1">{renderInline(line.slice(3))}</h2>)
+    } else if (line.startsWith('# ')) {
+      elements.push(<h1 key={i} className="text-lg font-bold text-[#011627] mt-4 mb-2">{renderInline(line.slice(2))}</h1>)
+    } else if (line.startsWith('- ') || line.startsWith('\u2022 ')) {
+      elements.push(<li key={i} className="ml-4 list-disc text-sm text-foreground/80 leading-relaxed">{renderInline(line.slice(2))}</li>)
+    } else if (line.trim() === '') {
+      elements.push(<div key={i} className="h-1" />)
+    } else {
+      elements.push(<p key={i} className="text-sm text-foreground/80 leading-relaxed">{renderInline(line)}</p>)
+    }
+  })
+  return <div className="space-y-1">{elements}</div>
+}
+
 function SavedCard({
   item,
   onClick,
@@ -404,8 +435,8 @@ function DetailSheet({
                 <h3 className="text-sm font-semibold text-[#011627]">AI Executive Summary</h3>
                 <span className="text-xs text-muted-foreground ml-auto">From Startup Pipeline</span>
               </div>
-              <div className="prose prose-sm max-w-none text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap rounded-lg bg-muted/30 border border-border/40 p-4">
-                {startup.aiExecutiveSummary}
+              <div className="rounded-lg bg-muted/30 border border-border/40 p-4">
+                <MarkdownRenderer content={startup.aiExecutiveSummary} />
               </div>
             </div>
           )}
