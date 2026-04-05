@@ -149,33 +149,13 @@ function ExecutiveSummarySection({
   }, [autoGenerate])
 
   // Format markdown-style bold headings into readable HTML
-  function renderSummary(text: string) {
-    const lines = text.split('\n')
-    return lines.map((line, i) => {
-      // Bold headers like **1. What They Do**
-      if (line.startsWith('**') && line.endsWith('**')) {
-        return (
-          <p key={i} className="text-xs font-bold text-foreground uppercase tracking-wide mt-4 mb-1">
-            {line.replace(/\*\*/g, '')}
-          </p>
-        )
-      }
-      // Bullet points
-      if (line.startsWith('- ')) {
-        return (
-          <li key={i} className="text-sm text-gray-700 ml-4 list-disc">
-            {line.slice(2)}
-          </li>
-        )
-      }
-      // Empty lines
-      if (line.trim() === '') return <br key={i} />
-      return (
-        <p key={i} className="text-sm text-gray-700 leading-relaxed">
-          {line}
-        </p>
-      )
-    })
+  function renderSummary(html: string) {
+    return (
+      <div
+        className="text-sm text-gray-700 [&>h3]:text-xs [&>h3]:font-bold [&>h3]:uppercase [&>h3]:tracking-wide [&>h3]:text-[#011627] [&>h3]:mt-4 [&>h3]:mb-1.5 [&>p]:leading-relaxed [&>p]:mb-2 [&>ul]:ml-4 [&>ul]:list-disc [&>li]:mb-1"
+        dangerouslySetInnerHTML={{ __html: html }}
+      />
+    )
   }
 
   return (
@@ -212,9 +192,9 @@ function ExecutiveSummarySection({
         <div className="px-5 py-4 border-t border-[#011627]/10">
           {state === 'loading' && (
             <div className="space-y-3">
-              <div className="flex items-center gap-2 text-xs text-muted-foreground mb-4">
-                <Sparkles className="w-3.5 h-3.5 animate-spin text-[#e71d36]" />
-                Generating McKinsey-level analysis…
+              <div className="flex items-center gap-2 text-sm font-semibold text-[#011627] mb-4">
+                <Sparkles className="w-4 h-4 animate-spin text-[#e71d36]" />
+                Our AI Analyst is working. Please wait a few seconds.
               </div>
               {[1, 2, 3, 4].map(i => (
                 <div key={i} className="space-y-1.5">
@@ -234,11 +214,7 @@ function ExecutiveSummarySection({
               </Button>
             </div>
           )}
-          {state === 'loaded' && summary && (
-            <div className="space-y-0.5 text-sm">
-              {renderSummary(summary)}
-            </div>
-          )}
+          {state === 'loaded' && summary && renderSummary(summary)}
         </div>
       )}
     </div>
