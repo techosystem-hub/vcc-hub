@@ -143,7 +143,7 @@ function AnalyticsPanel({
       .sort((a, b) => b[1] - a[1])
       .map(([name, value]) => ({ name, value }))
     const _stTotal = stagesAll.reduce((s, d) => s + d.value, 0)
-    const _stMin = Math.max(2, Math.round(_stTotal * 0.03))
+    const _stMin = Math.max(2, Math.round(_stTotal * 0.05))
     const stagesMajor = stagesAll.filter(d => d.value >= _stMin)
     const stagesOther = stagesAll.filter(d => d.value < _stMin).reduce((s, d) => s + d.value, 0)
     const stages = stagesOther > 0 ? [...stagesMajor, { name: 'Other', value: stagesOther }] : stagesMajor
@@ -165,7 +165,6 @@ function AnalyticsPanel({
       month,
       '2024': mMap[month]['2024'] || 0,
       '2025': mMap[month]['2025'] || 0,
-      '2026': mMap[month]['2026'] || 0,
     }))
     const invMap: Record<string, number> = {}
     startups.forEach(d => {
@@ -252,7 +251,7 @@ function AnalyticsPanel({
                   cx="50%" cy="48%"                  innerRadius={60} outerRadius={95}
                   dataKey="value" nameKey="name"
                   paddingAngle={2}
-                  label={({ cx, cy: pcy, midAngle, outerRadius, name, percent }: any) => { if (percent < 0.04) return null; const R = Math.PI / 180; const r = outerRadius + 28; const x = cx + r * Math.cos(-midAngle * R); const y = pcy + r * Math.sin(-midAngle * R); return <text x={x} y={y} fill="#555" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" fontSize={10}>{name}</text>; }}
+                  label={({ cx, cy: pcy, midAngle, outerRadius, name, percent }: any) => { if (percent < 0.05) return null; const R = Math.PI / 180; const r = outerRadius + 28; const x = cx + r * Math.cos(-midAngle * R); const y = pcy + r * Math.sin(-midAngle * R); return <text x={x} y={y} fill="#555" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" fontSize={10}>{name}</text>; }}
                     labelLine={{ stroke: '#ccc', strokeWidth: 1 }}
                   onClick={(data) => onFilter({ stages: [data.name] })}
                   cursor="pointer"
@@ -284,7 +283,6 @@ function AnalyticsPanel({
                 <Legend iconType="circle" iconSize={8} formatter={(value: any) => <span style={{ fontSize: 11, color: '#555' }}>{value}</span>} />
                 <Bar dataKey="2024" name="2024" fill={CHART_COLORS[2]} radius={[2, 2, 0, 0]} />
                 <Bar dataKey="2025" name="2025" fill={CHART_COLORS[0]} radius={[2, 2, 0, 0]} />
-                <Bar dataKey="2026" name="2026" fill={CHART_COLORS[3]} radius={[2, 2, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
