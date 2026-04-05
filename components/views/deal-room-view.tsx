@@ -218,7 +218,7 @@ function AnalyticsPanel({
             <p className="text-[11px] text-muted-foreground -mt-1">Click a bar to explore deals</p>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={480}>
               <BarChart data={stats.verticals} layout="vertical"
                 margin={{ left: 8, right: 32, top: 4, bottom: 4 }}>
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f0f0f0" />
@@ -242,7 +242,7 @@ function AnalyticsPanel({
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold">Round Stage Breakdown</CardTitle>
             <p className="text-[11px] text-muted-foreground -mt-1">Click a slice to explore deals</p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Data reflects 2024–2025 deals</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Data reflects 2024–2026 deals</p>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={480}>
