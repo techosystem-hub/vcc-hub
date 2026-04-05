@@ -145,20 +145,33 @@ function AnalyticsPanel({
 
     const yMap: Record<string, number> = {}
     startups.forEach(d => { if (d.year) yMap[String(d.year)] = (yMap[String(d.year)] || 0) + 1 })
-    const byYear = Object.entries(yMap)
-      .sort((a, b) => Number(a[0]) - Number(b[0]))
-      .map(([year, deals]) => ({ year, deals }))
-
+    const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+    const mMap: Record<string, Record<string, number>> = {}
+    MONTH_NAMES.forEach(m => { mMap[m] = {} })
+    startups.forEach(d => {
+      const y = String(d.year)
+      if (!['2024','2025','2026'].includes(y)) return
+      const date = d.datePublished ? new Date(d.datePublished) : null
+      if (!date || isNaN(date.getTime())) return
+      const m = MONTH_NAMES[date.getMonth()]
+      mMap[m][y] = (mMap[m][y] || 0) + 1
+    })
+    const byMonth = MONTH_NAMES.map(month => ({
+      month,
+      '2024': mMap[month]['2024'] || 0,
+      '2025': mMap[month]['2025'] || 0,
+      '2026': mMap[month]['2026'] || 0,
+    }))
     const invMap: Record<string, number> = {}
     startups.forEach(d => {
       if (d.vertical && d.investmentSizeUSD > 0)
         invMap[d.vertical] = (invMap[d.vertical] || 0) + d.investmentSizeUSD
     })
     const invByVertical = Object.entries(invMap)
-      .sort((a, b) => b[1] - a[1]).slice(0, 8)
+      .sort((a, b) => b[1] - a[1])
       .map(([name, value]) => ({ name, value: +(value / 1e6).toFixed(1) }))
 
-    return { total, totalInv, uaCount, memberCount, verticals, stages, byYear, invByVertical }
+    return { total, totalInv, uaCount, memberCount, verticals, stages, byMonth, invByVertical }
   }, [startups])
 
   const pct = (n: number) =>
@@ -228,14 +241,14 @@ function AnalyticsPanel({
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={360}>
-              <PieChart margin={{ bottom: 20 }}>
+              <PieChart margin={{ top: 10, bottom: 10 }}>
                 <Pie
                   data={stats.stages}
-                  cx="50%" cy="38%"
-                  innerRadius={60} outerRadius={95}
+                  cx="50%" cy="48%"                  innerRadius={60} outerRadius={95}
                   dataKey="value" nameKey="name"
                   paddingAngle={2}
-                  labelLine={false}
+                  label={({ cx, cy: pcy, midAngle, outerRadius, name, percent }: any) => { if (percent < 0.04) return null; const R = Math.PI / 180; const r = outerRadius + 28; const x = cx + r * Math.cos(-midAngle * R); const y = pcy + r * Math.sin(-midAngle * R); return <text x={x} y={y} fill="#555" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" fontSize={10}>{name}</text>; }}
+                    labelLine={{ stroke: '#ccc', strokeWidth: 1 }}
                   onClick={(data) => onFilter({ stages: [data.name] })}
                   cursor="pointer"
                 >
@@ -244,11 +257,7 @@ function AnalyticsPanel({
                   ))}
                 </Pie>
                 <Legend
-                  verticalAlign="bottom"
-                  iconType="circle"
-                  iconSize={8}
-                  formatter={(value) => <span style={{ fontSize: 11, color: '#555' }}>{value}</span>}
-                />
+                  
                 <Tooltip content={(p) => <ChartTooltip {...p} />} />
               </PieChart>
             </ResponsiveContainer>
@@ -263,16 +272,16 @@ function AnalyticsPanel({
             <p className="text-[11px] text-muted-foreground -mt-1">Click a bar to explore deals</p>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={stats.byYear} margin={{ left: 0, right: 16, top: 4, bottom: 0 }}>
+            <ResponsiveContainer width="100%" height={260}>
+              <BarChart data={stats.byMonth} margin={{ left: 0, right: 16, top: 4, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                <XAxis dataKey="year" tick={{ fontSize: 12, fill: '#555' }} />
-                <YAxis tick={{ fontSize: 11, fill: '#888' }} />
+                <XAxis dataKey="month" tick={{ fontSize: 10, fill: '#555' }} />
+                <YAxis tick={{ fontSize: 11, fill: '#888' }} allowDecimals={false} />
                 <Tooltip content={(p) => <ChartTooltip {...p} />} cursor={{ fill: 'rgba(0,0,0,0.06)' }} />
-                <Bar dataKey="deals" name="Deals" fill={RED} radius={[4, 4, 0, 0]}
-                  onClick={(data) => onFilter({ years: [String(data.year)] })}
-                  cursor="pointer"
-                />
+                <Legend iconType="circle" iconSize={8} formatter={(value: any) => <span style={{ fontSize: 11, color: '#555' }}>{value}</span>} />
+                <Bar dataKey="2024" name="2024" fill={CHART_COLORS[2]} radius={[2, 2, 0, 0]} />
+                <Bar dataKey="2025" name="2025" fill={CHART_COLORS[0]} radius={[2, 2, 0, 0]} />
+                <Bar dataKey="2026" name="2026" fill={CHART_COLORS[3]} radius={[2, 2, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -284,7 +293,7 @@ function AnalyticsPanel({
             <p className="text-[11px] text-muted-foreground -mt-1">Click a bar to explore deals</p>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={200}>
+            <ResponsiveContainer width="100%" height={Math.max(320, stats.invByVertical.length * 34)}>
               <BarChart data={stats.invByVertical} layout="vertical"
                 margin={{ left: 8, right: 32, top: 4, bottom: 4 }}>
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f0f0f0" />
@@ -300,6 +309,38 @@ function AnalyticsPanel({
           </CardContent>
         </Card>
       </div>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-semibold">Recent Deals</CardTitle>
+            <p className="text-[11px] text-muted-foreground -mt-1">Latest additions to the deal flow</p>
+          </CardHeader>
+          <CardContent>
+            <div className="divide-y divide-gray-100">
+              {[...startups]
+                .sort((a, b) => b.datePublished.localeCompare(a.datePublished) || b.year - a.year)
+                .slice(0, 8)
+                .map(s => (
+                  <div key={s.id} className="flex items-center justify-between py-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="flex-shrink-0 h-8 w-8 rounded-lg flex items-center justify-center font-bold text-xs text-white" style={{ background: NAVY }}>
+                        {s.name.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase() || '??'}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="font-semibold text-sm text-gray-900 truncate">{s.name}</div>
+                        <div className="text-xs text-gray-500">
+                          {[s.vertical, s.roundStage].filter(Boolean).join(' · ')}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex-shrink-0 text-right ml-4">
+                      <div className="text-sm font-semibold text-gray-900">{s.investmentSizeUSD > 0 ? formatUSD(s.investmentSizeUSD) : '—'}</div>
+                      <div className="text-xs text-gray-500">{s.datePublished || (s.year > 0 ? String(s.year) : '')}</div>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </CardContent>
+        </Card>
     </div>
   )
 }
