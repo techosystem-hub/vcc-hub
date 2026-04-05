@@ -529,7 +529,6 @@ export function SavedStartupsView({
         item={selected}
         onClose={() => {
           setSelected(null)
-          setAutoGenerateSummary(false)
         }}
         onRemove={handleRemove}
         />
