@@ -891,7 +891,7 @@ export function DealRoomView({ initialFilter }: DealRoomProps = {}) {
       </div>
 
       {viewMode === 'analytics' ? (
-        <AnalyticsPanel startups={startups} onFilter={handleAnalyticsFilter} onSelect={setSelected} />
+        <AnalyticsPanel startups={startups} onFilter={handleAnalyticsFilter} onSelect={setSelectedDeal} />
       ) : viewMode === 'list' ? (
         <>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
