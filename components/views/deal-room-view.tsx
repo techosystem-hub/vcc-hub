@@ -13,13 +13,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import {
   BarChart, Bar, PieChart, Pie, Cell,
-  ComposedChart, Area, Line,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList,
 } from 'recharts'
 import type { DealFlowStartup } from '@/lib/airtable'
 
-const RED  = '#e71d36'
-const NAVY = '#011627'
+const RED        = '#e71d36'
+const NAVY       = '#011627'
+const NAVY_LIGHT = '#5a7fa0'
 
 const CHART_COLORS = [
   '#e71d36', '#c0392b', '#011627', '#1a5276',
@@ -46,7 +46,7 @@ type SortOption = 'newest' | 'highest' | 'lowest'
 type ViewMode   = 'analytics' | 'deals' | 'list'
 
 function formatUSD(n: number): string {
-  if (!n) return '—'
+  if (!n) return 'â'
   if (n >= 1e9) return `$${(n / 1e9).toFixed(1)}B`
   if (n >= 1e6) return `$${(n / 1e6).toFixed(1)}M`
   if (n >= 1e3) return `$${(n / 1e3).toFixed(0)}K`
@@ -77,10 +77,11 @@ function ChartTooltip({ active, payload, label, fmt }: any) {
 }
 
 function StatCard({
-  icon: Icon, label, value, sub, onClick, hint,
+  icon: Icon, label, value, sub, onClick, hint, badge,
 }: {
   icon: React.ElementType; label: string; value: string; sub?: string
   onClick?: () => void; hint?: string
+  badge?: { text: string; up: boolean | null }
 }) {
   return (
     <Card
@@ -94,14 +95,25 @@ function StatCard({
           <div>
             <div className="text-2xl font-bold text-foreground">{value}</div>
             <div className="text-sm font-medium text-foreground mt-0.5">{label}</div>
+            {badge && (
+              <div className={`text-[11px] font-semibold mt-1.5 mb-0.5 px-2 py-0.5 rounded-full inline-flex items-center gap-0.5 ${
+                badge.up === null
+                  ? 'text-blue-700 bg-blue-50'
+                  : badge.up
+                    ? 'text-green-700 bg-green-50'
+                    : 'text-red-600 bg-red-50'
+              }`}>
+                {badge.up === true ? 'â ' : badge.up === false ? 'â ' : ''}{badge.text}
+              </div>
+            )}
             {sub && <div className="text-xs text-muted-foreground mt-0.5">{sub}</div>}
             {onClick && (
               <div className="text-[10px] mt-1.5 font-medium" style={{ color: RED }}>
-                Click to explore →
+                Click to explore â
               </div>
             )}
           </div>
-          <div className="rounded-lg p-2" style={{ background: `${RED}18` }}>
+          <div className="rounded-lg p-2 flex-shrink-0" style={{ background: `${RED}18` }}>
             <Icon className="h-4 w-4" style={{ color: RED }} />
           </div>
         </div>
@@ -127,297 +139,386 @@ function AnalyticsPanel({
   onFilter: (f: ChartFilter) => void
 }) {
   const stats = useMemo(() => {
-    const total       = startups.length
-    const totalInv    = startups.reduce((s, d) => s + (d.investmentSizeUSD || 0), 0)
-    const uaCount     = startups.filter(isUkrainian).length
+    // ââ Year splits ââââââââââââââââââââââââââââââââââââââââââââââ
+    const s2025 = startups.filter(s => s.year === 2025)
+    const s2024 = startups.filter(s => s.year === 2024)
+    const total2025   = s2025.length
+    const total2024   = s2024.length
+    const inv2025     = s2025.reduce((sum, d) => sum + (d.investmentSizeUSD || 0), 0)
+    const inv2024     = s2024.reduce((sum, d) => sum + (d.investmentSizeUSD || 0), 0)
+    const avg2025     = total2025 > 0 ? inv2025 / total2025 : 0
+    const avg2024     = total2024 > 0 ? inv2024 / total2024 : 0
     const memberCount = startups.filter(d => d.techosystemMember === 'Member').length
+    const total       = startups.length
 
-    const vMap: Record<string, number> = {}
-    const vMap24: Record<string, number> = {}
+    const yoyPct = (curr: number, prev: number) =>
+      prev > 0 ? Math.round(((curr - prev) / prev) * 100) : null
+
+    // ââ Verticals (2025 vs 2024) âââââââââââââââââââââââââââââââââ
     const vMap25: Record<string, number> = {}
-    startups.forEach(d => {
-      if (!d.vertical) return
-      vMap[d.vertical] = (vMap[d.vertical] || 0) + 1
-      if (String(d.year) === '2024') vMap24[d.vertical] = (vMap24[d.vertical] || 0) + 1
-      if (String(d.year) === '2025') vMap25[d.vertical] = (vMap25[d.vertical] || 0) + 1
-    })
-    const verticals = Object.entries(vMap)
-      .sort((a, b) => b[1] - a[1]).slice(0, 10)
-      .map(([name, value]) => {
-        const c24 = vMap24[name] || 0
-        const c25 = vMap25[name] || 0
-        const yoy: number | null = c24 > 0 ? Math.round((c25 - c24) / c24 * 100) : null
-        return { name, value, yoy }
-      })
+    const vMap24: Record<string, number> = {}
+    s2025.forEach(d => { if (d.vertical) vMap25[d.vertical] = (vMap25[d.vertical] || 0) + 1 })
+    s2024.forEach(d => { if (d.vertical) vMap24[d.vertical] = (vMap24[d.vertical] || 0) + 1 })
+    const allV = [...new Set([...Object.keys(vMap25), ...Object.keys(vMap24)])]
+    const verticalData = allV
+      .map(name => ({
+        name,
+        v2025:  vMap25[name] || 0,
+        v2024:  vMap24[name] || 0,
+        yoyNum: yoyPct(vMap25[name] || 0, vMap24[name] || 0),
+      }))
+      .sort((a, b) => b.v2025 - a.v2025)
+      .slice(0, 10)
 
-    const sMap: Record<string, number> = {}
-    const sMap24: Record<string, number> = {}
+    // ââ Stages (2025 vs 2024) ââââââââââââââââââââââââââââââââââââ
     const sMap25: Record<string, number> = {}
-    const sCapMap: Record<string, number> = {}
-    startups.forEach(d => {
+    const sMap24: Record<string, number> = {}
+    const cMap25: Record<string, number> = {}
+    const cMap24: Record<string, number> = {}
+    s2025.forEach(d => {
       if (!d.roundStage) return
-      sMap[d.roundStage] = (sMap[d.roundStage] || 0) + 1
-      if (String(d.year) === '2024') sMap24[d.roundStage] = (sMap24[d.roundStage] || 0) + 1
-      if (String(d.year) === '2025') sMap25[d.roundStage] = (sMap25[d.roundStage] || 0) + 1
-      sCapMap[d.roundStage] = (sCapMap[d.roundStage] || 0) + (d.investmentSizeUSD || 0)
+      sMap25[d.roundStage] = (sMap25[d.roundStage] || 0) + 1
+      cMap25[d.roundStage] = (cMap25[d.roundStage] || 0) + (d.investmentSizeUSD || 0)
     })
-    const stagesAll = Object.entries(sMap)
-      .sort((a, b) => b[1] - a[1])
-      .map(([name, value]) => ({ name, value }))
-    const _stTotal = stagesAll.reduce((s, d) => s + d.value, 0)
-    const _stMin = Math.max(2, Math.round(_stTotal * 0.05))
-    const stagesMajor = stagesAll.filter(d => d.value >= _stMin)
-    const stagesOther = stagesAll.filter(d => d.value < _stMin).reduce((s, d) => s + d.value, 0)
-    const stages = stagesOther > 0 ? [...stagesMajor, { name: 'Other', value: stagesOther }] : stagesMajor
-    const stagesDist = stagesMajor.map(({ name, value }) => {
-      const c24 = sMap24[name] || 0
-      const c25 = sMap25[name] || 0
-      const yoy: number | null = c24 > 0 ? Math.round((c25 - c24) / c24 * 100) : null
-      const capital = +((sCapMap[name] || 0) / 1e6).toFixed(1)
-      return { name, count: value, capital, yoy }
+    s2024.forEach(d => {
+      if (!d.roundStage) return
+      sMap24[d.roundStage] = (sMap24[d.roundStage] || 0) + 1
+      cMap24[d.roundStage] = (cMap24[d.roundStage] || 0) + (d.investmentSizeUSD || 0)
     })
+    const allS = [...new Set([...Object.keys(sMap25), ...Object.keys(sMap24)])]
+    const stageData = allS
+      .map(name => ({
+        name,
+        deals2025: sMap25[name] || 0,
+        deals2024: sMap24[name] || 0,
+        cap2025:   +(((cMap25[name] || 0) / 1e6).toFixed(1)),
+        cap2024:   +(((cMap24[name] || 0) / 1e6).toFixed(1)),
+        yoyNum:    yoyPct(sMap25[name] || 0, sMap24[name] || 0),
+      }))
+      .sort((a, b) => b.deals2025 - a.deals2025)
 
+    // ââ Year trend âââââââââââââââââââââââââââââââââââââââââââââââ
     const yMap: Record<string, number> = {}
     startups.forEach(d => { if (d.year) yMap[String(d.year)] = (yMap[String(d.year)] || 0) + 1 })
-    const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
-    const mMap: Record<string, Record<string, number>> = {}
-    MONTH_NAMES.forEach(m => { mMap[m] = {} })
-    startups.forEach(d => {
-      const y = String(d.year)
-      if (!['2024','2025','2026'].includes(y)) return
-      const date = d.datePublished ? new Date(d.datePublished) : null
-      if (!date || isNaN(date.getTime())) return
-      const m = MONTH_NAMES[date.getMonth()]
-      mMap[m][y] = (mMap[m][y] || 0) + 1
-    })
-    const capMap26: Record<string, number> = {}
-    startups.forEach(d => {
-      if (String(d.year) !== '2025') return
-      const d26 = d.datePublished ? new Date(d.datePublished) : null
-      if (!d26 || isNaN(d26.getTime())) return
-      const m26 = MONTH_NAMES[d26.getMonth()]
-      capMap26[m26] = (capMap26[m26] || 0) + (d.investmentSizeUSD || 0)
-    })
-    const byMonth = MONTH_NAMES.map(month => ({
-      month,
-      deals: mMap[month]['2025'] || 0,
-      capital: +((capMap26[month] || 0) / 1e6).toFixed(1),
-    }))
+    const byYear = Object.entries(yMap)
+      .sort((a, b) => Number(a[0]) - Number(b[0]))
+      .map(([year, deals]) => ({ year, deals }))
+
+    // ââ Investment by vertical âââââââââââââââââââââââââââââââââââ
     const invMap: Record<string, number> = {}
     startups.forEach(d => {
       if (d.vertical && d.investmentSizeUSD > 0)
         invMap[d.vertical] = (invMap[d.vertical] || 0) + d.investmentSizeUSD
     })
     const invByVertical = Object.entries(invMap)
-      .sort((a, b) => b[1] - a[1])
-      .map(([name, value]) => ({ name, value: +(value / 1e6).toFixed(1) })).filter(d => d.value > 0)
+      .sort((a, b) => b[1] - a[1]).slice(0, 8)
+      .map(([name, value]) => ({ name, value: +(value / 1e6).toFixed(1) }))
 
-    const total2024 = startups.filter(d => String(d.year) === '2024').length
-    const total2025 = startups.filter(d => String(d.year) === '2025').length
-    const inv2024 = startups.filter(d => String(d.year) === '2024').reduce((s, d) => s + (d.investmentSizeUSD || 0), 0)
-    const inv2025 = startups.filter(d => String(d.year) === '2025').reduce((s, d) => s + (d.investmentSizeUSD || 0), 0)
-    const avgDeal2024 = total2024 > 0 ? inv2024 / total2024 : 0
-    const avgDeal2025 = total2025 > 0 ? inv2025 / total2025 : 0
-    const yoyRounds: number | null = total2024 > 0 ? Math.round((total2025 - total2024) / total2024 * 100) : null
-    const yoyCap: number | null = inv2024 > 0 ? Math.round((inv2025 - inv2024) / inv2024 * 100) : null
-    const yoyAvg: number | null = avgDeal2024 > 0 ? Math.round((avgDeal2025 - avgDeal2024) / avgDeal2024 * 100) : null
-    const capM2025 = +(inv2025 / 1e6).toFixed(0)
-    const avgDealSizeM = +(avgDeal2025 / 1e6).toFixed(1)
-return { total, totalInv, uaCount, memberCount, verticals, stages, stagesDist, byMonth, invByVertical, total2025, capM2025, avgDealSizeM, yoyRounds, yoyCap, yoyAvg }
+    return {
+      total, total2025, total2024, inv2025, inv2024, avg2025, avg2024, memberCount,
+      verticalData, stageData, byYear, invByVertical,
+      yoyRounds:  yoyPct(total2025, total2024),
+      yoyCapital: yoyPct(inv2025,   inv2024),
+      yoyAvg:     yoyPct(avg2025,   avg2024),
+    }
   }, [startups])
-
-  const pct = (n: number) =>
-    stats.total > 0 ? `${Math.round(n / stats.total * 100)}%` : '0%'
 
   return (
     <div className="flex flex-col gap-6">
+
+      {/* ââ KPI Cards ââââââââââââââââââââââââââââââââââââââââââââââââ */}
       <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-        <div className="bg-white rounded-xl border border-gray-100 p-5 flex flex-col gap-3 cursor-pointer" onClick={() => onFilter({})}>
-          <div className="flex items-start justify-between">
-            <span className="text-sm text-gray-500 font-medium">Total Rounds</span>
-            <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
-              <TrendingUp className="w-5 h-5 text-blue-500" />
-            </div>
-          </div>
-          <div className="text-4xl font-bold text-gray-900">{stats.total2025}</div>
-          {stats.yoyRounds !== null && (
-            <div className="flex items-center gap-1 text-sm">
-              <span className={(stats.yoyRounds ?? 0) >= 0 ? 'text-emerald-600' : 'text-red-500'}>
-                ↗ {(stats.yoyRounds ?? 0) >= 0 ? '+' : ''}{stats.yoyRounds}%
-              </span>
-              <span className="text-gray-400">vs 2024</span>
-            </div>
-          )}
-        </div>
-        <div className="bg-white rounded-xl border border-gray-100 p-5 flex flex-col gap-3">
-          <div className="flex items-start justify-between">
-            <span className="text-sm text-gray-500 font-medium">Capital Deployed</span>
-            <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
-              <DollarSign className="w-5 h-5 text-blue-500" />
-            </div>
-          </div>
-          <div className="text-4xl font-bold text-gray-900">{stats.capM2025}M</div>
-          {stats.yoyCap !== null && (
-            <div className="flex items-center gap-1 text-sm">
-              <span className={(stats.yoyCap ?? 0) >= 0 ? 'text-emerald-600' : 'text-red-500'}>
-                ↗ {(stats.yoyCap ?? 0) >= 0 ? '+' : ''}{stats.yoyCap}%
-              </span>
-              <span className="text-gray-400">YoY growth</span>
-            </div>
-          )}
-        </div>
-        <div className="bg-white rounded-xl border border-gray-100 p-5 flex flex-col gap-3">
-          <div className="flex items-start justify-between">
-            <span className="text-sm text-gray-500 font-medium">Avg Deal Size</span>
-            <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
-              <BarChart2 className="w-5 h-5 text-blue-500" />
-            </div>
-          </div>
-          <div className="text-4xl font-bold text-gray-900">{stats.avgDealSizeM}M</div>
-          {stats.yoyAvg !== null && (
-            <div className="flex items-center gap-1 text-sm">
-              <span className={(stats.yoyAvg ?? 0) >= 0 ? 'text-emerald-600' : 'text-red-500'}>
-                ↗ {(stats.yoyAvg ?? 0) >= 0 ? '+' : ''}{stats.yoyAvg}%
-              </span>
-              <span className="text-gray-400">vs 2024</span>
-            </div>
-          )}
-        </div>
         <StatCard
-          icon={Award} label="Techosystem Members"
+          icon={TrendingUp}
+          label="Total Rounds Â· 2025"
+          value={String(stats.total2025)}
+          badge={stats.yoyRounds !== null ? {
+            text: `${stats.yoyRounds >= 0 ? '+' : ''}${stats.yoyRounds}% vs 2024`,
+            up: stats.yoyRounds >= 0,
+          } : undefined}
+          sub={`vs ${stats.total2024} rounds in 2024`}
+          hint="Click to browse 2025 deals"
+          onClick={() => onFilter({ years: ['2025'] })}
+        />
+        <StatCard
+          icon={DollarSign}
+          label="Capital Deployed Â· 2025"
+          value={formatUSD(stats.inv2025)}
+          badge={stats.yoyCapital !== null ? {
+            text: `${stats.yoyCapital >= 0 ? '+' : ''}${stats.yoyCapital}% YoY growth`,
+            up: stats.yoyCapital >= 0,
+          } : undefined}
+          sub={`vs ${formatUSD(stats.inv2024)} deployed in 2024`}
+          hint="Click to browse sorted by investment size"
+          onClick={() => onFilter({ sortBy: 'highest', years: ['2025'] })}
+        />
+        <StatCard
+          icon={BarChart2}
+          label="Avg Deal Size Â· 2025"
+          value={formatUSD(stats.avg2025)}
+          badge={stats.yoyAvg !== null ? {
+            text: `${stats.yoyAvg >= 0 ? '+' : ''}${stats.yoyAvg}% vs 2024`,
+            up: stats.yoyAvg >= 0,
+          } : undefined}
+          sub={`vs ${formatUSD(stats.avg2024)} avg per round in 2024`}
+        />
+        <StatCard
+          icon={Award}
+          label="Techosystem Members"
           value={String(stats.memberCount)}
-          sub={`${pct(stats.memberCount)} of portfolio`}
-          hint="Click to browse Techosystem member companies"
+          badge={{
+            text: `${stats.total > 0 ? Math.round(stats.memberCount / stats.total * 100) : 0}% of portfolio`,
+            up: null,
+          }}
+          sub="Active ecosystem member companies"
+          hint="Click to browse member companies"
           onClick={() => onFilter({ techosystemOnly: true })}
         />
+      </div>
+
+      {/* ââ Deals by Vertical + Round Stage (same height) âââââââââââ */}
+      <div className="grid gap-6 lg:grid-cols-2 items-stretch">
+
+        {/* Deals by Vertical */}
+        <Card className="flex flex-col">
+          <CardHeader className="pb-1">
+            <CardTitle className="text-sm font-semibold">Deals by Vertical</CardTitle>
+            <p className="text-[11px] text-muted-foreground -mt-0.5">
+              Distribution with YoY growth rates Â· 2025 vs 2024 Â· click a bar to explore deals
+            </p>
+            <div className="flex gap-4 mt-2">
+              <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                <span className="inline-block w-3 h-2.5 rounded-sm" style={{ background: RED }} /> 2025
+              </span>
+              <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                <span className="inline-block w-3 h-2.5 rounded-sm" style={{ background: NAVY }} /> 2024
+              </span>
+            </div>
+          </CardHeader>
+          <CardContent className="flex-1 pb-4">
+            <ResponsiveContainer width="100%" height={340}>
+              <BarChart
+                data={stats.verticalData}
+                layout="vertical"
+                margin={{ left: 8, right: 76, top: 4, bottom: 4 }}
+                barCategoryGap="25%"
+                barGap={2}
+              >
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f0f0f0" />
+                <XAxis type="number" tick={{ fontSize: 11, fill: '#888', fontFamily: 'Montserrat, Helvetica Neue, sans-serif' }} />
+                <YAxis
+                  type="category" dataKey="name"
+                  tick={{ fontSize: 11, fill: '#333', fontFamily: 'Montserrat, Helvetica Neue, sans-serif' }} width={148}
+                />
+                <Tooltip
+                  cursor={{ fill: 'rgba(0,0,0,0.04)' }}
+                  content={(p) => {
+                    if (!p.active || !p.payload?.length) return null
+                    const item = p.payload[0]?.payload
+                    if (!item) return null
+                    const yoyLabel = item.yoyNum !== null
+                      ? (item.yoyNum >= 0 ? `â +${item.yoyNum}%` : `â ${item.yoyNum}%`) : 'â'
+                    return (
+                      <div className="rounded-lg border bg-background px-3 py-2 shadow-lg text-xs">
+                        <div className="font-semibold mb-1.5">{item.name}</div>
+                        <div className="flex items-center gap-2">
+                          <span className="h-2 w-2 rounded-full flex-shrink-0" style={{ background: RED }} />
+                          <span className="text-muted-foreground">2025:</span>
+                          <span className="font-semibold">{item.v2025} deals</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="h-2 w-2 rounded-full flex-shrink-0" style={{ background: NAVY }} />
+                          <span className="text-muted-foreground">2024:</span>
+                          <span className="font-semibold">{item.v2024} deals</span>
+                        </div>
+                        <div className={`mt-1.5 text-[11px] font-semibold ${
+                          item.yoyNum !== null && item.yoyNum >= 0 ? 'text-green-700' : 'text-red-600'
+                        }`}>YoY: {yoyLabel}</div>
+                      </div>
+                    )
+                  }}
+                />
+                <Bar
+                  dataKey="v2025" name="2025" fill={RED} radius={[0, 3, 3, 0]} barSize={9}
+                  onClick={(data) => onFilter({ verticals: [data.name], years: ['2025'] })}
+                  cursor="pointer"
+                >
+                  <LabelList
+                    dataKey="yoyNum"
+                    content={(props: any) => {
+                      const n = props.value
+                      if (n === null || n === undefined) return null
+                      const x = (props.x || 0) + (props.width || 0) + 5
+                      const y = (props.y || 0) + (props.height || 0) / 2 + 4
+                      return (
+                        <text x={x} y={y} fill={n >= 0 ? '#15803d' : '#dc2626'}
+                          fontSize={10} fontWeight={600}
+                          fontFamily="Montserrat, Helvetica Neue, sans-serif">
+                          {n >= 0 ? `â+${n}%` : `â${n}%`}
+                        </text>
+                      )
+                    }}
+                  />
+                </Bar>
+                <Bar
+                  dataKey="v2024" name="2024" fill={NAVY} radius={[0, 3, 3, 0]} barSize={9}
+                  onClick={(data) => onFilter({ verticals: [data.name], years: ['2024'] })}
+                  cursor="pointer"
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Round Stage Breakdown */}
+        <Card className="flex flex-col">
+          <CardHeader className="pb-1">
+            <CardTitle className="text-sm font-semibold">Round Stage Breakdown</CardTitle>
+            <p className="text-[11px] text-muted-foreground -mt-0.5">
+              Deals and capital by funding stage Â· 2025 vs 2024 YoY Â· click a bar to explore
+            </p>
+            <div className="flex flex-wrap gap-3 mt-2">
+              <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                <span className="inline-block w-3 h-2.5 rounded-sm" style={{ background: RED }} /> Deals 2025
+              </span>
+              <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                <span className="inline-block w-3 h-2.5 rounded-sm" style={{ background: NAVY_LIGHT }} /> Deals 2024
+              </span>
+              <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                <span className="inline-block w-3 h-2.5 rounded-sm" style={{ background: NAVY }} /> Capital $M
+              </span>
+            </div>
+          </CardHeader>
+          <CardContent className="flex-1 pb-2">
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart
+                data={stats.stageData}
+                margin={{ left: 4, right: 48, top: 8, bottom: 4 }}
+                barCategoryGap="30%"
+                barGap={2}
+              >
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                <XAxis
+                  dataKey="name"
+                  tick={{ fontSize: 12, fontWeight: 600, fill: '#1c2b3a', fontFamily: 'Montserrat, Helvetica Neue, sans-serif' }}
+                  interval={0}
+                />
+                <YAxis
+                  yAxisId="left" orientation="left"
+                  tick={{ fontSize: 11, fill: '#888', fontFamily: 'Montserrat, Helvetica Neue, sans-serif' }}
+                  label={{ value: 'Deals', angle: -90, position: 'insideLeft', fontSize: 10, fill: '#aaa', offset: 8, fontFamily: 'Montserrat, Helvetica Neue, sans-serif' }}
+                />
+                <YAxis
+                  yAxisId="right" orientation="right"
+                  tick={{ fontSize: 11, fill: '#888', fontFamily: 'Montserrat, Helvetica Neue, sans-serif' }}
+                  label={{ value: '$M', angle: 90, position: 'insideRight', fontSize: 10, fill: '#aaa', offset: 8, fontFamily: 'Montserrat, Helvetica Neue, sans-serif' }}
+                />
+                <Tooltip
+                  cursor={{ fill: 'rgba(0,0,0,0.04)' }}
+                  content={(p) => {
+                    if (!p.active || !p.payload?.length) return null
+                    const item = p.payload[0]?.payload
+                    if (!item) return null
+                    const yoyLabel = item.yoyNum !== null
+                      ? (item.yoyNum >= 0 ? `â +${item.yoyNum}%` : `â ${item.yoyNum}%`) : 'â'
+                    return (
+                      <div className="rounded-lg border bg-background px-3 py-2 shadow-lg text-xs">
+                        <div className="font-semibold mb-1.5">{item.name}</div>
+                        <div className="flex items-center gap-2">
+                          <span className="h-2 w-2 rounded-full flex-shrink-0" style={{ background: RED }} />
+                          <span className="text-muted-foreground">Deals 2025:</span>
+                          <span className="font-semibold">{item.deals2025}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="h-2 w-2 rounded-full flex-shrink-0" style={{ background: NAVY_LIGHT }} />
+                          <span className="text-muted-foreground">Deals 2024:</span>
+                          <span className="font-semibold">{item.deals2024}</span>
+                        </div>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="h-2 w-2 rounded-full flex-shrink-0" style={{ background: NAVY }} />
+                          <span className="text-muted-foreground">Capital 2025:</span>
+                          <span className="font-semibold">${item.cap2025}M</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="h-2 w-2 rounded-full flex-shrink-0" style={{ background: '#8aaabf' }} />
+                          <span className="text-muted-foreground">Capital 2024:</span>
+                          <span className="font-semibold">${item.cap2024}M</span>
+                        </div>
+                        <div className={`mt-1.5 text-[11px] font-semibold ${
+                          item.yoyNum !== null && item.yoyNum >= 0 ? 'text-green-700' : 'text-red-600'
+                        }`}>YoY: {yoyLabel}</div>
+                      </div>
+                    )
+                  }}
+                />
+                <Bar yAxisId="left"  dataKey="deals2025" name="Deals 2025"      fill={RED}        radius={[3, 3, 0, 0]}
+                  onClick={(data) => onFilter({ stages: [data.name], years: ['2025'] })} cursor="pointer" />
+                <Bar yAxisId="left"  dataKey="deals2024" name="Deals 2024"      fill={NAVY_LIGHT} radius={[3, 3, 0, 0]}
+                  onClick={(data) => onFilter({ stages: [data.name], years: ['2024'] })} cursor="pointer" />
+                <Bar yAxisId="right" dataKey="cap2025"   name="Capital 2025 $M" fill={NAVY}       radius={[3, 3, 0, 0]}
+                  onClick={(data) => onFilter({ stages: [data.name], years: ['2025'] })} cursor="pointer" />
+              </BarChart>
+            </ResponsiveContainer>
+            {/* YoY badges */}
+            <div className="flex flex-wrap gap-2 mt-2 px-1">
+              {stats.stageData.map(s => s.yoyNum !== null && (
+                <span key={s.name}
+                  className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
+                    s.yoyNum >= 0 ? 'text-green-700 bg-green-50' : 'text-red-600 bg-red-50'
+                  }`}
+                >
+                  {s.name}: {s.yoyNum >= 0 ? '+' : ''}{s.yoyNum}% YoY
+                </span>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold">Deals by Vertical</CardTitle>
-            <p className="text-[11px] text-muted-foreground -mt-1">Distribution with YoY growth rates</p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">2025 vs 2024 · click to filter</p>
+            <CardTitle className="text-sm font-semibold">Deal Flow by Year</CardTitle>
+            <p className="text-[11px] text-muted-foreground -mt-1">Click a bar to explore deals</p>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2 pt-2">
-              {stats.verticals.map((v, i) => {
-                const max = stats.verticals[0]?.value || 1
-                const pct = Math.round((v.value / max) * 100)
-                const color = CHART_COLORS[i % CHART_COLORS.length]
-                return (
-                  <div key={v.name} className="cursor-pointer" onClick={() => onFilter({ verticals: [v.name] })}>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-[13px] font-semibold text-gray-800">{v.name}</span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[13px] text-gray-500">{v.value} deals</span>
-                        {v.yoy !== null && (
-                          <span className={`text-[12px] font-semibold ${v.yoy >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
-                            {v.yoy >= 0 ? '↗+' : '↘'}{v.yoy}%
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
-                      <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: color }} />
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={stats.byYear} margin={{ left: 0, right: 16, top: 4, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                <XAxis dataKey="year" tick={{ fontSize: 12, fill: '#555', fontFamily: 'Montserrat, Helvetica Neue, sans-serif' }} />
+                <YAxis tick={{ fontSize: 11, fill: '#888', fontFamily: 'Montserrat, Helvetica Neue, sans-serif' }} />
+                <Tooltip content={(p) => <ChartTooltip {...p} />} cursor={{ fill: 'rgba(0,0,0,0.06)' }} />
+                <Bar dataKey="deals" name="Deals" fill={RED} radius={[4, 4, 0, 0]}
+                  onClick={(data) => onFilter({ years: [String(data.year)] })}
+                  cursor="pointer"
+                />
+              </BarChart>
+            </ResponsiveContainer>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold">Round Stage Breakdown</CardTitle>
-            <p className="text-[11px] text-muted-foreground -mt-1">Deals and capital by funding stage</p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">2025 vs 2024 YoY · click to filter</p>
+            <CardTitle className="text-sm font-semibold">Investment Volume by Vertical ($M)</CardTitle>
+            <p className="text-[11px] text-muted-foreground -mt-1">Click a bar to explore deals</p>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={stats.stagesDist} layout="vertical"
-                margin={{ left: 8, right: 40, top: 8, bottom: 8 }}>
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={stats.invByVertical} layout="vertical"
+                margin={{ left: 8, right: 32, top: 4, bottom: 4 }}>
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f0f0f0" />
-                <XAxis type="number" tick={{ fontSize: 10, fill: '#888' }} />
-                <YAxis type="category" dataKey="name" width={72} tick={{ fontSize: 11, fill: '#444' }} />
-                <Tooltip content={(p) => <ChartTooltip {...p} />} cursor={{ fill: 'rgba(0,0,0,0.06)' }} />
-                <Legend iconType="circle" iconSize={8} formatter={(value: any) => <span style={{ fontSize: 11, color: '#555' }}>{value}</span>} />
-                <Bar dataKey="count" name="Deal Count" fill="#111111" radius={[0, 4, 4, 0]} cursor="pointer" onClick={(data: any) => data?.name && onFilter({ stages: [data.name] })} />
-                <Bar dataKey="capital" name="Capital ($M)" fill="#10b981" radius={[0, 4, 4, 0]} cursor="pointer" onClick={(data: any) => data?.name && onFilter({ stages: [data.name] })} />
+                <XAxis type="number" tick={{ fontSize: 11, fill: '#888', fontFamily: 'Montserrat, Helvetica Neue, sans-serif' }} />
+                <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: '#444', fontFamily: 'Montserrat, Helvetica Neue, sans-serif' }} width={148} />
+                <Tooltip content={(p) => <ChartTooltip {...p} fmt={(v: number) => `$${v}M`} />} cursor={{ fill: 'rgba(0,0,0,0.06)' }} />
+                <Bar dataKey="value" name="Investment" fill={NAVY} radius={[0, 4, 4, 0]}
+                  onClick={(data) => onFilter({ verticals: [data.name] })}
+                  cursor="pointer"
+                />
               </BarChart>
             </ResponsiveContainer>
-            <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 px-2">
-              {stats.stagesDist.map(s => s.yoy !== null ? (
-                <span key={s.name} className="text-[11px] text-gray-500">
-                  {s.name}: <span className={(s.yoy as number) >= 0 ? 'text-emerald-600 font-medium' : 'text-red-500 font-medium'}>{(s.yoy as number) >= 0 ? '+' : ''}{s.yoy}% YoY</span>
-                </span>
-              ) : null)}
-            </div>
           </CardContent>
         </Card>
       </div>
-
-      <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold">Deal Flow by Month</CardTitle>
-            <p className="text-[11px] text-muted-foreground -mt-1">Monthly deal flow · 2025 YTD</p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Capital ($M) and deal count</p>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={280}>
-              <ComposedChart data={stats.byMonth} margin={{ left: 8, right: 48, top: 8, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="capGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#9ca3af" stopOpacity={0.5} />
-                    <stop offset="95%" stopColor="#9ca3af" stopOpacity={0.05} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                <XAxis dataKey="month" tick={{ fontSize: 10, fill: '#555' }} />
-                <YAxis yAxisId="cap" orientation="left" tick={{ fontSize: 10, fill: '#888' }} tickFormatter={(v: number) => `${v}M`} />
-                <YAxis yAxisId="cnt" orientation="right" tick={{ fontSize: 10, fill: '#888' }} allowDecimals={false} />
-                <Tooltip content={(p) => <ChartTooltip {...p} />} cursor={{ fill: 'rgba(0,0,0,0.04)' }} />
-                <Legend iconType="circle" iconSize={8} formatter={(value: any) => <span style={{ fontSize: 11, color: '#555' }}>{value}</span>} />
-                <Area yAxisId="cap" type="monotone" dataKey="capital" name="Capital ($M)" fill="url(#capGrad)" stroke="#9ca3af" strokeWidth={1} />
-                <Line yAxisId="cnt" type="monotone" dataKey="deals" name="Deals" stroke="#10b981" strokeWidth={2} dot={{ fill: '#10b981', r: 4 }} activeDot={{ r: 6 }} />
-              </ComposedChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold">Recent Deals</CardTitle>
-            <p className="text-[11px] text-muted-foreground -mt-1">Latest additions to the deal flow</p>
-          </CardHeader>
-          <CardContent>
-            <div className="divide-y divide-gray-100">
-              {[...startups]
-                .sort((a, b) => b.datePublished.localeCompare(a.datePublished) || b.year - a.year)
-                .slice(0, 8)
-                .map(s => (
-                  <div key={s.id} className="flex items-center justify-between py-3">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="flex-shrink-0 h-8 w-8 rounded-lg flex items-center justify-center font-bold text-xs text-white" style={{ background: NAVY }}>
-                        {s.name.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase() || '??'}
-                      </div>
-                      <div className="min-w-0">
-                        <div className="font-semibold text-sm text-gray-900 truncate">{s.name}</div>
-                        <div className="text-xs text-gray-500">
-                          {[s.vertical, s.roundStage].filter(Boolean).join(' · ')}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex-shrink-0 text-right ml-4">
-                      <div className="text-sm font-semibold text-gray-900">{s.investmentSizeUSD > 0 ? formatUSD(s.investmentSizeUSD) : '—'}</div>
-                      <div className="text-xs text-gray-500">{s.datePublished || (s.year > 0 ? String(s.year) : '')}</div>
-                    </div>
-                  </div>
-                ))}
-            </div>
-          </CardContent>
-        </Card>
     </div>
   )
 }
@@ -447,7 +548,7 @@ function DealDetailSheet({
     <Sheet open={!!startup} onOpenChange={v => { if (!v) onClose() }}>
       <SheetContent className="w-full sm:max-w-[min(1000px,95vw)] overflow-y-auto p-0" side="right">
 
-        {/* ── Header ── */}
+        {/* ââ Header ââ */}
         <div className="px-8 pt-8 pb-5 border-b border-gray-100">
           <SheetHeader className="text-left space-y-0">
             <div className="flex items-start gap-4">
@@ -470,7 +571,7 @@ function DealDetailSheet({
                   )}
                   {startup.techosystemMember === 'Member' && (
                     <Badge className="text-xs text-white border-0" style={{ background: RED }}>
-                      ✓ Techosystem Member
+                      â Techosystem Member
                     </Badge>
                   )}
                 </div>
@@ -479,14 +580,14 @@ function DealDetailSheet({
           </SheetHeader>
         </div>
 
-        {/* ── Description ── */}
+        {/* ââ Description ââ */}
         {startup.description && (
           <div className="px-8 py-5 border-b border-gray-100">
             <p className="text-sm text-muted-foreground leading-relaxed">{startup.description}</p>
           </div>
         )}
 
-        {/* ── Fields ── */}
+        {/* ââ Fields ââ */}
         <div className="px-8 py-6 space-y-7">
 
           {/* Investment */}
@@ -509,7 +610,7 @@ function DealDetailSheet({
               Investors
             </p>
             <div className="grid grid-cols-2 gap-3">
-              <FieldCard label="Investor(s)" value={startup.investors || '—'} />
+              <FieldCard label="Investor(s)" value={startup.investors || 'â'} />
               <FieldCard label="UA Investors Involved" value={startup.uaInvestorsInvolved} />
             </div>
           </div>
@@ -529,7 +630,7 @@ function DealDetailSheet({
           </div>
         </div>
 
-        {/* ── CTA ── */}
+        {/* ââ CTA ââ */}
         {startup.linkToNews && (
           <div className="px-8 pb-8">
             <a
@@ -573,7 +674,7 @@ function DealListRow({
         <div className="flex items-center gap-2 flex-wrap">
           <span className="font-semibold text-sm text-foreground truncate">{startup.name}</span>
           {startup.techosystemMember === 'Member' && (
-            <Badge className="text-[10px] px-1.5 py-0 text-white border-0 shrink-0" style={{ background: RED }}>✓ Member</Badge>
+            <Badge className="text-[10px] px-1.5 py-0 text-white border-0 shrink-0" style={{ background: RED }}>â Member</Badge>
           )}
         </div>
         <div className="flex items-center gap-2 mt-0.5 flex-wrap">
@@ -590,7 +691,7 @@ function DealListRow({
         {startup.year > 0 && <p className="text-[10px] text-gray-400">{startup.year}</p>}
       </div>
       {/* Arrow */}
-      <div className="flex-shrink-0 text-gray-300 text-sm">›</div>
+      <div className="flex-shrink-0 text-gray-300 text-sm">âº</div>
     </div>
   )
 }
@@ -622,7 +723,7 @@ function DealCard({
               <h3 className="font-semibold text-foreground leading-tight truncate flex-1 min-w-0">{startup.name}</h3>
               {startup.techosystemMember === 'Member' && (
                 <Badge className="text-[10px] shrink-0 text-white border-0 px-1.5 py-0" style={{ background: RED }}>
-                  ✓ Member
+                  â Member
                 </Badge>
               )}
             </div>
@@ -678,7 +779,7 @@ function DealCard({
               View news
             </a>
           ) : <span />}
-          <span className="text-[10px] text-muted-foreground">Tap for details →</span>
+          <span className="text-[10px] text-muted-foreground">Tap for details â</span>
         </div>
       </CardContent>
     </Card>
