@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import {
   BarChart, Bar, PieChart, Pie, Cell,
+  ComposedChart, Area, Line,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from 'recharts'
 import type { DealFlowStartup } from '@/lib/airtable'
@@ -132,13 +133,34 @@ function AnalyticsPanel({
     const memberCount = startups.filter(d => d.techosystemMember === 'Member').length
 
     const vMap: Record<string, number> = {}
-    startups.forEach(d => { if (d.vertical) vMap[d.vertical] = (vMap[d.vertical] || 0) + 1 })
+    const vMap24: Record<string, number> = {}
+    const vMap25: Record<string, number> = {}
+    startups.forEach(d => {
+      if (!d.vertical) return
+      vMap[d.vertical] = (vMap[d.vertical] || 0) + 1
+      if (String(d.year) === '2024') vMap24[d.vertical] = (vMap24[d.vertical] || 0) + 1
+      if (String(d.year) === '2025') vMap25[d.vertical] = (vMap25[d.vertical] || 0) + 1
+    })
     const verticals = Object.entries(vMap)
       .sort((a, b) => b[1] - a[1]).slice(0, 10)
-      .map(([name, value]) => ({ name, value }))
+      .map(([name, value]) => {
+        const c24 = vMap24[name] || 0
+        const c25 = vMap25[name] || 0
+        const yoy: number | null = c24 > 0 ? Math.round((c25 - c24) / c24 * 100) : null
+        return { name, value, yoy }
+      })
 
     const sMap: Record<string, number> = {}
-    startups.forEach(d => { if (d.roundStage) sMap[d.roundStage] = (sMap[d.roundStage] || 0) + 1 })
+    const sMap24: Record<string, number> = {}
+    const sMap25: Record<string, number> = {}
+    const sCapMap: Record<string, number> = {}
+    startups.forEach(d => {
+      if (!d.roundStage) return
+      sMap[d.roundStage] = (sMap[d.roundStage] || 0) + 1
+      if (String(d.year) === '2024') sMap24[d.roundStage] = (sMap24[d.roundStage] || 0) + 1
+      if (String(d.year) === '2025') sMap25[d.roundStage] = (sMap25[d.roundStage] || 0) + 1
+      sCapMap[d.roundStage] = (sCapMap[d.roundStage] || 0) + (d.investmentSizeUSD || 0)
+    })
     const stagesAll = Object.entries(sMap)
       .sort((a, b) => b[1] - a[1])
       .map(([name, value]) => ({ name, value }))
@@ -147,6 +169,13 @@ function AnalyticsPanel({
     const stagesMajor = stagesAll.filter(d => d.value >= _stMin)
     const stagesOther = stagesAll.filter(d => d.value < _stMin).reduce((s, d) => s + d.value, 0)
     const stages = stagesOther > 0 ? [...stagesMajor, { name: 'Other', value: stagesOther }] : stagesMajor
+    const stagesDist = stagesMajor.map(({ name, value }) => {
+      const c24 = sMap24[name] || 0
+      const c25 = sMap25[name] || 0
+      const yoy: number | null = c24 > 0 ? Math.round((c25 - c24) / c24 * 100) : null
+      const capital = +((sCapMap[name] || 0) / 1e6).toFixed(1)
+      return { name, count: value, capital, yoy }
+    })
 
     const yMap: Record<string, number> = {}
     startups.forEach(d => { if (d.year) yMap[String(d.year)] = (yMap[String(d.year)] || 0) + 1 })
@@ -161,11 +190,18 @@ function AnalyticsPanel({
       const m = MONTH_NAMES[date.getMonth()]
       mMap[m][y] = (mMap[m][y] || 0) + 1
     })
+    const capMap26: Record<string, number> = {}
+    startups.forEach(d => {
+      if (String(d.year) !== '2026') return
+      const d26 = d.datePublished ? new Date(d.datePublished) : null
+      if (!d26 || isNaN(d26.getTime())) return
+      const m26 = MONTH_NAMES[d26.getMonth()]
+      capMap26[m26] = (capMap26[m26] || 0) + (d.investmentSizeUSD || 0)
+    })
     const byMonth = MONTH_NAMES.map(month => ({
       month,
-      '2024': mMap[month]['2024'] || 0,
-      '2025': mMap[month]['2025'] || 0,
-      '2026': mMap[month]['2026'] || 0,
+      deals: mMap[month]['2026'] || 0,
+      capital: +((capMap26[month] || 0) / 1e6).toFixed(1),
     }))
     const invMap: Record<string, number> = {}
     startups.forEach(d => {
@@ -176,7 +212,7 @@ function AnalyticsPanel({
       .sort((a, b) => b[1] - a[1])
       .map(([name, value]) => ({ name, value: +(value / 1e6).toFixed(1) })).filter(d => d.value > 0)
 
-    return { total, totalInv, uaCount, memberCount, verticals, stages, byMonth, invByVertical }
+    return { total, totalInv, uaCount, memberCount, verticals, stages, stagesDist, byMonth, invByVertical }
   }, [startups])
 
   const pct = (n: number) =>
@@ -216,56 +252,64 @@ function AnalyticsPanel({
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold">Deals by Vertical</CardTitle>
-            <p className="text-[11px] text-muted-foreground -mt-1">Click a bar to explore deals</p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Data reflects 2024–2026 deals</p>
+            <p className="text-[11px] text-muted-foreground -mt-1">Distribution with YoY growth rates</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">2025 vs 2024 · click to filter</p>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={480}>
-              <BarChart data={stats.verticals} layout="vertical"
-                margin={{ left: 8, right: 32, top: 4, bottom: 4 }}>
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f0f0f0" />
-                <XAxis type="number" tick={{ fontSize: 11, fill: '#888' }} />
-                <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: '#444' }} width={148} />
-                <Tooltip content={(p) => <ChartTooltip {...p} />} cursor={{ fill: 'rgba(0,0,0,0.06)' }} />
-                <Bar dataKey="value" name="Deals" radius={[0, 4, 4, 0]}
-                  onClick={(data) => onFilter({ verticals: [data.name] })}
-                  cursor="pointer"
-                >
-                  {stats.verticals.map((_, i) => (
-                    <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+            <div className="space-y-4 pt-2">
+              {stats.verticals.map((v, i) => {
+                const max = stats.verticals[0]?.value || 1
+                const pct = Math.round((v.value / max) * 100)
+                const color = CHART_COLORS[i % CHART_COLORS.length]
+                return (
+                  <div key={v.name} className="cursor-pointer" onClick={() => onFilter({ verticals: [v.name] })}>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-[13px] font-semibold text-gray-800">{v.name}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[13px] text-gray-500">{v.value} deals</span>
+                        {v.yoy !== null && (
+                          <span className={`text-[12px] font-semibold ${v.yoy >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                            {v.yoy >= 0 ? '↗+' : '↘'}{v.yoy}%
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="h-2.5 rounded-full bg-gray-100 overflow-hidden">
+                      <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: color }} />
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold">Round Stage Breakdown</CardTitle>
-            <p className="text-[11px] text-muted-foreground -mt-1">Click a slice to explore deals</p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Data reflects 2024–2026 deals</p>
+            <p className="text-[11px] text-muted-foreground -mt-1">Deals and capital by funding stage</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">2025 vs 2024 YoY · click to filter</p>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={480}>
-              <PieChart margin={{ top: 10, bottom: 10 }}>
-                <Pie
-                  data={stats.stages}
-                  cx="50%" cy="48%"                  innerRadius={80} outerRadius={130}
-                  dataKey="value" nameKey="name"
-                  paddingAngle={2}
-                  label={({ cx, cy: pcy, midAngle, outerRadius, name, percent }: any) => { if (percent < 0.05) return null; const R = Math.PI / 180; const r = outerRadius + 28; const x = cx + r * Math.cos(-midAngle * R); const y = pcy + r * Math.sin(-midAngle * R); return <text x={x} y={y} fill="#555" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" fontSize={10}>{name}</text>; }}
-                    labelLine={{ stroke: '#ccc', strokeWidth: 1 }}
-                  onClick={(data) => onFilter({ stages: [data.name] })}
-                  cursor="pointer"
-                >
-                  {stats.stages.map((_, i) => (
-                    <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
-                  ))}
-                </Pie>
-                                <Tooltip content={(p) => <ChartTooltip {...p} />} />
-              </PieChart>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={stats.stagesDist} layout="vertical"
+                margin={{ left: 8, right: 40, top: 8, bottom: 8 }}>
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f0f0f0" />
+                <XAxis type="number" tick={{ fontSize: 10, fill: '#888' }} />
+                <YAxis type="category" dataKey="name" width={72} tick={{ fontSize: 11, fill: '#444' }} />
+                <Tooltip content={(p) => <ChartTooltip {...p} />} cursor={{ fill: 'rgba(0,0,0,0.06)' }} />
+                <Legend iconType="circle" iconSize={8} formatter={(value: any) => <span style={{ fontSize: 11, color: '#555' }}>{value}</span>} />
+                <Bar dataKey="count" name="Deal Count" fill="#111111" radius={[0, 4, 4, 0]} />
+                <Bar dataKey="capital" name="Capital ($M)" fill="#10b981" radius={[0, 4, 4, 0]} />
+              </BarChart>
             </ResponsiveContainer>
+            <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 px-2">
+              {stats.stagesDist.map(s => s.yoy !== null ? (
+                <span key={s.name} className="text-[11px] text-gray-500">
+                  {s.name}: <span className={(s.yoy as number) >= 0 ? 'text-emerald-600 font-medium' : 'text-red-500 font-medium'}>{(s.yoy as number) >= 0 ? '+' : ''}{s.yoy}% YoY</span>
+                </span>
+              ) : null)}
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -273,21 +317,27 @@ function AnalyticsPanel({
       <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold">Deal Flow by Month</CardTitle>
-            <p className="text-[11px] text-muted-foreground -mt-1">Click a bar to explore deals</p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Data reflects 2024–2026 deals</p>
+            <p className="text-[11px] text-muted-foreground -mt-1">Monthly deal flow · 2026 YTD</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Capital ($M) and deal count</p>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={260}>
-              <BarChart data={stats.byMonth} margin={{ left: 0, right: 16, top: 4, bottom: 0 }}>
+            <ResponsiveContainer width="100%" height={280}>
+              <ComposedChart data={stats.byMonth} margin={{ left: 8, right: 48, top: 8, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="capGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#9ca3af" stopOpacity={0.5} />
+                    <stop offset="95%" stopColor="#9ca3af" stopOpacity={0.05} />
+                  </linearGradient>
+                </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
                 <XAxis dataKey="month" tick={{ fontSize: 10, fill: '#555' }} />
-                <YAxis tick={{ fontSize: 11, fill: '#888' }} allowDecimals={false} />
-                <Tooltip content={(p) => <ChartTooltip {...p} />} cursor={{ fill: 'rgba(0,0,0,0.06)' }} />
+                <YAxis yAxisId="cap" orientation="left" tick={{ fontSize: 10, fill: '#888' }} tickFormatter={(v: number) => `${v}M`} />
+                <YAxis yAxisId="cnt" orientation="right" tick={{ fontSize: 10, fill: '#888' }} allowDecimals={false} />
+                <Tooltip content={(p) => <ChartTooltip {...p} />} cursor={{ fill: 'rgba(0,0,0,0.04)' }} />
                 <Legend iconType="circle" iconSize={8} formatter={(value: any) => <span style={{ fontSize: 11, color: '#555' }}>{value}</span>} />
-                <Bar dataKey="2024" name="2024" fill={CHART_COLORS[2]} radius={[2, 2, 0, 0]} />
-                <Bar dataKey="2025" name="2025" fill={CHART_COLORS[0]} radius={[2, 2, 0, 0]} />
-                <Bar dataKey="2026" name="2026" fill={CHART_COLORS[1]} radius={[2, 2, 0, 0]} />
-              </BarChart>
+                <Area yAxisId="cap" type="monotone" dataKey="capital" name="Capital ($M)" fill="url(#capGrad)" stroke="#9ca3af" strokeWidth={1} />
+                <Line yAxisId="cnt" type="monotone" dataKey="deals" name="Deals" stroke="#10b981" strokeWidth={2} dot={{ fill: '#10b981', r: 4 }} activeDot={{ r: 6 }} />
+              </ComposedChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
