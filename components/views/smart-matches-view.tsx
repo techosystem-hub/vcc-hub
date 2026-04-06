@@ -323,7 +323,8 @@ function MatchDetailSheet({
       >
         {/* Header */}
         <div className="px-8 pt-8 pb-5">
-          <SheetHeader className="text-left space-y-0">
+          <SheetHeader className="text-left space-y-0 relative">
+            <button onClick={() => setSheetOpen(false)} className="absolute top-0 right-0 p-1.5 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors z-10" aria-label="Close"><X className="h-5 w-5" /></button>
             <div className="flex items-start gap-5">
               <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-[#011627] text-xl font-bold text-white flex-shrink-0">
                 {initials(match.startupName)}
