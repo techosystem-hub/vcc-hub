@@ -256,7 +256,7 @@ return { total, totalInv, uaCount, memberCount, verticals, stages, stagesDist, b
               <DollarSign className="w-5 h-5 text-blue-500" />
             </div>
           </div>
-          <div className="text-4xl font-bold text-gray-900">`{stats.capM2025}M{T}</div>
+          <div className="text-4xl font-bold text-gray-900">{stats.capM2025}M</div>
           {stats.yoyCap !== null && (
             <div className="flex items-center gap-1 text-sm">
               <span className={(stats.yoyCap ?? 0) >= 0 ? 'text-emerald-600' : 'text-red-500'}>
@@ -273,7 +273,7 @@ return { total, totalInv, uaCount, memberCount, verticals, stages, stagesDist, b
               <BarChart2 className="w-5 h-5 text-blue-500" />
             </div>
           </div>
-          <div className="text-4xl font-bold text-gray-900">`{stats.avgDealSizeM}M{T}</div>
+          <div className="text-4xl font-bold text-gray-900">{stats.avgDealSizeM}M</div>
           {stats.yoyAvg !== null && (
             <div className="flex items-center gap-1 text-sm">
               <span className={(stats.yoyAvg ?? 0) >= 0 ? 'text-emerald-600' : 'text-red-500'}>
