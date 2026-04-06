@@ -192,7 +192,7 @@ function AnalyticsPanel({
     })
     const capMap26: Record<string, number> = {}
     startups.forEach(d => {
-      if (String(d.year) !== '2026') return
+      if (String(d.year) !== '2025') return
       const d26 = d.datePublished ? new Date(d.datePublished) : null
       if (!d26 || isNaN(d26.getTime())) return
       const m26 = MONTH_NAMES[d26.getMonth()]
@@ -200,7 +200,7 @@ function AnalyticsPanel({
     })
     const byMonth = MONTH_NAMES.map(month => ({
       month,
-      deals: mMap[month]['2026'] || 0,
+      deals: mMap[month]['2025'] || 0,
       capital: +((capMap26[month] || 0) / 1e6).toFixed(1),
     }))
     const invMap: Record<string, number> = {}
@@ -212,7 +212,18 @@ function AnalyticsPanel({
       .sort((a, b) => b[1] - a[1])
       .map(([name, value]) => ({ name, value: +(value / 1e6).toFixed(1) })).filter(d => d.value > 0)
 
-    return { total, totalInv, uaCount, memberCount, verticals, stages, stagesDist, byMonth, invByVertical }
+    const total2024 = startups.filter(d => String(d.year) === '2024').length
+    const total2025 = startups.filter(d => String(d.year) === '2025').length
+    const inv2024 = startups.filter(d => String(d.year) === '2024').reduce((s, d) => s + (d.investmentSizeUSD || 0), 0)
+    const inv2025 = startups.filter(d => String(d.year) === '2025').reduce((s, d) => s + (d.investmentSizeUSD || 0), 0)
+    const avgDeal2024 = total2024 > 0 ? inv2024 / total2024 : 0
+    const avgDeal2025 = total2025 > 0 ? inv2025 / total2025 : 0
+    const yoyRounds: number | null = total2024 > 0 ? Math.round((total2025 - total2024) / total2024 * 100) : null
+    const yoyCap: number | null = inv2024 > 0 ? Math.round((inv2025 - inv2024) / inv2024 * 100) : null
+    const yoyAvg: number | null = avgDeal2024 > 0 ? Math.round((avgDeal2025 - avgDeal2024) / avgDeal2024 * 100) : null
+    const capM2025 = +(inv2025 / 1e6).toFixed(0)
+    const avgDealSizeM = +(avgDeal2025 / 1e6).toFixed(1)
+return { total, totalInv, uaCount, memberCount, verticals, stages, stagesDist, byMonth, invByVertical, total2025, capM2025, avgDealSizeM, yoyRounds, yoyCap, yoyAvg }
   }, [startups])
 
   const pct = (n: number) =>
@@ -221,24 +232,57 @@ function AnalyticsPanel({
   return (
     <div className="flex flex-col gap-6">
       <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          icon={TrendingUp} label="Total Deals"
-          value={String(stats.total)} sub="in the database"
-          hint="Click to browse all deals"
-          onClick={() => onFilter({})}
-        />
-        <StatCard
-          icon={DollarSign} label="Total Invested"
-          value={formatUSD(stats.totalInv)} sub="tracked investment volume"
-          hint="Click to browse sorted by investment size"
-          onClick={() => onFilter({ sortBy: 'highest' })}
-        />
-        <StatCard
-          icon={Globe} label="Ukrainian-founded"
-          value={pct(stats.uaCount)} sub={`${stats.uaCount} startups`}
-          hint="Click to browse Ukrainian-founded startups"
-          onClick={() => onFilter({ uaOnly: true })}
-        />
+        <div className="bg-white rounded-xl border border-gray-100 p-5 flex flex-col gap-3 cursor-pointer" onClick={() => onFilter({})}>
+          <div className="flex items-start justify-between">
+            <span className="text-sm text-gray-500 font-medium">Total Rounds</span>
+            <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
+              <TrendingUp className="w-5 h-5 text-blue-500" />
+            </div>
+          </div>
+          <div className="text-4xl font-bold text-gray-900">{stats.total2025}</div>
+          {stats.yoyRounds !== null && (
+            <div className="flex items-center gap-1 text-sm">
+              <span className={(stats.yoyRounds ?? 0) >= 0 ? 'text-emerald-600' : 'text-red-500'}>
+                ↗ {(stats.yoyRounds ?? 0) >= 0 ? '+' : ''}{stats.yoyRounds}%
+              </span>
+              <span className="text-gray-400">vs 2024</span>
+            </div>
+          )}
+        </div>
+        <div className="bg-white rounded-xl border border-gray-100 p-5 flex flex-col gap-3">
+          <div className="flex items-start justify-between">
+            <span className="text-sm text-gray-500 font-medium">Capital Deployed</span>
+            <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
+              <DollarSign className="w-5 h-5 text-blue-500" />
+            </div>
+          </div>
+          <div className="text-4xl font-bold text-gray-900">`{stats.capM2025}M{T}</div>
+          {stats.yoyCap !== null && (
+            <div className="flex items-center gap-1 text-sm">
+              <span className={(stats.yoyCap ?? 0) >= 0 ? 'text-emerald-600' : 'text-red-500'}>
+                ↗ {(stats.yoyCap ?? 0) >= 0 ? '+' : ''}{stats.yoyCap}%
+              </span>
+              <span className="text-gray-400">YoY growth</span>
+            </div>
+          )}
+        </div>
+        <div className="bg-white rounded-xl border border-gray-100 p-5 flex flex-col gap-3">
+          <div className="flex items-start justify-between">
+            <span className="text-sm text-gray-500 font-medium">Avg Deal Size</span>
+            <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
+              <BarChart2 className="w-5 h-5 text-blue-500" />
+            </div>
+          </div>
+          <div className="text-4xl font-bold text-gray-900">`{stats.avgDealSizeM}M{T}</div>
+          {stats.yoyAvg !== null && (
+            <div className="flex items-center gap-1 text-sm">
+              <span className={(stats.yoyAvg ?? 0) >= 0 ? 'text-emerald-600' : 'text-red-500'}>
+                ↗ {(stats.yoyAvg ?? 0) >= 0 ? '+' : ''}{stats.yoyAvg}%
+              </span>
+              <span className="text-gray-400">vs 2024</span>
+            </div>
+          )}
+        </div>
         <StatCard
           icon={Award} label="Techosystem Members"
           value={String(stats.memberCount)}
@@ -256,14 +300,14 @@ function AnalyticsPanel({
             <p className="text-[11px] text-muted-foreground mt-0.5">2025 vs 2024 · click to filter</p>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4 pt-2">
+            <div className="space-y-2 pt-2">
               {stats.verticals.map((v, i) => {
                 const max = stats.verticals[0]?.value || 1
                 const pct = Math.round((v.value / max) * 100)
                 const color = CHART_COLORS[i % CHART_COLORS.length]
                 return (
                   <div key={v.name} className="cursor-pointer" onClick={() => onFilter({ verticals: [v.name] })}>
-                    <div className="flex items-center justify-between mb-1.5">
+                    <div className="flex items-center justify-between mb-1">
                       <span className="text-[13px] font-semibold text-gray-800">{v.name}</span>
                       <div className="flex items-center gap-2">
                         <span className="text-[13px] text-gray-500">{v.value} deals</span>
@@ -274,7 +318,7 @@ function AnalyticsPanel({
                         )}
                       </div>
                     </div>
-                    <div className="h-2.5 rounded-full bg-gray-100 overflow-hidden">
+                    <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
                       <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: color }} />
                     </div>
                   </div>
@@ -299,8 +343,8 @@ function AnalyticsPanel({
                 <YAxis type="category" dataKey="name" width={72} tick={{ fontSize: 11, fill: '#444' }} />
                 <Tooltip content={(p) => <ChartTooltip {...p} />} cursor={{ fill: 'rgba(0,0,0,0.06)' }} />
                 <Legend iconType="circle" iconSize={8} formatter={(value: any) => <span style={{ fontSize: 11, color: '#555' }}>{value}</span>} />
-                <Bar dataKey="count" name="Deal Count" fill="#111111" radius={[0, 4, 4, 0]} />
-                <Bar dataKey="capital" name="Capital ($M)" fill="#10b981" radius={[0, 4, 4, 0]} />
+                <Bar dataKey="count" name="Deal Count" fill="#111111" radius={[0, 4, 4, 0]} cursor="pointer" onClick={(data: any) => data?.name && onFilter({ stages: [data.name] })} />
+                <Bar dataKey="capital" name="Capital ($M)" fill="#10b981" radius={[0, 4, 4, 0]} cursor="pointer" onClick={(data: any) => data?.name && onFilter({ stages: [data.name] })} />
               </BarChart>
             </ResponsiveContainer>
             <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 px-2">
@@ -317,7 +361,7 @@ function AnalyticsPanel({
       <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold">Deal Flow by Month</CardTitle>
-            <p className="text-[11px] text-muted-foreground -mt-1">Monthly deal flow · 2026 YTD</p>
+            <p className="text-[11px] text-muted-foreground -mt-1">Monthly deal flow · 2025 YTD</p>
             <p className="text-[11px] text-muted-foreground mt-0.5">Capital ($M) and deal count</p>
           </CardHeader>
           <CardContent>
@@ -342,27 +386,6 @@ function AnalyticsPanel({
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold">Investment Volume by Vertical ($M)</CardTitle>
-            <p className="text-[11px] text-muted-foreground -mt-1">Click a bar to explore deals</p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Data reflects 2024–2026 deals</p>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={320}>
-              <BarChart data={stats.invByVertical} margin={{ left: 8, right: 32, top: 4, bottom: 70 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#555' }} angle={-45} textAnchor="end" height={80} interval={0} />
-                <YAxis tick={{ fontSize: 11, fill: '#888' }} tickFormatter={(v: number) => '$' + v + 'M'} />
-                <Tooltip content={(p) => <ChartTooltip {...p} fmt={(v: number) => '$' + v + 'M'} />} cursor={{ fill: 'rgba(0,0,0,0.06)' }} />
-                <Bar dataKey="value" name="Investment" fill={NAVY} radius={[4, 4, 0, 0]}
-                  onClick={(data) => onFilter({ verticals: [data.name] })}
-                  cursor="pointer"
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold">Recent Deals</CardTitle>
