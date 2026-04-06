@@ -118,6 +118,16 @@ function StatCard({
     </Card>
   )
 }
+
+type ChartFilter = {
+  verticals?: string[]
+  stages?: string[]
+  years?: string[]
+  techosystemOnly?: boolean
+  uaOnly?: boolean
+  sortBy?: SortOption
+}
+
 function AnalyticsPanel({
   startups,
   onFilter,
