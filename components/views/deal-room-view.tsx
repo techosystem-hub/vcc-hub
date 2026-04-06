@@ -209,19 +209,6 @@ function AnalyticsPanel({
       const m26 = MONTH_NAMES[d26.getMonth()]
       capMap26[m26] = (capMap26[m26] || 0) + (d.investmentSizeUSD || 0)
     })
-date = d.datePublished ? new Date(d.datePublished) : null
-      if (!date || isNaN(date.getTime())) return
-      const m = MONTH_NAMES[date.getMonth()]
-      mMap[m][y] = (mMap[m][y] || 0) + 1
-    })
-    const capMap26: Record<string, number> = {}
-    startups.forEach(d => {
-      if (String(d.year) !== '2025') return
-      const d26 = d.datePublished ? new Date(d.datePublished) : null
-      if (!d26 || isNaN(d26.getTime())) return
-      const m26 = MONTH_NAMES[d26.getMonth()]
-      capMap26[m26] = (capMap26[m26] || 0) + (d.investmentSizeUSD || 0)
-    })
     const QUARTERS = [
       { key: 'Q1', months: [0,1,2] },
       { key: 'Q2', months: [3,4,5] },
@@ -253,7 +240,7 @@ date = d.datePublished ? new Date(d.datePublished) : null
     const yoyAvg: number | null = avgDeal2024 > 0 ? Math.round((avgDeal2025 - avgDeal2024) / avgDeal2024 * 100) : null
     const capM2025 = +(inv2025 / 1e6).toFixed(0)
     const avgDealSizeM = +(avgDeal2025 / 1e6).toFixed(1)
-return { total, totalInv, uaCount, memberCount, verticals, stages, stagesDist, byMonth, invByVertical, total2025, capM2025, avgDealSizeM, yoyRounds, yoyCap, yoyAvg }
+    return { total, totalInv, uaCount, memberCount, verticals, stages, stagesDist, byMonth, invByVertical, total2025, capM2025, avgDealSizeM, yoyRounds, yoyCap, yoyAvg }
   }, [startups])
 
   const pct = (n: number) =>
@@ -547,30 +534,81 @@ function DealDetailSheet({
             <a
               href={startup.linkToNews}
               target="_blank"
-              rel="noreferrer"
+              rel="noopener noreferrer"
               className="flex items-center justify-center gap-2 w-full rounded-lg py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90"
-              style={{ background: NAVY }}
+              style={{ background: RED }}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-s.w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M18 7l4 4-4 4M2 12h19.5M2 12a10 10 0 0 0 10 10M2 12a10 10 0 0 1 10-10" />
-              </svg>
-              Read News Article
+              <ExternalLink className="h-4 w-4" />
+              Read the news article
             </a>
           </div>
         )}
+
       </SheetContent>
     </Sheet>
   )
 }
+function DealListRow({
+  startup,
+  onClick,
+}: {
+  startup: DealFlowStartup
+  onClick: () => void
+}) {
+  return (
+    <div
+      className="flex items-center gap-4 bg-white border border-gray-200 rounded-xl px-4 py-3 hover:shadow-sm hover:border-gray-300 transition-all cursor-pointer"
+      onClick={onClick}
+    >
+      {/* Avatar */}
+      <div
+        className="flex-shrink-0 h-9 w-9 rounded-lg flex items-center justify-center font-bold text-xs text-white"
+        style={{ background: NAVY }}
+      >
+        {startup.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || '??'}
+      </div>
+      {/* Name + badges */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="font-semibold text-sm text-foreground truncate">{startup.name}</span>
+          {startup.techosystemMember === 'Member' && (
+            <Badge className="text-[10px] px-1.5 py-0 text-white border-0 shrink-0" style={{ background: RED }}>â Member</Badge>
+          )}
+        </div>
+        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+          {startup.vertical   && <span className="text-[10px] text-gray-500 bg-gray-100 rounded-full px-2 py-0.5">{startup.vertical}</span>}
+          {startup.roundStage && <span className="text-[10px] text-gray-500 bg-gray-100 rounded-full px-2 py-0.5">{startup.roundStage}</span>}
+          {startup.legalHQ    && <span className="text-[10px] text-gray-400 flex items-center gap-1"><MapPin className="h-2.5 w-2.5" />{startup.legalHQ}</span>}
+        </div>
+      </div>
+      {/* Investment */}
+      <div className="flex-shrink-0 text-right hidden sm:block">
+        {startup.investmentSizeUSD > 0 && (
+          <p className="text-sm font-semibold text-foreground">{formatUSD(startup.investmentSizeUSD)}</p>
+        )}
+        {startup.year > 0 && <p className="text-[10px] text-gray-400">{startup.year}</p>}
+      </div>
+      {/* Arrow */}
+      <div className="flex-shrink-0 text-gray-300 text-sm">âº</div>
+    </div>
+  )
+}
 
-function DealCard({ startup, onSelect }: { startup: DealFlowStartup; onSelect?: (s: DealFlowStartup) => void }) {
-  const initials = startup.name.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase() || '??'
+function DealCard({
+  startup,
+  onClick,
+}: {
+  startup: DealFlowStartup
+  onClick: () => void
+}) {
+  const initials = startup.name
+    .split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || '??'
   return (
     <Card
       className="flex flex-col hover:shadow-md transition-shadow cursor-pointer"
-      onClick={() => onSelect?.(startup)}
+      onClick={onClick}
     >
-      <CardHeader className="pb-2">
+      <CardHeader className="pb-3">
         <div className="flex items-start gap-3">
           <div
             className="flex h-10 w-10 items-center justify-center rounded-lg font-bold text-sm flex-shrink-0 text-white"
@@ -582,120 +620,81 @@ function DealCard({ startup, onSelect }: { startup: DealFlowStartup; onSelect?: 
             <div className="flex items-start gap-2">
               <h3 className="font-semibold text-foreground leading-tight truncate flex-1 min-w-0">{startup.name}</h3>
               {startup.techosystemMember === 'Member' && (
-                <Badge className="text-[9px] text-white border-0 flex-shrink-0" style={{ background: RED }}>
-                  Member
+                <Badge className="text-[10px] shrink-0 text-white border-0 px-1.5 py-0" style={{ background: RED }}>
+                  â Member
                 </Badge>
               )}
             </div>
-            <div className="text-xs text-muted-foreground mt-0.5 truncate">{startup.vertical}</div>
+            <div className="flex flex-wrap gap-1 mt-1">
+              {startup.vertical   && <Badge variant="outline" className="text-[10px] px-1.5 py-0 max-w[120px] truncate">{startup.vertical}</Badge>}
+              {startup.roundStage && <Badge variant="outline" className="text-[10px] px-1.5 py-0">{startup.roundStage}</Badge>}
+            </div>
           </div>
         </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-3 pt-0">
+        {startup.description && (
+          <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed">
+            {startup.description}
+          </p>
+        )}
         <div className="flex flex-col gap-1.5 text-xs text-muted-foreground">
           {startup.investmentSizeUSD > 0 && (
             <div className="flex items-center justify-between">
-              <span>Amount</span>
-              <span className="font-medium text-foreground">{formatUSD(startup.investmentSizeUSD)}</span>
-            </div>
-          )}
-          {startup.roundStage && (
-            <div className="flex items-center justify-between">
-              <span>Stage</span>
-              <span className="font-medium text-foreground">{startup.roundStage}</span>
+              <span>Investment</span>
+              <span className="font-semibold text-foreground">{formatUSD(s.tartup.investmentSizeUSD)}</span>
             </div>
           )}
           {startup.legalHQ && (
-            <div className="flex items-center justify-between">
-              <span>HQ</span>
-              <span className="font-medium text-foreground">{startup.legalHQ}</span>
+            <div className="flex items-center gap-1.5">
+              <MapPin className="h-3 w-3 shrink-0" />
+              <span className="truncate">{startup.legalHQ}</span>
             </div>
           )}
-          {startup.investors && (
-            <div className="flex items-center justify-between">
-              <span>Investors</span>
-              <span className="font-medium text-foreground truncate max-w-[140px]">{startup.investors}</span>
+          {startup.founders && (
+            <div className="flex items-center gap-1.5">
+              <Users className="h-3 w-3 shrink-0" />
+              <span className="truncate">{startup.founders}</span>
+            </div>
+          )}
+          {startup.year > 0 && (
+            <div className="flex items-center gap-1.5">
+              <Calendar className="h-3 w-3 shrink-0" />
+              <span>{startup.year}</span>
             </div>
           )}
         </div>
         <div className="flex items-center justify-between mt-1">
-          <span className="text-xs text-muted-foreground">{ startup.datePublished || (startup.year > 0 ? String(startup.year) : '')}</span>
-          { startup.linkToNews && (
+          {startup.linkToNews ? (
             <a
               href={startup.linkToNews}
-              target="_blank"
-              rel="noreferrer"
+              target="_blank" rel="noopener noreferrer"
               className="flex items-center gap-1 text-xs font-medium hover:underline"
               style={{ color: RED }}
               onClick={e => e.stopPropagation()}
             >
-              <ExternalLink className="h-~.w-3.5" />
-              News
+              <ExternalLink className="h-3 w-3" />
+              View news
             </a>
-          )}
+          ) : <span />}
+          <span className="text-[10px] text-muted-foreground">Tap for details â</span>
         </div>
       </CardContent>
     </Card>
   )
 }
 
-function DealListItem({ startup, onSelect }: { startup: DealFlowStartup; onSelect?: (s: DealFlowStartup) => void }) {
-  return (
-    <div
-      className="flex items-center gap-4 bg-white border border-gray-200 rounded-xl px-4 py-3 hover:shadow-sm hover:border-gray-300 transition-all cursor-pointer"
-      onClick={() => onSelect?.(startup)}
-    >
-      <div
-        className="flex-shrink-0 h-9 w-9 rounded-lg flex items-center justify-center font-bold text-xs text-white"
-        style={{ background: NAVY }}
-      >
-        {startup.name.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase() || '??'}
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="font-semibold text-sm text-gray-900">{startup.name}</span>
-          {startup.techosystemMember === 'Member' && (
-            <Badge className="text-[10px] px-1.5 py-0 text-white border-0 shrink-0" style={{ background: RED }}>â Member</Badge>
-          )}
-        </div>
-        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-          {startup.vertical   && <span className="text-[10px] text-gray-500 bg-gray-100 rounded-full px-2 py-0.5">{startup.vertical}</span>}
-          {startup.roundStage && <span className="text-[10px] text-gray-500 bg-gray-100 rounded-full px-2 py-0.5">{startup.roundStage}</span>}
-          {startup.legalHQ    && <span className="text-[10px] text-gray-400 flex items-center gap-1"><MapPin className="h-2.5 w-2.5" />{startup.legalHQ}</span>}
-        </div>
-      </div>
-      <div className="flex-shrink-0 text-right hidden sm:block">
-        <div className="text-sm font-semibold text-gray-900">{startup.investmentSizeUSD > 0 ? formatUSD(startup.investmentSizeUSD) : 'â'}</div>
-        <div className="text-xs text-gray-500">{startup.datePublished || (startup.year > 0 ? String(startup.year) : '')}</div>
-      </div>
-      <div className="flex-shrink-0 text-gray-300 text-sm">â»</div>
-    </div>
-  )
-}
-
 function FilterDropdown({
   label, items, selected, onToggle,
-}: { label: string; items: string[]; selected: string[]
+}: {
+  label: string; items: string[]; selected: string[]
   onToggle: (v: string) => void
 }) {
   const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLButtonElement>(null)
+  const [pos, setPos]   = useState({ top: 0, left: 0 })
+  const btnRef = useRef<HTMLButtonElement>(null)
 
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [])
-  return (
-    <div className="relative">
-      <button
-        ref={ref}
-        type="button"
-        className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 py-1.5 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground transition-colors h-8"
-        onClick={() => setOpen(p => !p)}
-      >
+  const openMenu = useCallback(() => {
     if (btnRef.current) {
       const r = btnRef.current.getBoundingClientRect()
       setPos({ top: r.bottom + 4, left: r.left })
@@ -984,7 +983,7 @@ export function DealRoomView({ initialFilter }: DealRoomProps = {}) {
             <FilterDropdown
               label="Investment Type" items={['New', 'Follow-up']}
               selected={selectedInvType ? [selectedInvType] : []}
-              onToggle={v => setSelectedIntType(p => p === v ? '' : v)}
+              onToggle={v => setSelectedInvType(p => p === v ? '' : v)}
             />
 
             <Button
