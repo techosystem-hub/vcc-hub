@@ -316,8 +316,8 @@ function AnalyticsPanel({
             <p className="text-[11px] text-muted-foreground -mt-1">Deals and capital by funding stage</p>
           </CardHeader>
           <CardContent className="flex flex-col flex-1 pt-1 pb-2">
-            <div className="flex-1 min-h-[360px]">
-            <ResponsiveContainer width="100%" height="100%">
+            <div className="min-h-[440px]">
+            <ResponsiveContainer width="100%" height={440}>
               <ComposedChart data={stats.stagesDist}
                 margin={{ left: 8, right: 8, top: 4, bottom: 110 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
