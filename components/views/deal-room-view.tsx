@@ -161,32 +161,21 @@ function AnalyticsPanel({
         return { name, value, yoy }
       })
 
-    const sMap: Record<string, number> = {}
     const sMap24: Record<string, number> = {}
     const sMap25: Record<string, number> = {}
-    const sCapMap: Record<string, number> = {}
+    const sMap26: Record<string, number> = {}
     startups.forEach(d => {
       if (!d.roundStage) return
-      sMap[d.roundStage] = (sMap[d.roundStage] || 0) + 1
       if (String(d.year) === '2024') sMap24[d.roundStage] = (sMap24[d.roundStage] || 0) + 1
       if (String(d.year) === '2025') sMap25[d.roundStage] = (sMap25[d.roundStage] || 0) + 1
-      sCapMap[d.roundStage] = (sCapMap[d.roundStage] || 0) + (d.investmentSizeUSD || 0)
+      if (String(d.year) === '2026') sMap26[d.roundStage] = (sMap26[d.roundStage] || 0) + 1
     })
-    const stagesAll = Object.entries(sMap)
-      .sort((a, b) => b[1] - a[1])
-      .map(([name, value]) => ({ name, value }))
-    const _stTotal = stagesAll.reduce((s, d) => s + d.value, 0)
-    const _stMin = Math.max(2, Math.round(_stTotal * 0.05))
-    const stagesMajor = stagesAll.filter(d => d.value >= _stMin)
-    const stagesOther = stagesAll.filter(d => d.value < _stMin).reduce((s, d) => s + d.value, 0)
-    const stages = stagesOther > 0 ? [...stagesMajor, { name: 'Other', value: stagesOther }] : stagesMajor
-    const stagesDist = stagesMajor.map(({ name, value }) => {
-      const c24 = sMap24[name] || 0
-      const c25 = sMap25[name] || 0
-      const yoy: number | null = c24 > 0 ? Math.round((c25 - c24) / c24 * 100) : null
-      const capital = +((sCapMap[name] || 0) / 1e6).toFixed(1)
-      return { name, count: value, capital, yoy }
-    })
+    const allStageNames = Array.from(new Set([...Object.keys(sMap24), ...Object.keys(sMap25), ...Object.keys(sMap26)]))
+    const stagesDistRaw = allStageNames
+      .map(name => ({ name, count24: sMap24[name] || 0, count25: sMap25[name] || 0, count26: sMap26[name] || 0 }))
+      .sort((a, b) => (b.count24 + b.count25 + b.count26) - (a.count24 + a.count25 + a.count26))
+    const stagesDist = [...stagesDistRaw.filter(s => s.name !== 'Non-disclosed'), ...stagesDistRaw.filter(s => s.name === 'Non-disclosed')]
+    const stages = stagesDist
 
     const yMap: Record<string, number> = {}
     startups.forEach(d => { if (d.year) yMap[String(d.year)] = (yMap[String(d.year)] || 0) + 1 })
@@ -325,7 +314,7 @@ function AnalyticsPanel({
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold">Round Stage Breakdown</CardTitle>
             <p className="text-[11px] text-muted-foreground -mt-1">Deals and capital by funding stage</p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">2025 vs 2024 YoY · click to filter</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">2024 · 2025 · 2026 · click to filter</p>
           </CardHeader>
           <CardContent className="flex flex-col flex-1 pt-1 pb-2">
             <div className="flex-1 min-h-[240px]">
@@ -337,17 +326,11 @@ function AnalyticsPanel({
                 <YAxis type="number" tick={{ fontSize: 10, fill: '#888' }} />
                 <Tooltip content={(p) => <ChartTooltip {...p} />} cursor={{ fill: 'rgba(0,0,0,0.06)' }} />
                 <Legend iconType="circle" iconSize={8} wrapperStyle={{ marginTop: 8 }} formatter={(value: any) => <span style={{ fontSize: 11, color: '#555' }}>{value}</span>} />
-                <Bar dataKey="count" name="Deal Count" fill="#111111" radius={[4, 4, 0, 0]} cursor="pointer" onClick={(data: any) => data?.name && onFilter({ stages: [data.name] })} />
-                <Bar dataKey="capital" name="Capital ($M)" fill="#e71d36" radius={[4, 4, 0, 0]} cursor="pointer" onClick={(data: any) => data?.name && onFilter({ stages: [data.name] })} />
+                <Bar dataKey="count24" name="2024" fill="#94a3b8" radius={[4, 4, 0, 0]} maxBarSize={28} />
+                <Bar dataKey="count25" name="2025" fill={NAVY} radius={[4, 4, 0, 0]} maxBarSize={28} />
+                <Bar dataKey="count26" name="2026" fill={RED} radius={[4, 4, 0, 0]} maxBarSize={28} />
               </BarChart>
             </ResponsiveContainer>
-            </div>
-            <div className="mt-1 flex flex-wrap gap-x-6 gap-y-1 px-2">
-              {stats.stagesDist.map(s => s.yoy !== null ? (
-                <span key={s.name} className="text-[11px] text-gray-500">
-                  {s.name}: <span className={(s.yoy as number) >= 0 ? 'text-emerald-600 font-medium' : 'text-red-500 font-medium'}>{(s.yoy as number) >= 0 ? '+' : ''}{s.yoy}% YoY</span>
-                </span>
-              ) : null)}
             </div>
           </CardContent>
         </Card>
