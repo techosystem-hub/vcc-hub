@@ -333,7 +333,7 @@ function AnalyticsPanel({
               <BarChart data={stats.stagesDist}
                 margin={{ left: 8, right: 8, top: 8, bottom: 50 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                <XAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: '#444', angle: -25, textAnchor: 'end' }} interval={0} height={60} />
+                <XAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: '#444', angle: -25, textAnchor: 'end' } as any} interval={0} height={60} />
                 <YAxis type="number" tick={{ fontSize: 10, fill: '#888' }} />
                 <Tooltip content={(p) => <ChartTooltip {...p} />} cursor={{ fill: 'rgba(0,0,0,0.06)' }} />
                 <Legend iconType="circle" iconSize={8} formatter={(value: any) => <span style={{ fontSize: 11, color: '#555' }}>{value}</span>} />
