@@ -314,22 +314,21 @@ function AnalyticsPanel({
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold">Round Stage Breakdown</CardTitle>
             <p className="text-[11px] text-muted-foreground -mt-1">Deals and capital by funding stage</p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">2024 · 2025 · 2026 · click to filter</p>
           </CardHeader>
           <CardContent className="flex flex-col flex-1 pt-1 pb-2">
             <div className="flex-1 min-h-[240px]">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={stats.stagesDist}
-                margin={{ left: 8, right: 8, top: 4, bottom: 20 }}>
+              <ComposedChart data={stats.stagesDist}
+                margin={{ left: 8, right: 8, top: 4, bottom: 55 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                <XAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: '#444' }} interval={0} height={20} />
+                <XAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: '#444', angle: -45, textAnchor: 'end' } as any} interval={0} height={55} />
                 <YAxis type="number" tick={{ fontSize: 10, fill: '#888' }} />
                 <Tooltip content={(p) => <ChartTooltip {...p} />} cursor={{ fill: 'rgba(0,0,0,0.06)' }} />
-                <Legend iconType="circle" iconSize={8} wrapperStyle={{ marginTop: 8 }} formatter={(value: any) => <span style={{ fontSize: 11, color: '#555' }}>{value}</span>} />
-                <Bar dataKey="count24" name="2024" fill="#94a3b8" radius={[4, 4, 0, 0]} maxBarSize={28} />
-                <Bar dataKey="count25" name="2025" fill={NAVY} radius={[4, 4, 0, 0]} maxBarSize={28} />
-                <Bar dataKey="count26" name="2026" fill={RED} radius={[4, 4, 0, 0]} maxBarSize={28} />
-              </BarChart>
+                <Legend iconType="circle" iconSize={8} wrapperStyle={{ marginTop: '1.5rem' }} formatter={(value: any) => <span style={{ fontSize: 11, color: '#555' }}>{value}</span>} />
+                <Bar dataKey="count24" name="2024" fill="#94a3b8" radius={[4, 4, 0, 0]} maxBarSize={28} onClick={(data: any) => onFilter({ stages: [data.name] })} style={{ cursor: 'pointer' }} />
+                <Bar dataKey="count25" name="2025" fill={NAVY} radius={[4, 4, 0, 0]} maxBarSize={28} onClick={(data: any) => onFilter({ stages: [data.name] })} style={{ cursor: 'pointer' }} />
+                <Line dataKey="count26" name="2026 (YTD)" stroke={RED} strokeWidth={2} dot={{ r: 4, fill: RED }} activeDot={{ r: 6 }} type="monotone" />
+              </ComposedChart>
             </ResponsiveContainer>
             </div>
           </CardContent>
