@@ -327,13 +327,13 @@ function AnalyticsPanel({
             <p className="text-[11px] text-muted-foreground -mt-1">Deals and capital by funding stage</p>
             <p className="text-[11px] text-muted-foreground mt-0.5">2025 vs 2024 YoY · click to filter</p>
           </CardHeader>
-          <CardContent className="flex flex-col flex-1 pt-2 pb-4">
+          <CardContent className="flex flex-col flex-1 pt-1 pb-2">
             <div className="flex-1 min-h-[240px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={stats.stagesDist}
-                margin={{ left: 8, right: 8, top: 8, bottom: 50 }}>
+                margin={{ left: 8, right: 8, top: 4, bottom: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                <XAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: '#444', angle: -25, textAnchor: 'end' } as any} interval={0} height={60} />
+                <XAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: '#444', angle: -25, textAnchor: 'end' } as any} interval={0} height={40} />
                 <YAxis type="number" tick={{ fontSize: 10, fill: '#888' }} />
                 <Tooltip content={(p) => <ChartTooltip {...p} />} cursor={{ fill: 'rgba(0,0,0,0.06)' }} />
                 <Legend iconType="circle" iconSize={8} formatter={(value: any) => <span style={{ fontSize: 11, color: '#555' }}>{value}</span>} />
@@ -342,7 +342,7 @@ function AnalyticsPanel({
               </BarChart>
             </ResponsiveContainer>
             </div>
-            <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 px-2">
+            <div className="mt-1 flex flex-wrap gap-x-6 gap-y-1 px-2">
               {stats.stagesDist.map(s => s.yoy !== null ? (
                 <span key={s.name} className="text-[11px] text-gray-500">
                   {s.name}: <span className={(s.yoy as number) >= 0 ? 'text-emerald-600 font-medium' : 'text-red-500 font-medium'}>{(s.yoy as number) >= 0 ? '+' : ''}{s.yoy}% YoY</span>
