@@ -330,15 +330,15 @@ function AnalyticsPanel({
           <CardContent className="flex flex-col flex-1 pt-2 pb-4">
             <div className="flex-1 min-h-[240px]">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={stats.stagesDist} layout="vertical"
-                margin={{ left: 8, right: 40, top: 8, bottom: 8 }}>
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f0f0f0" />
-                <XAxis type="number" tick={{ fontSize: 10, fill: '#888' }} />
-                <YAxis type="category" dataKey="name" width={72} tick={{ fontSize: 11, fill: '#444' }} />
+              <BarChart data={stats.stagesDist}
+                margin={{ left: 8, right: 8, top: 8, bottom: 50 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                <XAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: '#444', angle: -25, textAnchor: 'end' }} interval={0} height={60} />
+                <YAxis type="number" tick={{ fontSize: 10, fill: '#888' }} />
                 <Tooltip content={(p) => <ChartTooltip {...p} />} cursor={{ fill: 'rgba(0,0,0,0.06)' }} />
                 <Legend iconType="circle" iconSize={8} formatter={(value: any) => <span style={{ fontSize: 11, color: '#555' }}>{value}</span>} />
-                <Bar dataKey="count" name="Deal Count" fill="#111111" radius={[0, 4, 4, 0]} cursor="pointer" onClick={(data: any) => data?.name && onFilter({ stages: [data.name] })} />
-                <Bar dataKey="capital" name="Capital ($M)" fill="#e71d36" radius={[0, 4, 4, 0]} cursor="pointer" onClick={(data: any) => data?.name && onFilter({ stages: [data.name] })} />
+                <Bar dataKey="count" name="Deal Count" fill="#111111" radius={[4, 4, 0, 0]} cursor="pointer" onClick={(data: any) => data?.name && onFilter({ stages: [data.name] })} />
+                <Bar dataKey="capital" name="Capital ($M)" fill="#e71d36" radius={[4, 4, 0, 0]} cursor="pointer" onClick={(data: any) => data?.name && onFilter({ stages: [data.name] })} />
               </BarChart>
             </ResponsiveContainer>
             </div>
