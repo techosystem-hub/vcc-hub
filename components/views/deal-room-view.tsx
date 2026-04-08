@@ -46,7 +46,7 @@ type SortOption = 'newest' | 'highest' | 'lowest'
 type ViewMode   = 'analytics' | 'deals' | 'list'
 
 function formatUSD(n: number): string {
-  if (!n) return 'â'
+  if (!n) return '—'
   if (n >= 1e9) return `$${(n / 1e9).toFixed(1)}B`
   if (n >= 1e6) return `$${(n / 1e6).toFixed(1)}M`
   if (n >= 1e3) return `$${(n / 1e3).toFixed(0)}K`
@@ -100,13 +100,13 @@ function StatCard({
                 badge.up === null ? 'text-blue-700 bg-blue-50'
                   : badge.up ? 'text-green-700 bg-green-50' : 'text-red-600 bg-red-50'
               }`}>
-                {badge.up === true ? 'â ' : badge.up === false ? 'â ' : ''}{badge.text}
+                {badge.up === true ? '↑ ' : badge.up === false ? '↓ ' : ''}{badge.text}
               </div>
             )}
             {sub && <div className="text-xs text-muted-foreground mt-0.5">{sub}</div>}
             {onClick && (
               <div className="text-[10px] mt-1.5 font-medium" style={{ color: RED }}>
-                Click to explore â
+                Click to explore →
               </div>
             )}
           </div>
@@ -251,7 +251,7 @@ function AnalyticsPanel({
       <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
         <StatCard
           icon={TrendingUp}
-          label="Total Rounds Â· 2025"
+          label="Total Rounds · 2025"
           value={String(stats.total2025)}
           badge={stats.yoyRounds !== null ? { text: `${stats.yoyRounds >= 0 ? '+' : ''}${stats.yoyRounds}% vs 2024`, up: stats.yoyRounds >= 0 } : undefined}
           sub="Deals tracked in 2025"
@@ -260,7 +260,7 @@ function AnalyticsPanel({
         />
         <StatCard
           icon={DollarSign}
-          label="Capital Deployed Â· 2025"
+          label="Capital Deployed · 2025"
           value={`${stats.capM2025}M`}
           badge={stats.yoyCap !== null ? { text: `${stats.yoyCap >= 0 ? '+' : ''}${stats.yoyCap}% YoY growth`, up: stats.yoyCap >= 0 } : undefined}
           sub="$M deployed in 2025"
@@ -269,7 +269,7 @@ function AnalyticsPanel({
         />
         <StatCard
           icon={BarChart2}
-          label="Avg Deal Size Â· 2025"
+          label="Avg Deal Size · 2025"
           value={`${stats.avgDealSizeM}M`}
           badge={stats.yoyAvg !== null ? { text: `${stats.yoyAvg >= 0 ? '+' : ''}${stats.yoyAvg}% vs 2024`, up: stats.yoyAvg >= 0 } : undefined}
           sub="$M avg per round in 2025"
@@ -290,7 +290,7 @@ function AnalyticsPanel({
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold">Deals by Vertical</CardTitle>
             <p className="text-[11px] text-muted-foreground -mt-1">Distribution with YoY growth rates</p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">2025 vs 2024 Â· click to filter</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">2025 vs 2024 · click to filter</p>
           </CardHeader>
           <CardContent>
             <div className="space-y-2 pt-2">
@@ -306,7 +306,7 @@ function AnalyticsPanel({
                         <span className="text-[13px] text-gray-500">{v.value} deals</span>
                         {v.yoy !== null && (
                           <span className={`text-[12px] font-semibold ${v.yoy >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>
-                            {v.yoy >= 0 ? 'â+' : 'â'}{v.yoy}%
+                            {v.yoy >= 0 ? '↗+' : '↘'}{v.yoy}%
                           </span>
                         )}
                       </div>
@@ -325,7 +325,7 @@ function AnalyticsPanel({
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold">Round Stage Breakdown</CardTitle>
             <p className="text-[11px] text-muted-foreground -mt-1">Deals and capital by funding stage</p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">2025 vs 2024 YoY Â· click to filter</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">2025 vs 2024 YoY · click to filter</p>
           </CardHeader>
           <CardContent className="flex flex-col flex-1 pt-2 pb-4">
             <div className="flex-1 min-h-[240px]">
@@ -357,7 +357,7 @@ function AnalyticsPanel({
         <Card className="flex flex-col">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold">Deal Flow by Quarter</CardTitle>
-            <p className="text-[11px] text-muted-foreground -mt-1">Quarterly deal flow Â· 2025 YTD</p>
+            <p className="text-[11px] text-muted-foreground -mt-1">Quarterly deal flow · 2025 YTD</p>
             <p className="text-[11px] text-muted-foreground mt-0.5">Capital ($M) and deal count</p>
           </CardHeader>
           <CardContent className="flex flex-col flex-1 pt-2 pb-4">
@@ -403,12 +403,12 @@ function AnalyticsPanel({
                       <div className="min-w-0">
                         <div className="font-semibold text-sm text-gray-900 truncate">{s.name}</div>
                         <div className="text-xs text-gray-500">
-                          {[s.vertical, s.roundStage].filter(Boolean).join(' Â· ')}
+                          {[s.vertical, s.roundStage].filter(Boolean).join(' · ')}
                         </div>
                       </div>
                     </div>
                     <div className="flex-shrink-0 text-right ml-4">
-                      <div className="text-sm font-semibold text-gray-900">{s.investmentSizeUSD > 0 ? formatUSD(s.investmentSizeUSD) : 'â'}</div>
+                      <div className="text-sm font-semibold text-gray-900">{s.investmentSizeUSD > 0 ? formatUSD(s.investmentSizeUSD) : '—'}</div>
                       <div className="text-xs text-gray-500">{s.datePublished || (s.year > 0 ? String(s.year) : '')}</div>
                     </div>
                   </div>
@@ -446,7 +446,7 @@ function DealDetailSheet({
     <Sheet open={!!startup} onOpenChange={v => { if (!v) onClose() }}>
       <SheetContent className="w-full sm:max-w-[min(1000px,95vw)] overflow-y-auto p-0" side="right">
 
-        {/* ââ Header ââ */}
+        {/* ── Header ── */}
         <div className="px-8 pt-8 pb-5 border-b border-gray-100">
           <SheetHeader className="text-left space-y-0">
             <div className="flex items-start gap-4">
@@ -469,7 +469,7 @@ function DealDetailSheet({
                   )}
                   {startup.techosystemMember === 'Member' && (
                     <Badge className="text-xs text-white border-0" style={{ background: RED }}>
-                      â Techosystem Member
+                      ✓ Techosystem Member
                     </Badge>
                   )}
                 </div>
@@ -478,14 +478,14 @@ function DealDetailSheet({
           </SheetHeader>
         </div>
 
-        {/* ââ Description ââ */}
+        {/* ── Description ── */}
         {startup.description && (
           <div className="px-8 py-5 border-b border-gray-100">
             <p className="text-sm text-muted-foreground leading-relaxed">{startup.description}</p>
           </div>
         )}
 
-        {/* ââ Fields ââ */}
+        {/* ── Fields ── */}
         <div className="px-8 py-6 space-y-7">
 
           {/* Investment */}
@@ -508,7 +508,7 @@ function DealDetailSheet({
               Investors
             </p>
             <div className="grid grid-cols-2 gap-3">
-              <FieldCard label="Investor(s)" value={startup.investors || 'â'} />
+              <FieldCard label="Investor(s)" value={startup.investors || '—'} />
               <FieldCard label="UA Investors Involved" value={startup.uaInvestorsInvolved} />
             </div>
           </div>
@@ -528,7 +528,7 @@ function DealDetailSheet({
           </div>
         </div>
 
-        {/* ââ CTA ââ */}
+        {/* ── CTA ── */}
         {startup.linkToNews && (
           <div className="px-8 pb-8">
             <a
@@ -572,7 +572,7 @@ function DealListRow({
         <div className="flex items-center gap-2 flex-wrap">
           <span className="font-semibold text-sm text-foreground truncate">{startup.name}</span>
           {startup.techosystemMember === 'Member' && (
-            <Badge className="text-[10px] px-1.5 py-0 text-white border-0 shrink-0" style={{ background: RED }}>â Member</Badge>
+            <Badge className="text-[10px] px-1.5 py-0 text-white border-0 shrink-0" style={{ background: RED }}>✓ Member</Badge>
           )}
         </div>
         <div className="flex items-center gap-2 mt-0.5 flex-wrap">
@@ -589,7 +589,7 @@ function DealListRow({
         {startup.year > 0 && <p className="text-[10px] text-gray-400">{startup.year}</p>}
       </div>
       {/* Arrow */}
-      <div className="flex-shrink-0 text-gray-300 text-sm">âº</div>
+      <div className="flex-shrink-0 text-gray-300 text-sm">›</div>
     </div>
   )
 }
@@ -621,7 +621,7 @@ function DealCard({
               <h3 className="font-semibold text-foreground leading-tight truncate flex-1 min-w-0">{startup.name}</h3>
               {startup.techosystemMember === 'Member' && (
                 <Badge className="text-[10px] shrink-0 text-white border-0 px-1.5 py-0" style={{ background: RED }}>
-                  â Member
+                  ✓ Member
                 </Badge>
               )}
             </div>
@@ -677,7 +677,7 @@ function DealCard({
               View news
             </a>
           ) : <span />}
-          <span className="text-[10px] text-muted-foreground">Tap for details â</span>
+          <span className="text-[10px] text-muted-foreground">Tap for details →</span>
         </div>
       </CardContent>
     </Card>
