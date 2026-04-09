@@ -766,6 +766,7 @@ interface DealRoomProps {
 export function DealRoomView({ initialFilter }: DealRoomProps = {}) {
   const [startups, setStartups]                   = useState<DealFlowStartup[]>([])
   const [loading, setLoading]                     = useState(true)
+  const [fetchError, setFetchError]               = useState<string | null>(null)
   const [viewMode, setViewMode]                   = useState<ViewMode>(initialFilter?.viewMode ?? 'analytics')
   const [searchQuery, setSearchQuery]             = useState('')
   const [sortBy, setSortBy]                       = useState<SortOption>('newest')
@@ -778,15 +779,24 @@ export function DealRoomView({ initialFilter }: DealRoomProps = {}) {
   const [dateFrom, setDateFrom]                   = useState<string | null>(initialFilter?.dateFrom ?? null)
   const [selectedDeal, setSelectedDeal]           = useState<DealFlowStartup | null>(null)
 
-  useEffect(() => {
+  const loadData = useCallback(() => {
+    setLoading(true)
+    setFetchError(null)
     fetch('/api/dealflow')
-      .then(r => r.json())
-      .then((data: DealFlowStartup[]) => {
-        setStartups(Array.isArray(data) ? data : [])
+      .then(async r => {
+        const data = await r.json()
+        if (!r.ok) throw new Error(data?.error || `Server error ${r.status}`)
+        if (!Array.isArray(data)) throw new Error('Unexpected response format')
+        setStartups(data)
         setLoading(false)
       })
-      .catch(() => setLoading(false))
+      .catch((err: Error) => {
+        setFetchError(err.message || 'Failed to load data')
+        setLoading(false)
+      })
   }, [])
+
+  useEffect(() => { loadData() }, [loadData])
 
   const filtered = useMemo(() => {
     let result = [...startups]
@@ -835,7 +845,15 @@ export function DealRoomView({ initialFilter }: DealRoomProps = {}) {
 
   if (loading) return (
     <div className="flex items-center justify-center py-20 text-muted-foreground">
-      Loading deal flow data...
+      Loading deal flow data…
+    </div>
+  )
+
+  if (fetchError) return (
+    <div className="flex flex-col items-center justify-center py-20 gap-4">
+      <p className="text-sm text-destructive font-medium">Failed to load deal flow data</p>
+      <p className="text-xs text-muted-foreground max-w-sm text-center">{fetchError}</p>
+      <Button size="sm" variant="outline" onClick={loadData}>Retry</Button>
     </div>
   )
 
