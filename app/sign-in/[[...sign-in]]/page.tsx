@@ -1,14 +1,22 @@
 import { SignIn } from '@clerk/nextjs';
+import Image from 'next/image';
 
 export default function SignInPage() {
   return (
-    <div className="min-h-screen bg-[#1a1f2e] flex items-center justify-center px-4">
+    <div className="min-h-screen bg-[#000000] flex items-center justify-center px-4">
       <div className="w-full max-w-md flex flex-col items-center">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-blue-500 text-white text-2xl font-bold mb-4">
-            TV
+          <div className="flex justify-center mb-4">
+            <Image
+              src="/brama-logo.jpeg"
+              alt="BRAMA by Techosystem"
+              width={120}
+              height={120}
+              className="rounded-2xl"
+              priority
+            />
           </div>
-          <h1 className="text-2xl font-bold text-white">VCC Intelligence Hub</h1>
+          <h1 className="text-2xl font-bold text-white">BRAMA Hub</h1>
           <p className="text-gray-400 mt-1 text-sm">Techosystem VC Committee — Members only</p>
         </div>
         <SignIn
@@ -31,7 +39,7 @@ export default function SignInPage() {
               rel="noopener noreferrer"
               className="text-blue-400 hover:text-blue-300 underline font-medium"
             >
-              Learn more about VCC Hub
+              Learn more about BRAMA Hub
             </a>
           </p>
         </div>
