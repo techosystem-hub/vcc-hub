@@ -58,7 +58,7 @@ function AppSidebar({ activeView, onViewChange }: { activeView: View; onViewChan
     <Sidebar collapsible="icon">
       <SidebarHeader className="p-6">
         <div className="group-data-[collapsible=icon]:hidden">
-          <span className="font-extrabold text-xl" style={{ color: '#011627' }}>VCC Hub</span>
+          <span className="font-extrabold text-xl" style={{ color: '#011627' }}>BRAMA Hub</span>
         </div>
       </SidebarHeader>
       <SidebarContent className="p-2">
