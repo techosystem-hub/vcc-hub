@@ -133,7 +133,26 @@ export default function Home() {
               {navItems.find((item) => item.id === activeView)?.label}
             </h1>
           </div>
-          <img src="/Techosystem_logo.png" alt="Techosystem" className="h-7 object-contain" />
+          {/* BRAMA horizontal logo — inline SVG, no file upload required */}
+          <svg height="28" viewBox="0 0 220 44" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="BRAMA by Techosystem">
+            {/* 3×3 dot grid */}
+            {/* Row 1 — all red */}
+            <circle cx="7"  cy="7"  r="6" fill="#E8192C"/>
+            <circle cx="22" cy="7"  r="6" fill="#E8192C"/>
+            <circle cx="37" cy="7"  r="6" fill="#E8192C"/>
+            {/* Row 2 — red, dark, red */}
+            <circle cx="7"  cy="22" r="6" fill="#E8192C"/>
+            <circle cx="22" cy="22" r="6" fill="#1A1A2E"/>
+            <circle cx="37" cy="22" r="6" fill="#E8192C"/>
+            {/* Row 3 — red, dark, red */}
+            <circle cx="7"  cy="37" r="6" fill="#E8192C"/>
+            <circle cx="22" cy="37" r="6" fill="#1A1A2E"/>
+            <circle cx="37" cy="37" r="6" fill="#E8192C"/>
+            {/* BRAMA text */}
+            <text x="50" y="32" fontFamily="Montserrat, sans-serif" fontWeight="800" fontSize="26" fill="#011627" letterSpacing="1">BRAMA</text>
+            {/* by techosystem */}
+            <text x="156" y="42" fontFamily="Montserrat, sans-serif" fontWeight="400" fontSize="8" fill="#6B7280">by techosystem</text>
+          </svg>
         </header>
         <main className="flex-1 overflow-auto p-6">
           {activeView === 'deal-room' && <DealRoomView initialFilter={dealFilter} />}
