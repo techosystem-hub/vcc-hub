@@ -476,22 +476,35 @@ function parseDealFlowStartup(r: any): DealFlowStartup {
   };
 }
 
+async function fetchAirtablePage(urlString: string, attempt = 0): Promise<any> {
+  const res  = await fetch(urlString, { headers, cache: 'no-store' });
+  if (res.status === 429 && attempt < 3) {
+    // Airtable rate-limit — wait 250 ms and retry (up to 3 times)
+    await new Promise(r => setTimeout(r, 250 * (attempt + 1)));
+    return fetchAirtablePage(urlString, attempt + 1);
+  }
+  const data = await res.json();
+  if (!res.ok) throw new Error(`Airtable error: ${data.error?.message ?? res.status}`);
+  return data;
+}
+
 export async function getDealFlowStartups(filters: {
   vertical?: string;
   stage?: string;
   search?: string;
 } = {}): Promise<DealFlowStartup[]> {
-  const url = new URL(`${DEALFLOW_ROOT}/tblFoWnsAmc40zupt`);
-  url.searchParams.set('sort[0][field]', 'Date of publishing');
-  url.searchParams.set('sort[0][direction]', 'desc');
+  const BASE_URL = `${DEALFLOW_ROOT}/tblFoWnsAmc40zupt`;
 
   const records: any[] = [];
   let offset: string | undefined;
   do {
+    // Build a fresh URL per page so the offset never leaks into the wrong request
+    const url = new URL(BASE_URL);
+    url.searchParams.set('sort[0][field]', 'Date of publishing');
+    url.searchParams.set('sort[0][direction]', 'desc');
     if (offset) url.searchParams.set('offset', offset);
-    const res  = await fetch(url.toString(), { headers, next: { revalidate: 300, tags: ['dealflow'] } });
-    const data = await res.json();
-    if (!res.ok) throw new Error(`Airtable error: ${data.error?.message}`);
+
+    const data = await fetchAirtablePage(url.toString());
     records.push(...(data.records || []));
     offset = data.offset;
   } while (offset);
