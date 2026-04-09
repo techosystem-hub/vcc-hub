@@ -8,7 +8,7 @@ export default function SignInPage() {
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
             <Image
-              src="/brama-logo.jpeg"
+              src="/2.png"
               alt="BRAMA by Techosystem"
               width={120}
               height={120}
