@@ -319,7 +319,7 @@ function AnalyticsPanel({
             <div className="min-h-[408px]">
             <ResponsiveContainer width="100%" height={408}>
               <ComposedChart data={stats.stagesDist}
-                margin={{ left: 8, right: 8, top: 4, bottom: 80 }}>
+                margin={{ left: 8, right: 8, top: 4, bottom: 48 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
                 <XAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: '#444', angle: -45, textAnchor: 'end' } as any} interval={0} height={75} />
                 <YAxis type="number" tick={{ fontSize: 10, fill: '#888' }} />
