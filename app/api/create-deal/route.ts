@@ -111,7 +111,7 @@ export async function POST(req: NextRequest) {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            from: 'VCC Hub <notifications@uatechecosystem.com>',
+            from: 'BRAMA Hub <notifications@uatechecosystem.com>',
             to: ['contact@uatechecosystem.com'],
             subject: `New Deal Added: ${body.startup}`,
             html: `
@@ -134,7 +134,7 @@ export async function POST(req: NextRequest) {
                     ${body.comments   ? `<tr><td style="padding:6px 0;color:#6b7280;vertical-align:top">Comments</td><td style="padding:6px 0">${body.comments}</td></tr>` : ''}
                   </table>
                 </div>
-                <p style="font-size:12px;color:#9ca3af;margin-top:12px;text-align:center">Sent by VCC Hub · Airtable record: ${data.id}</p>
+                <p style="font-size:12px;color:#9ca3af;margin-top:12px;text-align:center">Sent by BRAMA Hub · Airtable record: ${data.id}</p>
               </div>
             `,
           }),
