@@ -39,7 +39,7 @@ export default function SignInPage() {
               rel="noopener noreferrer"
               className="text-blue-400 hover:text-blue-300 underline font-medium"
             >
-              Learn more about BRAMA Hub
+              Learn more
             </a>
           </p>
         </div>
