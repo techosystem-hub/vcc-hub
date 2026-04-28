@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { Briefcase, Sparkles, BarChart3, Settings, LogOut, Bookmark } from 'lucide-react'
+import { Briefcase, Sparkles, BarChart3, Settings, LogOut, Bookmark, BookOpen } from 'lucide-react'
 import { useUser, useClerk } from '@clerk/nextjs'
 import {
   Sidebar,
@@ -89,11 +89,20 @@ function AppSidebar({ activeView, onViewChange }: { activeView: View; onViewChan
             <span className="text-xs text-muted-foreground truncate">{fundName}</span>
           </div>
         </div>
+        <a
+          href="https://drive.google.com/file/d/19z5xQi-mbuJlZmzKlsqYAIraohENLNwa/view?usp=sharing"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-3 flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
+        >
+          <BookOpen className="h-4 w-4 flex-shrink-0" />
+          <span className="group-data-[collapsible=icon]:hidden">How BRAMA Works</span>
+        </a>
         <Button
           variant="ghost"
           size="sm"
           onClick={() => signOut({ redirectUrl: '/sign-in' })}
-          className="mt-3 w-full justify-start gap-2 text-muted-foreground hover:text-foreground group-data-[collapsible=icon]:justify-center"
+          className="mt-1 w-full justify-start gap-2 text-muted-foreground hover:text-foreground group-data-[collapsible=icon]:justify-center"
         >
           <LogOut className="h-4 w-4" />
           <span className="group-data-[collapsible=icon]:hidden">Sign Out</span>
