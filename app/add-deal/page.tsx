@@ -29,7 +29,7 @@ const CURRENCIES = ['USD', 'EUR', 'PLN', 'GBP', 'UAH', 'Non-disclosed']
 
 // Only years that already exist as Airtable singleSelect options for Born Year
 const BORN_YEARS = [
-  '2026', '2025', '2024', '2023', '2022', '2021', '2020', '2019', '018',
+  '2026', '2025', '2024', '2023', '2022', '2021', '2020', '2019', '2018',
   '2017', '2016', '2015', '2014', '2013', '2012', '2009', '2006',
   '2000', '1998', 'Non-disclosed',
 ]

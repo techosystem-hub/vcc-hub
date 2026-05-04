@@ -477,13 +477,24 @@ function parseDealFlowStartup(r: any): DealFlowStartup {
 }
 
 async function fetchAirtablePage(urlString: string, attempt = 0): Promise<any> {
-  const res  = await fetch(urlString, { headers, cache: 'no-store' });
+  const controller = new AbortController();
+    const timeout    = setTimeout(() => controller.abort(), 8000);
+      let res: Response;
+        try {
+            res = await fetch(urlString, { headers, cache: 'no-store', signal: controller.signal });
+              } finally {
+                  clearTimeout(timeout);
+                    }
   if (res.status === 429 && attempt < 3) {
     // Airtable rate-limit — wait 250 ms and retry (up to 3 times)
     await new Promise(r => setTimeout(r, 250 * (attempt + 1)));
     return fetchAirtablePage(urlString, attempt + 1);
   }
-  const data = await res.json();
+  const text = await res.text();
+    let data: any;
+      try { data = JSON.parse(text); } catch {
+          throw new Error(`Airtable non-JSON (${res.status}): ${text.slice(0,120)}`);
+            }
   if (!res.ok) throw new Error(`Airtable error: ${data.error?.message ?? res.status}`);
   return data;
 }
